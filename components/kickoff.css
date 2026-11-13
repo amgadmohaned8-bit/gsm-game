@@ -1,0 +1,33 @@
+.ko-banner {
+  --bg: rgba(8, 12, 19, 0.96);
+  --bd: var(--brass);
+  --cut: 16px;
+  position: fixed;
+  right: clamp(12px, 2vw, 28px);
+  bottom: clamp(12px, 2vw, 28px);
+  z-index: 90;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  max-width: calc(100vw - 24px);
+  padding: 14px 44px 14px 16px;
+  animation: ko-in 0.6s var(--ease-out);
+}
+@keyframes ko-in {
+  from { opacity: 0; transform: translateY(24px); }
+  to { opacity: 1; transform: none; }
+}
+.ko-crests { display: flex; align-items: center; gap: 8px; flex: none; }
+.ko-crests img { width: 34px; height: 34px; object-fit: contain; }
+.ko-crests span { color: var(--brass); font-family: var(--font-display); font-weight: 800; }
+.ko-text { display: grid; gap: 2px; min-width: 0; }
+.ko-text strong { font-family: var(--font-display); font-size: 20px; font-weight: 800; line-height: 1.05; text-transform: uppercase; }
+.ko-text span { color: var(--chalk-2); font-size: 13px; }
+.ko-go { min-height: 46px; padding: 0 20px; font-size: 18px; flex: none; animation: ko-pulse 2s ease-in-out infinite; }
+@keyframes ko-pulse { 50% { filter: brightness(1.18); } }
+.ko-close { position: absolute; top: 6px; right: 6px; width: 32px; height: 32px; display: grid; place-items: center; border: 0; background: transparent; color: var(--chalk-3); }
+.ko-close:hover { color: var(--chalk); }
+@media (max-width: 560px) {
+  .ko-banner { left: 12px; right: 12px; flex-wrap: wrap; }
+  .ko-go { width: 100%; }
+}

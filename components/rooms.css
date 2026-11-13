@@ -1,0 +1,46 @@
+.rm { position: fixed; inset: 0; z-index: 80; display: grid; place-items: center; padding: 20px; background: rgba(2, 4, 7, 0.78); backdrop-filter: blur(6px); animation: rm-fade 0.25s both; }
+.rm-panel { width: min(640px, 100%); max-height: 92svh; overflow-y: auto; padding: 24px; display: grid; gap: 16px; animation: rm-rise 0.45s var(--ease-out) both; }
+.rm-panel header { display: flex; align-items: center; justify-content: space-between; }
+.rm-panel h2 { margin: 0; font-family: var(--font-display); font-weight: 900; font-size: 32px; letter-spacing: 0.04em; text-transform: uppercase; }
+.rm-x { width: 40px; height: 40px; display: grid; place-items: center; background: none; border: 1px solid var(--line-2); color: var(--chalk); cursor: pointer; }
+.rm-p { margin: 0; color: var(--chalk-2); line-height: 1.5; }
+.rm-p b { color: var(--brass-hi); }
+.rm-code { display: flex; gap: 8px; justify-content: center; }
+.rm-code span { width: 52px; height: 66px; display: grid; place-items: center; font-family: var(--font-display); font-weight: 900; font-size: 44px; color: var(--brass-hi); background: var(--ink-3); border: 1px solid var(--brass-lo); animation: rm-flip 0.6s var(--ease-out) both; }
+.rm-row { display: flex; gap: 10px; }
+.rm-btn { flex: 1; padding: 12px 16px; background: none; border: 1px solid var(--brass-lo); color: var(--brass-hi); font-weight: 800; letter-spacing: 0.06em; text-transform: uppercase; cursor: pointer; transition: background 0.2s; }
+.rm-btn:hover:not(:disabled) { background: rgba(201, 164, 92, 0.12); }
+.rm-btn:disabled { opacity: 0.45; cursor: default; }
+.rm-go { justify-self: stretch; }
+.rm-msg { margin: 0; color: var(--card-red); font-size: 14px; }
+.rm-members p { margin: 0 0 8px; color: var(--chalk-3); font-size: 14px; }
+.rm-members b { color: var(--brass-hi); }
+.rm-members ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
+.rm-members li { display: flex; align-items: center; gap: 10px; padding: 8px 10px; background: var(--ink-2); border: 1px solid var(--line); }
+.rm-members li img { width: 30px; height: 30px; object-fit: contain; }
+.rm-members li span { display: grid; min-width: 0; }
+.rm-members small { color: var(--chalk-3); }
+.rm-form { display: flex; gap: 10px; }
+.rm-form input { flex: 1; min-width: 0; height: 52px; padding: 0 16px; text-align: center; font-family: var(--font-display); font-weight: 900; font-size: 30px; letter-spacing: 0.3em; text-transform: uppercase; background: var(--ink-1); border: 1px solid var(--line-2); color: var(--chalk); outline: 0; }
+.rm-form input:focus { border-color: var(--brass); }
+.rm-form .rm-btn { flex: none; }
+.rm-found { display: grid; gap: 14px; animation: rm-fade 0.3s both; }
+.rm-h { margin: 0; font-family: var(--font-display); font-size: 18px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--brass-hi); }
+.rm-clubs { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 8px; }
+.rm-club { display: grid; justify-items: center; gap: 4px; padding: 10px 6px; background: var(--ink-2); border: 1px solid var(--line); color: var(--chalk); cursor: pointer; font: inherit; animation: rm-fade 0.4s both; transition: border-color 0.2s, transform 0.2s; }
+.rm-club img { width: 38px; height: 38px; object-fit: contain; }
+.rm-club span { font-size: 13px; font-weight: 700; text-align: center; }
+.rm-club small { color: var(--chalk-3); font-size: 11px; }
+.rm-club:hover:not(:disabled) { transform: translateY(-2px); border-color: var(--brass-lo); }
+.rm-club.is-on { border-color: var(--brass); background: var(--ink-3); box-shadow: 0 0 0 1px var(--brass) inset; }
+.rm-club:disabled { opacity: 0.4; cursor: not-allowed; }
+@keyframes rm-fade { from { opacity: 0; } }
+@keyframes rm-rise { from { opacity: 0; transform: translateY(24px) scale(0.985); } }
+@keyframes rm-flip { from { opacity: 0; transform: rotateX(80deg) translateY(-10px); } }
+@media (max-width: 640px) {
+  .rm { padding: 0; align-items: end; }
+  .rm-panel { padding: 18px; }
+  .rm-code span { width: 44px; height: 58px; font-size: 36px; }
+  .rm-clubs { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (prefers-reduced-motion: reduce) { .rm, .rm-panel, .rm-code span, .rm-club { animation: none; } }

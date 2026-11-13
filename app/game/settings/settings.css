@@ -1,0 +1,44 @@
+.st { position: relative; min-height: 100svh; isolation: isolate; overflow-x: clip; background: var(--ink-0); }
+.st-bg { position: fixed; inset: -3%; z-index: -5; background: url("/images/stadium-night.jpg") center / cover no-repeat; filter: saturate(0.5) brightness(0.28); }
+.st-wrap { width: min(820px, 100% - 32px); margin: 0 auto; padding: 28px 0 80px; display: grid; gap: 18px; }
+.st-head p { margin: 0 0 4px; color: var(--brass); font-size: 13px; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; }
+.st-head h1 { margin: 0; font-family: var(--font-display); font-weight: 900; font-size: clamp(48px, 8vw, 88px); line-height: 0.92; text-transform: uppercase; }
+.st-card { --bg: rgba(10, 14, 22, 0.88); --bd: var(--line-2); padding: 22px 24px; display: grid; gap: 12px; animation: st-in 0.55s var(--ease-out) both; animation-delay: calc(var(--i) * 70ms); }
+.st-card h2 { margin: 0 0 2px; font-family: var(--font-display); font-size: 22px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--brass-hi); }
+.st-row { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 12px 14px; background: var(--ink-2); border: 1px solid var(--line); text-align: left; color: var(--chalk); font: inherit; }
+.st-row > span:first-child { display: grid; gap: 3px; min-width: 0; }
+.st-row small { color: var(--chalk-3); font-size: 13px; line-height: 1.45; }
+.st-row em { color: var(--pitch); font-style: normal; font-weight: 800; }
+.st-switch { cursor: pointer; width: 100%; transition: border-color 0.2s; }
+.st-switch:hover { border-color: var(--brass-lo); }
+.st-switch i { flex: none; width: 50px; height: 28px; border-radius: 99px; background: var(--ink-4); border: 1px solid var(--line-2); position: relative; transition: background 0.25s; }
+.st-switch b { position: absolute; top: 3px; left: 3px; width: 20px; height: 20px; border-radius: 50%; background: var(--chalk-3); transition: transform 0.25s var(--ease-out), background 0.25s; }
+.st-switch[aria-checked="true"] i { background: rgba(227, 178, 88, 0.3); border-color: var(--brass); }
+.st-switch[aria-checked="true"] b { transform: translateX(22px); background: var(--brass-hi); }
+.st-label { margin: 6px 0 0; color: var(--chalk-3); font-size: 12px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; }
+.st-choice { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+.st-choice button { display: grid; gap: 4px; padding: 12px; text-align: left; background: var(--ink-2); border: 1px solid var(--line); color: var(--chalk); cursor: pointer; font: inherit; transition: border-color 0.2s, background 0.2s, transform 0.2s; }
+.st-choice button:hover { transform: translateY(-2px); }
+.st-choice button.is-on { border-color: var(--brass); background: var(--ink-3); box-shadow: inset 0 0 0 1px var(--brass); }
+.st-choice small { color: var(--chalk-3); font-size: 12px; }
+.st-btn { flex: none; padding: 10px 16px; background: var(--brass); color: #1a1405; border: 0; font-weight: 800; letter-spacing: 0.06em; text-transform: uppercase; font-size: 13px; cursor: pointer; transition: filter 0.2s, transform 0.2s; }
+.st-btn:hover:not(:disabled) { filter: brightness(1.1); transform: translateY(-1px); }
+.st-btn:disabled { opacity: 0.45; cursor: default; }
+.st-btn.is-ghost { background: none; color: var(--chalk-2); border: 1px solid var(--line-2); }
+.st-btn.is-danger { background: var(--card-red); color: #fff; }
+.st-confirm { display: flex; gap: 8px; flex: none; }
+.st-pw { display: grid; gap: 10px; }
+.st-pw input { height: 46px; padding: 0 14px; background: var(--ink-1); border: 1px solid var(--line-2); color: var(--chalk); font: inherit; outline: 0; }
+.st-pw input:focus { border-color: var(--brass); }
+.st-pw .st-btn { justify-self: start; }
+.st-note { margin: 0; color: var(--pitch); font-size: 14px; }
+.st-note.is-bad { color: var(--card-red); }
+.st-danger { --bd: rgba(209, 52, 56, 0.5); }
+.st-danger h2 { color: var(--card-red); }
+@keyframes st-in { from { opacity: 0; transform: translateY(14px); } }
+@media (max-width: 640px) {
+  .st-card { padding: 16px; }
+  .st-choice { grid-template-columns: minmax(0, 1fr); }
+  .st-row { flex-wrap: wrap; }
+  .st-confirm { width: 100%; }
+}

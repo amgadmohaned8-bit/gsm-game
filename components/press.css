@@ -1,0 +1,57 @@
+/* The press hall fills the screen; everything on top is frosted glass so the room stays visible. */
+.pc { position: fixed; inset: 0; z-index: 150; display: grid; grid-template-rows: auto 1fr auto; gap: 12px; padding: clamp(10px, 2vw, 24px); overflow: hidden; background: #05070d; animation: pc-in 0.5s both; isolation: isolate; }
+.pc-hall { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: 50% 40%; z-index: -3; animation: pc-drift 24s ease-in-out infinite alternate; }
+.pc-shade { position: absolute; inset: 0; z-index: -2; background: linear-gradient(180deg, rgba(3, 5, 10, 0.55), rgba(3, 5, 10, 0.05) 28%, rgba(3, 5, 10, 0.05) 52%, rgba(3, 5, 10, 0.7)); }
+.pc-flashes { position: absolute; inset: 0; z-index: -1; pointer-events: none; }
+.pc-flashes i { position: absolute; width: 150px; height: 150px; margin: -75px 0 0 -75px; border-radius: 50%; background: radial-gradient(circle, rgba(255, 255, 255, 0.9), transparent 62%); opacity: 0; z-index: -1; animation: pc-flash 4s infinite; pointer-events: none; }
+
+.pc-glass { background: linear-gradient(135deg, rgba(14, 20, 38, 0.46), rgba(8, 12, 24, 0.34)); backdrop-filter: blur(16px) saturate(1.35); -webkit-backdrop-filter: blur(16px) saturate(1.35); border: 1px solid rgba(255, 255, 255, 0.2); box-shadow: 0 18px 50px rgba(0, 0, 0, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.22); border-radius: 18px; color: #fff; text-shadow: 0 1px 8px rgba(0, 0, 0, 0.5); }
+
+.pc-banner { align-self: start; width: min(1100px, 100%); justify-self: center; display: flex; align-items: center; gap: 14px; padding: 10px 18px; }
+.pc-banner img { width: 44px; height: 44px; object-fit: contain; filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.5)); }
+.pc-banner div { flex: 1; min-width: 0; display: grid; }
+.pc-banner small { color: var(--brass-hi); font-weight: 800; letter-spacing: 0.16em; text-transform: uppercase; font-size: 12px; }
+.pc-banner strong { min-width: 0; font-family: var(--font-display); font-size: 26px; letter-spacing: 0.04em; text-transform: uppercase; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.pc-count { font-family: var(--font-display); font-size: 26px; color: var(--brass-hi); }
+
+.pc-ask { align-self: center; justify-self: center; width: min(820px, 100%); }
+.pc-line { padding: 14px 20px 16px; font-family: var(--font-text), "Noto Sans Arabic", Tahoma, sans-serif; animation: pc-pop 0.35s var(--ease-out) both; }
+.pc-line strong { display: flex; align-items: center; gap: 8px; font-size: 14px; color: var(--brass-hi); margin-bottom: 6px; }
+.pc-line strong small { color: rgba(255, 255, 255, 0.72); font-weight: 600; }
+.pc-live { width: 9px; height: 9px; border-radius: 50%; background: #ff4d5e; box-shadow: 0 0 0 0 rgba(255, 77, 94, 0.7); animation: pc-ping 1.4s infinite; }
+.pc-line p { margin: 0; font-weight: 800; font-size: clamp(19px, 2.6vw, 26px); line-height: 1.55; min-height: 3.1em; }
+.pc-line.is-react { background: linear-gradient(135deg, rgba(227, 178, 88, 0.5), rgba(227, 178, 88, 0.24)); border-color: rgba(255, 224, 138, 0.5); }
+.pc-caret { display: inline-block; width: 3px; height: 1em; margin-inline-start: 3px; background: #fff; vertical-align: -0.12em; animation: pc-blink 0.8s steps(1) infinite; }
+
+.pc-reply { align-self: end; justify-self: center; width: min(820px, 100%); display: grid; gap: 8px; justify-items: center; }
+.pc-answer, .pc-you { width: 100%; padding: 16px 18px; display: grid; gap: 10px; transition: opacity 0.3s; }
+.pc-answer label, .pc-you small { color: var(--brass-hi); font-size: 12px; font-weight: 800; letter-spacing: 0.14em; text-transform: uppercase; }
+.pc-answer textarea { display: block; width: 100%; box-sizing: border-box; padding: 12px 14px; resize: none; background: rgba(0, 0, 0, 0.35); border: 1px solid rgba(255, 255, 255, 0.22); border-radius: 12px; color: #fff; font: inherit; font-size: 17px; line-height: 1.5; outline: 0; text-shadow: none; }
+.pc-answer textarea::placeholder { color: rgba(255, 255, 255, 0.55); }
+.pc-answer textarea:focus { border-color: var(--brass-hi); background: rgba(0, 0, 0, 0.48); }
+.pc-hints { display: flex; flex-wrap: wrap; gap: 8px; }
+.pc-hints button { padding: 7px 12px; background: rgba(255, 255, 255, 0.1); border: 1px solid rgba(255, 255, 255, 0.24); border-radius: 99px; color: #fff; font: inherit; font-size: 14px; cursor: pointer; transition: background 0.2s, border-color 0.2s; }
+.pc-hints button:hover:not(:disabled) { background: rgba(227, 178, 88, 0.3); border-color: var(--brass-hi); }
+.pc-actions { display: flex; align-items: center; gap: 10px; }
+.pc-actions small { flex: 1; color: rgba(255, 255, 255, 0.7); }
+.pc-ghost { padding: 10px 16px; background: rgba(255, 255, 255, 0.08); border: 1px solid rgba(255, 255, 255, 0.28); border-radius: 10px; color: #fff; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; cursor: pointer; font-size: 13px; }
+.pc-skip { padding: 6px 12px; background: rgba(0, 0, 0, 0.35); border: 0; border-radius: 99px; color: rgba(255, 255, 255, 0.8); font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase; cursor: pointer; backdrop-filter: blur(8px); }
+.pc-you { font-size: 20px; line-height: 1.5; }
+
+@keyframes pc-in { from { opacity: 0; } }
+@keyframes pc-drift { from { transform: scale(1.02); } to { transform: scale(1.09) translateX(-1%); } }
+@keyframes pc-pop { from { opacity: 0; transform: translateY(10px) scale(0.98); } }
+@keyframes pc-blink { 50% { opacity: 0.2; } }
+@keyframes pc-ping { to { box-shadow: 0 0 0 10px rgba(255, 77, 94, 0); } }
+@keyframes pc-flash { 0%, 92%, 100% { opacity: 0; } 94% { opacity: 1; } 97% { opacity: 0.1; } }
+@media (max-width: 640px) {
+  .pc { gap: 8px; padding: 10px; }
+  .pc-hall { object-position: 52% 50%; }
+  .pc-banner strong { font-size: 17px; }
+  .pc-actions { flex-wrap: wrap; }
+  .pc-actions .gx-btn { flex: 1; }
+  .pc-answer textarea { font-size: 16px; }
+}
+@media (max-height: 640px) { .pc-answer textarea { rows: 2; } .pc-line p { min-height: 0; } }
+@media (prefers-reduced-motion: reduce) { .pc, .pc-hall, .pc-line, .pc-flashes i, .pc-live { animation: none !important; } }
+

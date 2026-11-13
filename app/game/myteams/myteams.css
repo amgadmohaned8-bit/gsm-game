@@ -1,0 +1,43 @@
+.mt { position: relative; min-height: 100svh; display: flex; flex-direction: column; overflow: hidden; isolation: isolate; background: #05070d; color: #fff; }
+.mt-bg { position: absolute; inset: -3%; z-index: -2; background: radial-gradient(ellipse 60% 50% at 80% 10%, rgba(201, 162, 39, 0.22), transparent 70%), radial-gradient(ellipse 50% 60% at 10% 90%, rgba(124, 58, 237, 0.22), transparent 70%), url("/images/stadium-night.jpg") center / cover no-repeat; filter: saturate(0.5) brightness(0.4); }
+.mt-top { display: flex; justify-content: space-between; align-items: center; padding: 16px clamp(16px, 4vw, 48px); }
+.mt-brand { display: inline-flex; align-items: center; gap: 10px; font-family: var(--font-display); font-size: 22px; letter-spacing: 0.08em; }
+.mt-top-r { display: flex; gap: 8px; }
+.mt-top-r button { display: inline-flex; align-items: center; gap: 8px; min-height: 44px; padding: 0 14px; color: #fff; font: inherit; font-size: 14px; cursor: pointer; border: 1px solid rgba(255, 255, 255, 0.2); border-radius: 12px; background: linear-gradient(135deg, rgba(14, 20, 38, 0.46), rgba(8, 12, 24, 0.34)); backdrop-filter: blur(16px) saturate(1.35); -webkit-backdrop-filter: blur(16px) saturate(1.35); }
+.mt-stage { flex: 1; width: min(1100px, 100%); margin: 0 auto; padding: clamp(8px, 3vh, 36px) clamp(16px, 4vw, 48px) 40px; display: flex; flex-direction: column; gap: clamp(18px, 3vh, 34px); justify-content: center; }
+.mt-title p { margin: 0 0 6px; color: var(--chalk-2, #b9c0d0); font-size: 15px; }
+.mt-title h1 { margin: 0; font-family: var(--font-display); font-weight: 900; text-transform: uppercase; line-height: 0.9; font-size: clamp(40px, 6vw, 80px); text-shadow: 0 6px 40px rgba(0, 0, 0, 0.6); }
+.mt-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: clamp(12px, 2vw, 22px); }
+.mt-slot { --c1: #7c3aed; --c2: #ec4899; position: relative; display: grid; align-content: end; gap: 4px; min-height: clamp(190px, 28vh, 260px); padding: 18px 18px 16px; text-align: left; color: #fff; font: inherit; cursor: pointer; overflow: hidden; border-radius: 22px; border: 1px solid color-mix(in srgb, var(--c1) 50%, rgba(255, 255, 255, 0.16)); background: linear-gradient(160deg, color-mix(in srgb, var(--c1) 70%, #05070d), color-mix(in srgb, var(--c2) 30%, #05070d) 130%); box-shadow: 0 24px 50px -20px rgba(0, 0, 0, 0.7), inset 0 1px 0 rgba(255, 255, 255, 0.22); transition: transform 0.4s var(--ease-out, ease), box-shadow 0.4s; animation: mt-in 0.6s var(--ease-out, ease) backwards; animation-delay: calc(var(--i, 0) * 80ms); }
+.mt-slot:hover:not(:disabled) { transform: translateY(-4px); }
+.mt-slot:focus-visible { outline: 3px solid var(--brass-hi, #f7db96); outline-offset: 3px; }
+.mt-slot:disabled { cursor: progress; opacity: 0.8; }
+.mt-slot.is-active { border-color: color-mix(in srgb, var(--c2) 80%, #fff); box-shadow: 0 30px 60px -20px color-mix(in srgb, var(--c1) 70%, #000), 0 0 0 1px color-mix(in srgb, var(--c2) 60%, transparent); }
+.mt-comp { position: absolute; right: 14px; top: 14px; width: 58px; height: 58px; object-fit: contain; opacity: 0.9; filter: drop-shadow(0 4px 10px rgba(0, 0, 0, 0.5)); }
+.mt-kind { position: absolute; left: 18px; top: 18px; padding: 4px 10px; font-size: 11px; font-weight: 800; letter-spacing: 0.12em; text-transform: uppercase; border-radius: 999px; background: rgba(0, 0, 0, 0.4); border: 1px solid rgba(255, 255, 255, 0.2); }
+.mt-crest { width: 64px; height: 64px; display: grid; place-items: center; margin-bottom: 6px; }
+.mt-crest img { width: 100%; height: 100%; object-fit: contain; filter: drop-shadow(0 6px 12px rgba(0, 0, 0, 0.5)); }
+.mt-crest b { font-family: var(--font-display); font-size: 26px; }
+.mt-club { font-family: var(--font-display); font-size: clamp(22px, 2.6vw, 32px); font-weight: 900; line-height: 1; text-transform: uppercase; }
+.mt-league { color: rgba(255, 255, 255, 0.78); font-size: 14px; }
+.mt-status { font-size: 13px; color: rgba(255, 255, 255, 0.92); font-weight: 700; }
+.mt-go { display: inline-flex; align-items: center; gap: 6px; margin-top: 8px; font-size: 13px; font-weight: 800; letter-spacing: 0.1em; text-transform: uppercase; color: var(--brass-hi, #f7db96); }
+.mt-add { align-content: center; justify-items: center; text-align: center; background: linear-gradient(135deg, rgba(14, 20, 38, 0.46), rgba(8, 12, 24, 0.34)); backdrop-filter: blur(16px) saturate(1.35); -webkit-backdrop-filter: blur(16px) saturate(1.35); border: 1px dashed rgba(255, 255, 255, 0.35); box-shadow: none; }
+.mt-plus { width: 56px; height: 56px; display: grid; place-items: center; font-size: 34px; line-height: 1; border-radius: 50%; border: 1px solid rgba(255, 255, 255, 0.35); color: var(--brass-hi, #f7db96); }
+.mt-add strong { font-family: var(--font-display); font-size: 22px; text-transform: uppercase; }
+.mt-skel { animation: mt-pulse 1.2s ease-in-out infinite; background: rgba(255, 255, 255, 0.06); border-color: rgba(255, 255, 255, 0.1); }
+.mt-err { margin: 0; color: #ff9b9b; }
+@keyframes mt-in { from { opacity: 0; transform: translateY(16px); } }
+@keyframes mt-pulse { 50% { opacity: 0.45; } }
+@media (max-width: 560px) {
+  .mt-grid { gap: 10px; }
+  .mt-slot { min-height: 210px; padding: 14px 12px 12px; border-radius: 18px; }
+  .mt-comp { width: 40px; height: 40px; right: 10px; top: 10px; }
+  .mt-kind { left: 12px; top: 12px; font-size: 10px; padding: 3px 8px; }
+  .mt-crest { width: 52px; height: 52px; }
+  .mt-club { font-size: 19px; }
+  .mt-league, .mt-status { font-size: 12px; }
+  .mt-top-r button span { display: none; }
+  .mt-top-r button { padding: 0 12px; }
+}
+@media (prefers-reduced-motion: reduce) { .mt-slot, .mt-skel { animation: none; } }

@@ -1,0 +1,30 @@
+.cp-win { height: 150px; width: auto; filter: drop-shadow(0 14px 22px rgba(0, 0, 0, 0.6)); animation: cp-float 5s ease-in-out infinite; }
+.cp-h { margin: 0 0 14px; font-family: var(--font-display); font-weight: 800; font-size: 22px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--chalk-2); }
+.fx-error { margin: 0 22px; color: var(--card-red); font-size: 14px; }
+
+.cp-bracket { min-width: 0; }
+.cp-scroll { display: grid; grid-auto-flow: column; grid-auto-columns: minmax(196px, 1fr); gap: 16px; overflow-x: auto; padding-bottom: 14px; scroll-snap-type: x proximity; }
+.cp-scroll:focus-visible { outline: 2px solid var(--brass); outline-offset: 4px; }
+.cp-round { display: grid; align-content: start; gap: 10px; scroll-snap-align: start; }
+.cp-round > header { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; padding: 10px 12px; border-bottom: 2px solid var(--brass-lo); }
+.cp-round > header strong { font-family: var(--font-display); font-size: 18px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--brass-hi); }
+.cp-round > header small { color: var(--chalk-3); font-size: 12px; font-weight: 700; }
+
+.cp-tie { display: grid; background: rgba(8, 12, 19, 0.88); border: 1px solid var(--line); }
+.cp-tie.is-mine { border-color: var(--brass); box-shadow: 0 0 0 1px color-mix(in srgb, var(--brass) 35%, transparent), 0 10px 30px rgba(0, 0, 0, 0.4); }
+.cp-tie.is-tbd { opacity: 0.45; }
+.cp-side { display: grid; grid-template-columns: 26px minmax(0, 1fr) auto; align-items: center; gap: 10px; min-height: 44px; padding: 6px 12px; color: var(--chalk-2); }
+.cp-side + .cp-side { border-top: 1px solid var(--line); }
+.cp-side img { width: 26px; height: 26px; object-fit: contain; }
+.cp-side span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 14px; font-weight: 600; }
+.cp-tie.is-tbd .cp-side { grid-template-columns: minmax(0, 1fr); color: var(--chalk-3); }
+.cp-side b { font-family: var(--font-display); font-size: 20px; font-variant-numeric: tabular-nums; }
+.cp-side b sup { margin-left: 2px; font-size: 11px; color: var(--chalk-3); }
+.cp-side.is-won { color: var(--chalk); }
+.cp-side.is-won b { color: var(--brass-hi); }
+.cp-side.is-lost { opacity: 0.55; }
+.cp-side.is-me span { color: var(--brass-hi); }
+
+@keyframes cp-float { 50% { transform: translateY(-5px); } }
+@media (max-width: 640px) { .cp-scroll { grid-auto-columns: minmax(78%, 1fr); } }
+@media (prefers-reduced-motion: reduce) { .cp-win { animation: none; } }

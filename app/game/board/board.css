@@ -1,0 +1,40 @@
+.bd { position: relative; min-height: 100svh; isolation: isolate; overflow-x: clip; background: var(--ink-0); }
+.bd-bg { position: fixed; inset: -3%; z-index: -5; background: url("/images/stadium-night.jpg") center / cover no-repeat; filter: saturate(.45) brightness(.3); }
+.bd-shade { position: fixed; inset: 0; z-index: -4; background: radial-gradient(ellipse 50% 40% at 15% 0%, rgba(227,178,88,.18), transparent 70%), linear-gradient(180deg, rgba(4,6,10,.5), var(--ink-0) 92%); }
+.bd-wrap { width: min(1100px, 100% - 32px); margin: 0 auto; padding: 28px 0 64px; display: grid; gap: 20px; }
+.bd-head p { margin: 0 0 4px; color: var(--brass); font-size: 13px; font-weight: 700; letter-spacing: .14em; text-transform: uppercase; }
+.bd-head h1 { margin: 0; font-family: var(--font-display); font-weight: 900; font-size: clamp(48px, 8vw, 92px); line-height: .92; text-transform: uppercase; }
+.bd-warn { margin: 0; padding: 14px 18px; border-left: 4px solid #ff7a7a; background: rgba(255,90,90,.12); color: var(--chalk); font-weight: 700; animation: bd-pulse 2.4s ease-in-out infinite; }
+@keyframes bd-pulse { 50% { background: rgba(255,90,90,.22); } }
+.bd-grid { display: grid; grid-template-columns: minmax(0, 1.7fr) minmax(0, 1fr); gap: 16px; }
+.bd-confidence, .bd-stats { --bg: linear-gradient(135deg, rgba(14,20,38,.5), rgba(8,12,24,.38)); --bd: rgba(255,255,255,.2); --cut: 20px; backdrop-filter: blur(16px) saturate(1.3); }
+.bd-confidence { display: grid; grid-template-columns: 180px minmax(0, 1fr); gap: 22px; align-items: center; padding: 22px; }
+.bd-confidence h2 { margin: 0; font-family: var(--font-display); font-size: 34px; text-transform: uppercase; }
+.bd-confidence p { margin: 6px 0 12px; color: var(--chalk-2); line-height: 1.5; }
+.bd-track { fill: none; stroke: rgba(255,255,255,.1); stroke-width: 12; }
+.bd-fill { fill: none; stroke: var(--pitch); stroke-width: 12; stroke-linecap: round; stroke-dashoffset: var(--to); animation: bd-draw 1.3s var(--ease-out) both; }
+@keyframes bd-draw { from { stroke-dashoffset: 440; } }
+.mood-delighted .bd-fill, .mood-happy .bd-fill { stroke: #6fdc8c; } .mood-patient .bd-fill { stroke: var(--brass); } .mood-worried .bd-fill { stroke: #ff9f5a; } .mood-angry .bd-fill { stroke: #ff5a5a; }
+.bd-num { fill: var(--chalk); font: 900 54px var(--font-display); } .bd-lbl { fill: var(--chalk-3); font: 700 10px var(--font-text); letter-spacing: .2em; }
+.bd-form { list-style: none; margin: 0 0 10px; padding: 0; display: flex; gap: 6px; }
+.bd-form li { width: 30px; height: 30px; display: grid; place-items: center; font: 800 14px var(--font-display); color: #06100a; animation: bd-pop .4s var(--ease-out) both; }
+.bd-form .f-W { background: #6fdc8c; } .bd-form .f-D { background: #c9d2dc; } .bd-form .f-L { background: #ff6b6b; } .bd-form .none { width: auto; background: none; color: var(--chalk-3); font: 400 14px var(--font-text); }
+@keyframes bd-pop { from { transform: scale(.4); opacity: 0; } }
+.bd-spark { width: 100%; height: 56px; } .bd-spark polyline { fill: none; stroke: var(--brass); stroke-width: 2; stroke-linejoin: round; vector-effect: non-scaling-stroke; }
+.bd-stats { display: grid; grid-template-columns: 1fr 1fr; gap: 1px; padding: 0; align-content: stretch; }
+.bd-stats div { display: grid; align-content: center; gap: 2px; padding: 18px 20px; background: rgba(255,255,255,.03); }
+.bd-stats span { color: var(--chalk-3); font-size: 12px; letter-spacing: .12em; text-transform: uppercase; } .bd-stats b { font: 900 38px var(--font-display); line-height: 1; } .bd-stats .is-bad { color: #ff7a7a; }
+
+.bd-objectives h2 { margin: 0 0 12px; font-family: var(--font-display); font-size: 28px; text-transform: uppercase; }
+.bd-objectives ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
+.bd-objectives li { --bg: rgba(10,15,26,.82); --bd: var(--line-2); --cut: 14px; display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 6px 14px; align-items: center; padding: 16px 20px; backdrop-filter: blur(12px); animation: bd-in .5s var(--ease-out) both; }
+@keyframes bd-in { from { opacity: 0; transform: translateY(14px); } }
+.bd-objectives strong { display: block; font-size: 18px; } .bd-objectives small { color: var(--chalk-3); }
+.bd-chip { padding: 5px 12px; font: 800 12px var(--font-text); text-transform: uppercase; letter-spacing: .08em; border: 1px solid currentColor; }
+.st-done .bd-chip, .st-on-track .bd-chip { color: #6fdc8c; } .st-at-risk .bd-chip { color: #ff9f5a; } .st-failed .bd-chip { color: #ff6b6b; }
+.bd-val { grid-column: 1; margin: 0; color: var(--chalk-2); font-size: 14px; }
+.bd-meter { grid-column: 1 / -1; height: 6px; background: rgba(255,255,255,.1); } .bd-meter i { display: block; height: 100%; background: linear-gradient(90deg, var(--pitch), var(--brass)); transition: width 1s var(--ease-out); }
+.st-at-risk .bd-meter i { background: #ff9f5a; } .st-failed .bd-meter i { background: #ff6b6b; }
+.bd-note { margin: 14px 0 0; color: var(--chalk-3); font-size: 13px; line-height: 1.55; max-width: 720px; }
+@media (max-width: 820px) { .bd-grid { grid-template-columns: 1fr; } .bd-confidence { grid-template-columns: 1fr; justify-items: center; text-align: center; } .bd-confidence svg:first-child { width: 160px; } .bd-form { justify-content: center; } }
+@media (prefers-reduced-motion: reduce) { .bd-fill, .bd-warn, .bd-form li, .bd-objectives li { animation: none; } }

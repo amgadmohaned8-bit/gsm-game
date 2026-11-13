@@ -1,0 +1,82 @@
+/* =========================================================
+   Manager's office: a dialogue scene, not a form
+   ========================================================= */
+
+.management-loading { min-height: 100svh; display: grid; place-content: center; justify-items: center; gap: 16px; background: var(--ink-1); color: var(--chalk-2); font-weight: 700; }
+.management-loading p { margin: 0; }
+.management-loading button { min-height: 48px; padding: 0 22px; border: 1px solid var(--brass); background: transparent; color: var(--brass-hi); font-weight: 700; }
+.management-loading-logo { animation: mg-pulse 1.6s ease-in-out infinite; }
+@keyframes mg-pulse { 50% { opacity: 0.45; transform: scale(0.94); } }
+
+.mg { position: relative; height: 100svh; min-height: 560px; display: grid; grid-template-rows: auto 1fr; isolation: isolate; overflow: hidden; background: #05070d; }
+
+/* the manager fills the screen */
+.mg .manager-character { position: absolute; inset: 0; z-index: -3; padding: 0; border: 0; background: #05070d; cursor: pointer; }
+.mg .manager-image { display: block; width: 100%; height: 100%; object-fit: cover; object-position: 50% 24%; animation: mg-drift 26s ease-in-out infinite alternate, mg-swap 0.5s var(--ease-out); }
+.mg-shade { position: absolute; inset: 0; z-index: -2; pointer-events: none; background: linear-gradient(90deg, rgba(3, 5, 10, 0.55), transparent 34%, transparent 66%, rgba(3, 5, 10, 0.4)), linear-gradient(180deg, rgba(3, 5, 10, 0.5), transparent 26%, transparent 55%, rgba(3, 5, 10, 0.72)); }
+@keyframes mg-drift { from { transform: scale(1.02); } to { transform: scale(1.08); } }
+@keyframes mg-swap { from { opacity: 0.2; } }
+
+/* glass over the photo, the same as the press hall */
+.mg-glass { background: linear-gradient(135deg, rgba(14, 20, 38, 0.46), rgba(8, 12, 24, 0.34)); backdrop-filter: blur(16px) saturate(1.35); -webkit-backdrop-filter: blur(16px) saturate(1.35); border: 1px solid rgba(255, 255, 255, 0.2); box-shadow: 0 18px 50px rgba(0, 0, 0, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.22); border-radius: 22px; color: #fff; text-shadow: 0 1px 8px rgba(0, 0, 0, 0.5); }
+
+.mg-body { position: relative; display: grid; grid-template-columns: minmax(300px, 360px) minmax(0, 1fr) minmax(300px, 340px); grid-template-rows: 1fr auto; gap: 18px; padding: clamp(14px, 2.4vh, 28px) clamp(14px, 3vw, 44px) clamp(14px, 3vh, 34px); min-height: 0; pointer-events: none; }
+.mg-body > * { pointer-events: auto; }
+.mg-side { grid-column: 1; grid-row: 1 / 3; align-self: start; padding: 24px 24px 12px; }
+.mg-talk { grid-column: 2; grid-row: 2; align-self: end; justify-self: center; width: min(640px, 100%); }
+.mg-actions { grid-column: 3; grid-row: 2; align-self: end; display: grid; gap: 10px; padding: 14px; }
+
+.mg-side-head h1 { margin: 0; font-family: var(--font-display); font-size: clamp(36px, 3.6vw, 54px); font-weight: 900; line-height: 0.95; text-transform: uppercase; }
+.mg-side-head p { margin: 8px 0 0; color: var(--brass-hi); font-size: 17px; font-weight: 700; }
+.mg-stats { margin: 14px 0 0; }
+.mg-stats div { display: flex; align-items: baseline; justify-content: space-between; gap: 16px; padding: 14px 0; border-top: 1px solid rgba(255, 255, 255, 0.16); }
+.mg-stats dt { color: rgba(255, 255, 255, 0.78); font-size: 15px; }
+.mg-stats dd { margin: 0; font-family: var(--font-display); font-size: 28px; font-weight: 800; line-height: 1; text-align: right; }
+
+.mg-hint { display: inline-block; padding: 10px 18px; border-radius: 99px; font-size: 14px; font-weight: 600; }
+.mg-talk { text-align: center; }
+.mg-dialogue { padding: 18px 22px 20px; text-align: left; animation: mg-say 0.45s var(--ease-out); border-left: 4px solid var(--brass-hi); }
+@keyframes mg-say { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
+.mg-dialogue small { display: flex; justify-content: space-between; gap: 12px; color: var(--brass-hi); font-size: 13px; font-weight: 700; }
+.mg-dialogue-count { color: rgba(255, 255, 255, 0.7); font-variant-numeric: tabular-nums; }
+.mg-dialogue strong { display: block; margin: 4px 0 6px; font-family: var(--font-display); font-size: 30px; font-weight: 800; line-height: 1; text-transform: uppercase; }
+.mg-dialogue p { margin: 0; font-size: 18px; line-height: 1.6; }
+.mg-dialogue p[dir="rtl"], .mg-dialogue p:lang(ar) { font-family: var(--font-ar); }
+.mg-dialogue.mood-happy { border-left-color: var(--pitch); }
+.mg-dialogue.mood-happy small { color: var(--pitch); }
+.mg-dialogue.mood-angry { border-left-color: #ff6b61; }
+.mg-dialogue.mood-angry small { color: #ff9a92; }
+
+.mg-actions .gx-btn { width: 100%; font-size: 16px; white-space: nowrap; padding-inline: 12px; }
+.mg-resign { display: flex; align-items: center; justify-content: center; gap: 10px; min-height: 48px; background: rgba(238, 106, 96, 0.12); border: 1px solid rgba(238, 106, 96, 0.55); border-radius: 12px; color: #ffc4be; font: inherit; font-size: 15px; font-weight: 700; cursor: pointer; transition: background 0.2s, color 0.2s; text-shadow: none; }
+.mg-resign:hover { background: #e5483c; color: #fff; }
+.mg-actions button:focus-visible, .mg .manager-character:focus-visible { outline: 3px solid var(--brass-hi); outline-offset: -3px; }
+
+/* resign dialog */
+.mg-overlay { position: fixed; inset: 0; z-index: 120; display: grid; place-items: center; padding: 18px; background: rgba(2, 3, 6, 0.8); backdrop-filter: blur(6px); animation: gsm-fade-in 0.2s; }
+.mg-modal { width: min(480px, 100%); padding: 32px 30px 28px; text-align: center; border: 1px solid rgba(238, 106, 96, 0.5); border-radius: 24px; background: linear-gradient(160deg, #14141a, #07070a); box-shadow: 0 40px 80px rgba(0, 0, 0, 0.6); }
+.mg-modal-icon { width: 52px; height: 52px; margin: 0 auto 14px; display: grid; place-items: center; border: 1px solid var(--card-red); color: var(--card-red); transform: rotate(45deg); }
+.mg-modal-icon svg { transform: rotate(-45deg); }
+.mg-modal h2 { margin: 12px 0 14px; font-family: var(--font-display); font-size: 36px; font-weight: 800; line-height: 1; text-transform: uppercase; }
+.mg-modal p { margin: 0 0 8px; color: var(--chalk-2); font-family: var(--font-ar); font-size: 16px; line-height: 1.7; }
+.mg-modal .mg-modal-warning { color: #ffb1aa; font-weight: 700; }
+.mg-modal-buttons { display: grid; gap: 12px; margin-top: 24px; }
+.mg-modal-error { color: #ff8a80 !important; font-weight: 700; }
+.mg-modal button:disabled { opacity: 0.55; cursor: not-allowed; }
+.mg-confirm { cursor: pointer; border-radius: 12px; min-height: 50px; border: 1px solid rgba(238, 106, 96, 0.6); background: transparent; color: #ffb1aa; font-size: 15px; font-weight: 700; transition: background 0.2s, color 0.2s; }
+.mg-confirm:hover { background: var(--card-red); color: #1a0504; }
+
+@media (max-width: 960px) {
+  .mg { height: auto; min-height: 100svh; }
+  .mg-body { grid-template-columns: minmax(0, 1fr); grid-template-rows: auto 1fr auto auto; min-height: calc(100svh - 72px); padding-bottom: 14px; }
+  .mg-side { grid-column: 1; grid-row: 1; padding: 16px 18px 6px; }
+  .mg-stats { display: grid; grid-template-columns: 1fr 1fr; column-gap: 18px; }
+  .mg-stats dd { font-size: 24px; }
+  .mg-talk { grid-column: 1; grid-row: 3; width: 100%; }
+  .mg-actions { grid-column: 1; grid-row: 4; grid-template-columns: 1fr 1fr; }
+  .mg-actions .gx-btn { font-size: 15px; padding-inline: 10px; }
+  .mg-dialogue { padding: 14px 16px; }
+  .mg-dialogue strong { font-size: 24px; }
+  .mg-dialogue p { font-size: 16px; }
+}
+@media (prefers-reduced-motion: reduce) { .mg .manager-image, .mg-dialogue { animation: none; } }

@@ -1,0 +1,73 @@
+/* Studio and commentator */
+.bc { position: fixed; inset: 0; z-index: 150; display: grid; align-content: center; justify-items: center; gap: 14px; padding: 12px; background: radial-gradient(ellipse at 50% 30%, #0b1330, #02040a 75%); animation: bc-in 0.5s both; cursor: pointer; }
+.bc-stage { position: relative; width: min(100%, calc((100svh - 190px) * 1.777)); aspect-ratio: 1672 / 941; container-type: inline-size; overflow: hidden; border: 1px solid var(--brass-lo); box-shadow: 0 30px 80px rgba(0, 0, 0, 0.7); animation: bc-zoom 14s ease-out both; }
+.bc-studio-img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.bc-dim { position: absolute; top: 0; bottom: 0; width: 38%; background: rgba(2, 4, 10, 0); transition: background 0.35s; pointer-events: none; }
+.bc-dim.is-left { left: 0; } .bc-dim.is-right { right: 0; }
+.bc-dim.is-left.is-on { background: linear-gradient(90deg, rgba(2, 4, 10, 0.5) 65%, transparent); }
+.bc-dim.is-right.is-on { background: linear-gradient(270deg, rgba(2, 4, 10, 0.5) 65%, transparent); }
+/* the TV in the picture shows the real fixture */
+.bc-tv { position: absolute; left: 33.8%; top: 2.3%; width: 30.4%; height: 39%; display: grid; align-content: center; justify-items: center; gap: 1cqw; background: radial-gradient(ellipse at 50% 0%, #1b3a8f, #08133a 80%); border: 0.25cqw solid rgba(255, 255, 255, 0.12); color: #fff; text-align: center; }
+.bc-tv small { font-weight: 800; letter-spacing: 0.18em; text-transform: uppercase; font-size: 1.3cqw; color: #f3d37a; }
+.bc-tv > div { display: flex; align-items: center; gap: 2cqw; }
+.bc-tv img { width: 7.5cqw; height: 7.5cqw; object-fit: contain; filter: drop-shadow(0 0.6cqw 1cqw rgba(0, 0, 0, 0.6)); animation: bc-float 4s ease-in-out infinite; }
+.bc-tv img:last-child { animation-delay: -2s; }
+.bc-tv b { font-family: var(--font-display); font-size: 3.8cqw; font-style: italic; color: #f3d37a; }
+.bc-tv p { display: flex; gap: 3cqw; margin: 0; font-weight: 800; font-size: 1.5cqw; }
+.bc-tv em { font-style: normal; padding: 0.3cqw 1.2cqw; background: rgba(0, 0, 0, 0.5); border: 1px solid rgba(243, 211, 122, 0.5); font-size: 1.2cqw; font-weight: 800; letter-spacing: 0.12em; }
+.bc-live { position: absolute; top: 2.4%; right: 2.4%; display: flex; align-items: center; gap: 0.8cqw; padding: 0.5cqw 1.4cqw; background: #d3142f; color: #fff; font-weight: 800; letter-spacing: 0.16em; font-size: 1.6cqw; }
+.bc-live i { width: 1cqw; height: 1cqw; border-radius: 50%; background: #fff; animation: bc-blink 1s infinite; }
+.bc-caption { --bg: rgba(6, 10, 22, 0.94); --bd: var(--brass-lo); width: min(100%, 900px); padding: 14px 20px 16px; min-height: 108px; display: grid; gap: 4px; animation: bc-rise 0.4s var(--ease-out) both; }
+.bc-caption strong { color: var(--brass-hi); font-family: var(--font-display); font-size: 20px; letter-spacing: 0.1em; text-transform: uppercase; }
+.bc-caption p { margin: 0; font-size: clamp(18px, 2.4vw, 24px); line-height: 1.55; color: var(--chalk); font-family: var(--font-text), "Noto Sans Arabic", Tahoma, sans-serif; }
+.bc-caret { display: inline-block; width: 3px; height: 1em; margin-inline-start: 3px; background: var(--brass); vertical-align: -0.12em; animation: bc-blink 0.8s steps(1) infinite; }
+.bc-skip { padding: 8px 16px; background: none; border: 1px solid var(--line-2); color: var(--chalk-2); cursor: pointer; letter-spacing: 0.08em; text-transform: uppercase; font-weight: 700; }
+.bc-skip:hover { border-color: var(--brass); color: var(--brass-hi); }
+
+/* match booth */
+.bc-booth { position: relative; display: flex; align-items: flex-end; gap: 14px; min-height: 190px; padding: 6px 4px 0; }
+.bc-man { width: clamp(120px, 22vw, 250px); height: auto; flex: none; transform-origin: 50% 100%; filter: drop-shadow(0 14px 22px rgba(0, 0, 0, 0.6)); }
+.bc-man.is-talking { animation: bc-talk 0.5s ease-in-out infinite alternate; }
+.bc-man.is-goal { animation: bc-jump 0.45s ease-in-out infinite alternate; }
+.bc-bubble { position: relative; flex: 1; min-width: 0; padding: 16px 20px; background: #f4efe2; color: #14120c; border-radius: 4px 22px 22px 22px; font-family: var(--font-text), "Noto Sans Arabic", Tahoma, sans-serif; font-weight: 800; font-size: clamp(17px, 2.3vw, 23px); line-height: 1.55; box-shadow: 0 14px 34px rgba(0, 0, 0, 0.5); animation: bc-pop 0.35s var(--ease-out) both; }
+.bc-bubble::before { content: ""; position: absolute; left: -12px; bottom: 26px; border: 8px solid transparent; border-right-color: #f4efe2; border-left: 0; width: 0; }
+.bc-bubble p { margin: 0; }
+.bc-bubble.is-goal { background: linear-gradient(135deg, #ffe08a, #e3b258); border: 2px solid #fff3c4; }
+.bc-bubble.is-goal::before { border-right-color: #ffe08a; }
+.bc-bubble.is-miss { background: #e5e9f2; }
+.bc-goal-word { display: block; font-family: var(--font-display); font-style: italic; font-weight: 900; font-size: clamp(34px, 7vw, 64px); line-height: 1; letter-spacing: 0.04em; color: #b3121e; animation: bc-shake 0.5s both; }
+.bc-log { max-height: 190px; overflow: hidden; opacity: 0.85; }
+.bc-flash { position: fixed; inset: 0; pointer-events: none; background: radial-gradient(circle at 50% 40%, rgba(255, 224, 138, 0.55), transparent 65%); opacity: 0; animation: bc-flash 1.2s ease-out; }
+.bc-match.is-goal .fx-board { box-shadow: 0 0 0 2px var(--brass), 0 0 40px rgba(227, 178, 88, 0.6); }
+.bc-voice { margin-inline-start: 12px; padding: 4px 10px; background: none; border: 1px solid var(--line-2); color: var(--chalk-3); font-size: 12px; cursor: pointer; }
+.bc-voice[aria-pressed="true"] { color: var(--brass-hi); border-color: var(--brass); }
+
+@keyframes bc-in { from { opacity: 0; } }
+@keyframes bc-zoom { from { transform: scale(1); } to { transform: scale(1.025); } }
+@keyframes bc-rise { from { opacity: 0; transform: translateY(14px); } }
+@keyframes bc-pop { from { opacity: 0; transform: scale(0.92) translateX(-10px); } }
+@keyframes bc-blink { 50% { opacity: 0.2; } }
+@keyframes bc-float { 50% { transform: translateY(-0.6cqw); } }
+@keyframes bc-talk { from { transform: rotate(-1deg) scale(1); } to { transform: rotate(1.2deg) scale(1.025); } }
+@keyframes bc-jump { from { transform: translateY(0) rotate(-2deg); } to { transform: translateY(-14px) rotate(2deg) scale(1.04); } }
+@keyframes bc-shake { 0% { transform: scale(0.4) rotate(-6deg); opacity: 0; } 60% { transform: scale(1.15) rotate(2deg); opacity: 1; } 100% { transform: none; } }
+@keyframes bc-flash { 0% { opacity: 0; } 15% { opacity: 1; } 100% { opacity: 0; } }
+
+@media (max-width: 640px) {
+  .bc { align-content: start; padding-top: 70px; }
+  .bc-stage { width: 100%; }
+  .bc-caption { min-height: 130px; }
+  .bc-booth { min-height: 150px; }
+  .bc-man { width: 104px; }
+  .bc-bubble { padding: 12px 14px; font-size: 16px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .bc, .bc-stage, .bc-caption, .bc-bubble, .bc-man, .bc-tv img, .bc-flash { animation: none !important; }
+}
+
+.bc-scorers { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin: 4px 0 8px; font-size: 13px; color: var(--chalk-2); }
+.bc-scorers ul { margin: 0; padding: 0; list-style: none; display: grid; gap: 2px; }
+.bc-scorers ul.is-away { text-align: right; }
+.bc-scorers li { animation: bc-scorer-in .5s var(--ease-out) both; }
+.bc-scorers li::before { content: "\26BD\FE0E "; }
+@keyframes bc-scorer-in { from { opacity: 0; transform: translateY(-6px) scale(.96); } to { opacity: 1; transform: none; } }

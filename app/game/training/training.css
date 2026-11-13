@@ -1,0 +1,36 @@
+.tn { position: relative; min-height: 100svh; isolation: isolate; overflow-x: clip; background: var(--ink-0); }
+.tn-bg { position: fixed; inset: -3%; z-index: -5; background: url("/images/stadium-night.jpg") center / cover no-repeat; filter: saturate(.5) brightness(.34); }
+.tn-shade { position: fixed; inset: 0; z-index: -4; background: radial-gradient(ellipse 55% 45% at 85% 5%, rgba(111,220,140,.14), transparent 70%), linear-gradient(180deg, rgba(4,6,10,.5), var(--ink-0) 92%); }
+.tn-wrap { width: min(1240px, 100% - 32px); margin: 0 auto; padding: 28px 0 64px; display: grid; gap: 18px; }
+.tn-head { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: end; gap: 22px; }
+.tn-head p { margin: 0 0 4px; color: var(--brass); font-size: 13px; font-weight: 700; letter-spacing: .14em; text-transform: uppercase; }
+.tn-head h1 { margin: 0; font-family: var(--font-display); font-weight: 900; font-size: clamp(48px, 8vw, 92px); line-height: .92; text-transform: uppercase; }
+.tn-head small { display: block; max-width: 520px; margin-top: 10px; color: var(--chalk-2); font-size: 15px; line-height: 1.5; }
+.tn-slots { display: flex; flex-wrap: wrap; gap: 10px; align-items: stretch; }
+.tn-slot { width: 124px; min-height: 96px; display: grid; place-items: center; align-content: center; gap: 2px; padding: 10px; text-align: center; border: 1px dashed rgba(255,255,255,.3); background: rgba(10,15,26,.6); backdrop-filter: blur(10px); color: var(--chalk-3); font-size: 13px; }
+.tn-slot.is-full { border-style: solid; border-color: var(--pitch); color: var(--chalk); animation: tn-pop .35s var(--ease-out) both; }
+.tn-slot.is-done { border-color: var(--brass); }
+.tn-slot b { font: 900 28px var(--font-display); line-height: 1; } .tn-slot strong { font-size: 13px; } .tn-slot small { color: #6fdc8c; font-weight: 800; }
+@keyframes tn-pop { from { transform: scale(.85); opacity: 0; } to { transform: none; opacity: 1; } }
+.tn-problem, .tn-result { margin: 0; padding: 10px 14px; border-left: 3px solid #ff7a7a; background: rgba(255,255,255,.05); color: var(--chalk); font-size: 14px; }
+.tn-result { border-color: #6fdc8c; }
+.tn-tabs { display: flex; gap: 6px; flex-wrap: wrap; }
+.tn-tabs button { min-height: 40px; padding: 0 16px; border: 1px solid var(--line-2); color: var(--chalk-2); font-weight: 700; background: rgba(10,15,26,.6); }
+.tn-tabs button[aria-selected="true"] { background: var(--brass); border-color: var(--brass); color: var(--brass-ink); }
+.tn-grid { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px; }
+.tn-grid li { animation: tn-in .4s var(--ease-out) both; }
+@keyframes tn-in { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: none; } }
+.tn-card { position: relative; width: 100%; display: grid; gap: 3px; padding: 14px 12px 12px; text-align: left; color: var(--chalk); border: 1px solid var(--line-2); border-top: 3px solid var(--chalk-3); background: linear-gradient(160deg, rgba(24,32,50,.95), rgba(10,14,24,.95)); transition: transform .2s var(--ease-out), border-color .2s; }
+.tn-card:hover:not(:disabled) { transform: translateY(-4px); border-color: var(--brass); }
+.tn-card:disabled { opacity: .55; cursor: default; }
+.tn-card.ph-rising { border-top-color: #6fdc8c; } .tn-card.ph-prime { border-top-color: var(--brass); } .tn-card.ph-declining { border-top-color: #ff7a7a; }
+.tn-card.is-on { outline: 2px solid var(--brass-hi); outline-offset: 2px; background: linear-gradient(160deg, rgba(40,52,30,.95), rgba(10,14,24,.95)); }
+.tn-card.is-trained { outline: 2px solid #6fdc8c; }
+.tn-card b { font: 900 36px var(--font-display); line-height: 1; }
+.tn-card i { position: absolute; top: 12px; right: 12px; font: 800 11px var(--font-text); font-style: normal; color: var(--chalk-3); }
+.tn-card strong { font-size: 15px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.tn-card small { color: var(--chalk-3); font-size: 12px; }
+.tn-phase { font: 800 12px var(--font-text); } .ph-rising .tn-phase { color: #6fdc8c; } .ph-prime .tn-phase { color: var(--brass-hi); } .ph-declining .tn-phase { color: #ff7a7a; }
+.tn-gain { color: var(--chalk-2); font-size: 12px; }
+.tn-bar { display: block; height: 4px; margin-top: 4px; background: rgba(255,255,255,.1); overflow: hidden; } .tn-bar em { display: block; height: 100%; background: linear-gradient(90deg, var(--pitch), var(--brass)); }
+@media (prefers-reduced-motion: reduce) { .tn-grid li, .tn-slot { animation: none; } }
