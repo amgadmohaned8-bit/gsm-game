@@ -310,8 +310,7 @@ function Match({
         say(current.pen ? penMissLine(name, current.kind === "save", `${seedBase}|${cursor}|m`) : missLine(name, current.kind === "save", `${seedBase}|${cursor}|m`), "miss");
       }
       timers.push(setTimeout(() => { setCursor((c) => c + 1); setStage("run"); }, gap(current.kind === "goal" ? 3600 : 2800)));
-    } else if (stage === "end") {
-      setMinute(90);
+    
     }
 
     return () => {
