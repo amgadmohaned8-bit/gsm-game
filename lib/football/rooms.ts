@@ -162,11 +162,11 @@ export async function seasonRows(
   season: string,
   roomId: string | null | undefined
 ): Promise<ScheduledFixture[]> {
-  if (!roomId) return buildSeasonFixtures(userId, leagueId, season);
+ if (!roomId) return buildSeasonFixtures(userId, leagueId, season, new Date());
 
   let stored = await roomFixtures(client, roomId, season);
   if (stored.length === 0) {
-    const built = buildSeasonFixtures(userId, leagueId, season);
+    const built = buildSeasonFixtures(userId, leagueId, season, new Date());
     const rows = built.map((m) => ({
       room_id: roomId,
       season,

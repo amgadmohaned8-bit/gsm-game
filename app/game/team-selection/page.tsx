@@ -1,13 +1,17 @@
+
 "use client";
 
-import { egyptClubs, egyptColors } from "@/lib/football/egypt";
-import { useEffect, useMemo, useState } from "react";
+import { Suspense, useEffect, useMemo, useState } from "react";
 import type { CSSProperties } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+
+import { egyptClubs, egyptColors } from "@/lib/football/egypt";
 import { isCup, leagueOf } from "@/lib/football/leaguesCatalog";
 import { CAF_CUPS, africanClubs, africaColors } from "@/lib/football/africa";
+
 import GameHud from "@/components/GameHud";
 import Icon from "@/components/Icon";
+
 import "./clubs.css";
 
 type Club = {
@@ -65,31 +69,52 @@ const premierClubs: Club[] = [
   { id: "tottenham", name: "Tottenham Hotspur", city: "London", stadium: "Tottenham Hotspur Stadium", logo: "/club-logos/tottenham.png" },
 ];
 
-const clubColors: Record<string, string> = { ...premierColors, ...egyptColors, ...africaColors };
+const clubColors: Record<string, string> = {
+  ...premierColors,
+  ...egyptColors,
+  ...africaColors,
+};
 
-export default function TeamSelectionPage() {
+function TeamSelectionContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
+
   const league = searchParams.get("league") || "premier-league";
   const cupDef = CAF_CUPS.find((c) => c.id === league);
-  // in a CAF cup the manager first picks the Egyptian clubs; the club list is then those two plus the African clubs
+
+  // In a CAF cup the manager first picks the Egyptian clubs.
   const [egypt, setEgypt] = useState<string[] | null>(cupDef ? null : []);
+
   const clubs: Club[] = useMemo(() => {
     if (cupDef) {
-      const africa = africanClubs.filter((a) => cupDef.clubs.some((c) => c.id === a.id));
-      const mine = (egypt ?? []).map((id) => egyptClubs.find((c) => c.id === id)).filter(Boolean) as Club[];
+      const africa = africanClubs.filter((a) =>
+        cupDef.clubs.some((c) => c.id === a.id)
+      );
+
+      const mine = (egypt ?? [])
+        .map((id) => egyptClubs.find((c) => c.id === id))
+        .filter(Boolean) as Club[];
+
       return [...mine, ...africa];
     }
-    return league === "egyptian-premier-league" ? egyptClubs : premierClubs;
+
+    return league === "egyptian-premier-league"
+      ? egyptClubs
+      : premierClubs;
   }, [league, egypt, cupDef]);
 
-  const [selectedClub, setSelectedClub] = useState<Club>(clubs[0] ?? egyptClubs[0]);
+  const [selectedClub, setSelectedClub] = useState<Club>(
+    clubs[0] ?? egyptClubs[0]
+  );
   const [search, setSearch] = useState("");
   const [picked, setPicked] = useState<string[]>([]);
 
-  // the list changes once the Egyptian clubs are chosen
+  // The list changes once the Egyptian clubs are chosen.
   useEffect(() => {
-    setSelectedClub((current) => clubs.find((c) => c.id === current.id) ?? clubs[0] ?? current);
+    setSelectedClub(
+      (current) =>
+        clubs.find((c) => c.id === current.id) ?? clubs[0] ?? current
+    );
   }, [clubs]);
 
   const filteredClubs = useMemo(() => {
@@ -103,40 +128,55 @@ export default function TeamSelectionPage() {
   );
 
   function selectPreviousClub() {
+    if (clubs.length === 0) return;
+
     const previousIndex =
       (selectedIndex - 1 + clubs.length) % clubs.length;
+
     setSelectedClub(clubs[previousIndex]);
   }
 
   function selectNextClub() {
+    if (clubs.length === 0) return;
+
     const nextIndex = (selectedIndex + 1) % clubs.length;
     setSelectedClub(clubs[nextIndex]);
   }
 
   function continueToProfile() {
     router.push(
-      `/game/final-contract?league=${encodeURIComponent(league)}&club=${selectedClub.id}${cupDef ? `&egypt=${(egypt ?? []).join(",")}` : ""}`
+      `/game/final-contract?league=${encodeURIComponent(league)}&club=${selectedClub.id}${
+        cupDef ? `&egypt=${(egypt ?? []).join(",")}` : ""
+      }`
     );
   }
 
-  // up / down arrow keys flip through the clubs (not while typing in search)
+  // Up/down arrow keys flip through the clubs (not while typing in search).
   useEffect(() => {
     function onKey(event: KeyboardEvent) {
       if ((event.target as HTMLElement)?.tagName === "INPUT") return;
+      if (clubs.length === 0) return;
+
       if (event.key === "ArrowDown" || event.key === "ArrowRight") {
         event.preventDefault();
+
         setSelectedClub((current) => {
           const i = clubs.findIndex((c) => c.id === current.id);
           return clubs[(i + 1) % clubs.length];
         });
-      } else if (event.key === "ArrowUp" || event.key === "ArrowLeft") {
+      } else if (
+        event.key === "ArrowUp" ||
+        event.key === "ArrowLeft"
+      ) {
         event.preventDefault();
+
         setSelectedClub((current) => {
           const i = clubs.findIndex((c) => c.id === current.id);
           return clubs[(i - 1 + clubs.length) % clubs.length];
         });
       }
     }
+
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
   }, [clubs]);
@@ -145,43 +185,83 @@ export default function TeamSelectionPage() {
 
   if (cupDef && egypt === null) {
     return (
-      <main className="cl gx-grain" style={{ "--cc": "#e3b258" } as CSSProperties}>
+      <main
+        className="cl gx-grain"
+        style={{ "--cc": "#e3b258" } as CSSProperties}
+      >
         <div className="gx-curtain" aria-hidden="true" />
         <div className="cl-bg" aria-hidden="true" />
+
         <GameHud step={3} onBack={() => router.back()} />
+
         <div className="cl-wrap">
           <header className="cl-head">
             <h1>Pick your Egyptian clubs</h1>
-            <p>Choose the {cupDef.egypt.length} Egyptian clubs you want in the {cupDef.name}. They join the 14 African clubs, and you then choose your own club from the 16.</p>
+            <p>
+              Choose the {cupDef.egypt.length} Egyptian clubs you want in the{" "}
+              {cupDef.name}. They join the 14 African clubs, and you then
+              choose your own club from the 16.
+            </p>
           </header>
+
           <section className="cl-directory" aria-label="Egyptian clubs">
             <div className="cl-dir-head">
-              <h2>Egyptian clubs <b>{picked.length}/{cupDef.egypt.length}</b></h2>
+              <h2>
+                Egyptian clubs <b>{picked.length}/{cupDef.egypt.length}</b>
+              </h2>
             </div>
+
             <div className="cl-grid">
               {egyptClubs.map((club) => {
                 const on = picked.includes(club.id);
+
                 return (
                   <button
                     type="button"
                     key={club.id}
-                    onClick={() => setPicked((cur) => (cur.includes(club.id) ? cur.filter((x) => x !== club.id) : cur.length < cupDef.egypt.length ? [...cur, club.id] : cur))}
+                    onClick={() =>
+                      setPicked((cur) =>
+                        cur.includes(club.id)
+                          ? cur.filter((x) => x !== club.id)
+                          : cur.length < cupDef.egypt.length
+                            ? [...cur, club.id]
+                            : cur
+                      )
+                    }
                     className={`cl-tile ${on ? "is-active" : ""}`}
-                    style={{ "--rc": clubColors[club.id] || "#e3b258" } as CSSProperties}
+                    style={
+                      {
+                        "--rc": clubColors[club.id] || "#e3b258",
+                      } as CSSProperties
+                    }
                     aria-pressed={on}
                   >
                     <img src={club.logo} alt="" />
+
                     <span>
                       <strong>{club.name}</strong>
                       <small>{club.city}</small>
                     </span>
+
                     {on && <Icon name="check" size={16} strokeWidth={2.8} />}
                   </button>
                 );
               })}
             </div>
-            <div className="cl-actions" style={{ marginTop: 18, gridTemplateColumns: "minmax(0, 360px)" }}>
-              <button type="button" className="gx-btn cl-confirm" disabled={picked.length !== cupDef.egypt.length} onClick={() => setEgypt(picked)}>
+
+            <div
+              className="cl-actions"
+              style={{
+                marginTop: 18,
+                gridTemplateColumns: "minmax(0, 360px)",
+              }}
+            >
+              <button
+                type="button"
+                className="gx-btn cl-confirm"
+                disabled={picked.length !== cupDef.egypt.length}
+                onClick={() => setEgypt(picked)}
+              >
                 Continue
                 <Icon name="arrow-right" size={22} strokeWidth={2.2} />
               </button>
@@ -193,7 +273,10 @@ export default function TeamSelectionPage() {
   }
 
   return (
-    <main className="cl gx-grain" style={{ "--cc": color } as CSSProperties}>
+    <main
+      className="cl gx-grain"
+      style={{ "--cc": color } as CSSProperties}
+    >
       <div className="gx-curtain" aria-hidden="true" />
       <div className="cl-bg" aria-hidden="true" />
 
@@ -202,62 +285,130 @@ export default function TeamSelectionPage() {
       <div className="cl-wrap">
         <header className="cl-head">
           <h1>Choose your club</h1>
-          <p>{clubs.length} clubs, one job. Pick the badge you want to carry for the whole season.</p>
+          <p>
+            {clubs.length} clubs, one job. Pick the badge you want to carry
+            for the whole season.
+          </p>
         </header>
 
         <div className="cl-body">
-          {/* the club you are looking at */}
-          <section className="cl-feature" aria-live="polite" aria-label="Selected club">
+          {/* The club you are looking at */}
+          <section
+            className="cl-feature"
+            aria-live="polite"
+            aria-label="Selected club"
+          >
             <div className="cl-stage" aria-hidden="true">
               <span className="cl-ring cl-ring-a" />
               <span className="cl-ring cl-ring-b" />
               <span className="cl-halo" />
               <span className="cl-burst" key={`b-${selectedClub.id}`} />
+
               <span className="cl-crest" key={`s-${selectedClub.id}`}>
                 <img src={selectedClub.logo} alt="" />
-                <i className="cl-shine" style={{ "--logo": `url(${selectedClub.logo})` } as CSSProperties} />
+                <i
+                  className="cl-shine"
+                  style={
+                    {
+                      "--logo": `url(${selectedClub.logo})`,
+                    } as CSSProperties
+                  }
+                />
               </span>
             </div>
-            <img className="cl-sr" src={selectedClub.logo} alt={`${selectedClub.name} crest`} />
+
+            <img
+              className="cl-sr"
+              src={selectedClub.logo}
+              alt={`${selectedClub.name} crest`}
+            />
 
             <div className="cl-id" key={`n-${selectedClub.id}`}>
-              <span className="cl-count">Club {selectedIndex + 1} of {clubs.length}</span>
+              <span className="cl-count">
+                Club {selectedIndex + 1} of {clubs.length}
+              </span>
+
               <h2 aria-label={selectedClub.name}>
                 {Array.from(selectedClub.name).map((ch, i) => (
-                  <span key={i} aria-hidden="true" style={{ "--i": i } as CSSProperties}>{ch === " " ? "\u00a0" : ch}</span>
+                  <span
+                    key={i}
+                    aria-hidden="true"
+                    style={{ "--i": i } as CSSProperties}
+                  >
+                    {ch === " " ? "\u00a0" : ch}
+                  </span>
                 ))}
               </h2>
             </div>
 
             <dl className="cl-specs" key={`d-${selectedClub.id}`}>
-              <div><dt>Home ground</dt><dd>{selectedClub.stadium}</dd></div>
-              <div><dt>City</dt><dd>{selectedClub.city}</dd></div>
-              <div><dt>League</dt><dd>{leagueOf(league).name}</dd></div>
+              <div>
+                <dt>Home ground</dt>
+                <dd>{selectedClub.stadium}</dd>
+              </div>
+              <div>
+                <dt>City</dt>
+                <dd>{selectedClub.city}</dd>
+              </div>
+              <div>
+                <dt>League</dt>
+                <dd>{leagueOf(league).name}</dd>
+              </div>
             </dl>
 
             <div className="cl-actions">
-              <button type="button" className="cl-step" onClick={selectPreviousClub} aria-label="Previous club">
+              <button
+                type="button"
+                className="cl-step"
+                onClick={selectPreviousClub}
+                aria-label="Previous club"
+              >
                 <Icon name="arrow-left" size={22} />
               </button>
-              <button type="button" className="gx-btn cl-confirm" onClick={continueToProfile}>
+
+              <button
+                type="button"
+                className="gx-btn cl-confirm"
+                onClick={continueToProfile}
+              >
                 Take charge
                 <Icon name="arrow-right" size={22} strokeWidth={2.2} />
               </button>
-              <button type="button" className="cl-step" onClick={selectNextClub} aria-label="Next club">
+
+              <button
+                type="button"
+                className="cl-step"
+                onClick={selectNextClub}
+                aria-label="Next club"
+              >
                 <Icon name="arrow-right" size={22} />
               </button>
             </div>
           </section>
 
-          {/* the directory */}
+          {/* The directory */}
           <section className="cl-directory" aria-label="Club directory">
             <div className="cl-dir-head">
-              <h2>All clubs <b>{filteredClubs.length}</b></h2>
+              <h2>
+                All clubs <b>{filteredClubs.length}</b>
+              </h2>
+
               <label className="cl-search">
                 <Icon name="search" size={18} />
-                <input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Search clubs" aria-label="Search clubs" />
+
+                <input
+                  value={search}
+                  onChange={(event) => setSearch(event.target.value)}
+                  placeholder="Search clubs"
+                  aria-label="Search clubs"
+                />
+
                 {search && (
-                  <button type="button" onClick={() => setSearch("")} aria-label="Clear search">
+                  <button
+                    type="button"
+                    onClick={() => setSearch("")}
+                    aria-label="Clear search"
+                  >
                     <Icon name="close" size={16} />
                   </button>
                 )}
@@ -267,32 +418,65 @@ export default function TeamSelectionPage() {
             <div className="cl-grid">
               {filteredClubs.map((club) => {
                 const active = selectedClub.id === club.id;
+
                 return (
                   <button
                     type="button"
                     key={club.id}
                     onClick={() => setSelectedClub(club)}
                     className={`cl-tile ${active ? "is-active" : ""}`}
-                    style={{ "--rc": clubColors[club.id] || "#e3b258", "--n": clubs.indexOf(club) } as CSSProperties}
+                    style={
+                      {
+                        "--rc": clubColors[club.id] || "#e3b258",
+                        "--n": clubs.indexOf(club),
+                      } as CSSProperties
+                    }
                     aria-pressed={active}
                   >
                     <img src={club.logo} alt="" />
+
                     <span>
                       <strong>{club.name}</strong>
                       <small>{club.city}</small>
                     </span>
-                    {active && <Icon name="check" size={16} strokeWidth={2.8} />}
+
+                    {active && (
+                      <Icon name="check" size={16} strokeWidth={2.8} />
+                    )}
                   </button>
                 );
               })}
             </div>
 
             {filteredClubs.length === 0 && (
-              <div className="cl-empty">No club matches that name. Try a different spelling.</div>
+              <div className="cl-empty">
+                No club matches that name. Try a different spelling.
+              </div>
             )}
           </section>
         </div>
       </div>
     </main>
+  );
+}
+
+export default function TeamSelectionPage() {
+  return (
+    <Suspense
+      fallback={
+        <main
+          className="cl gx-grain"
+          style={{ "--cc": "#e3b258" } as CSSProperties}
+        >
+          <div className="cl-wrap">
+            <header className="cl-head">
+              <h1>Preparing club selection...</h1>
+            </header>
+          </div>
+        </main>
+      }
+    >
+      <TeamSelectionContent />
+    </Suspense>
   );
 }

@@ -64,7 +64,7 @@ export default function FixturesPage() {
   const [confirmRestart, setConfirmRestart] = useState(false);
   const [restarting, setRestarting] = useState(false);
   const [error, setError] = useState("");
-  const [now, setNow] = useState(() => Date.now());
+  const [now, setNow] = useState(0);
   const [tab, setTab] = useState<Tab>("upcoming");
   const [saving, setSaving] = useState(false);
   const liveSquad = useRef<Player[]>([]);
@@ -147,7 +147,7 @@ export default function FixturesPage() {
         ].sort((a, b) => a - b);
 
         if (undated.length > 0) {
-          const first = firstKickoff();
+          const first = firstKickoff(new Date());
           const pending = [
             ...new Set(rows.filter((r) => r.status === "scheduled").map((r) => r.matchday)),
           ].sort((a, b) => a - b);
