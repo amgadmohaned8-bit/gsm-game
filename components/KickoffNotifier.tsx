@@ -30,7 +30,7 @@ export default function KickoffNotifier() {
   const pathname = usePathname();
 
   const [next, setNext] = useState<NextMatch | null>(null);
-  const [now, setNow] = useState(() => Date.now());
+  const [now, setNow] = useState(0);
   const [dismissed, setDismissed] = useState<string | null>(null);
 
   // find the manager's next scheduled match (again after every page change)
@@ -126,10 +126,15 @@ export default function KickoffNotifier() {
   }, [pathname]);
 
   // one tick a second: sleeping tabs and long waits both stay correct
-  useEffect(() => {
-    const timer = setInterval(() => setNow(Date.now()), 1000);
-    return () => clearInterval(timer);
-  }, []);
+useEffect(() => {
+  setNow(Date.now());
+
+  const timer = setInterval(() => {
+    setNow(Date.now());
+  }, 1000);
+
+  return () => clearInterval(timer);
+}, []);
 
   const ready =
     !!next?.kickoff_at && new Date(next.kickoff_at).getTime() <= now;
