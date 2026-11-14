@@ -210,11 +210,13 @@ export default function SocialPage() {
               })}
             </div>
 
-            {posts.length === 0 ? (
-              <div className="sc-state">Nothing posted here yet. Play a match and face the press to start the conversation.</div>
-            ) : (
-              posts.map((p) => <PostCard key={p.id} post={p} mine={mine} update={save} meName={feed.me.name.split(" ")[0].toLowerCase()} />)
-            )}
+            <div className="sc-feed">
+              {posts.length === 0 ? (
+                <div className="sc-state">Nothing posted here yet. Play a match and face the press to start the conversation.</div>
+              ) : (
+                posts.map((p) => <PostCard key={p.id} post={p} mine={mine} update={save} meName={feed.me.name.split(" ")[0].toLowerCase()} />)
+              )}
+            </div>
           </>
         )}
       </div>

@@ -7,7 +7,7 @@ import { supabase } from "@/lib/supabase";
 import { allClubs as clubs } from "@/lib/football/leagueClubs";
 import { getTier } from "@/lib/football/finance";
 import { marketValue, teamRating, type Player, type Position } from "@/lib/football/squads";
-import { askingPrice, canBuy, recordDeal, windowStatus } from "@/lib/football/transfers";
+import { askingPrice, canBuy, MIN_BY_POSITION, recordDeal, windowStatus } from "@/lib/football/transfers";
 import { useTransfers } from "@/lib/football/useTransfers";
 import { BidModal, money } from "@/components/TransferModals";
 import GsmMark from "@/components/GsmMark";
@@ -102,7 +102,10 @@ export default function ClubPage() {
             {" "}<Link href="/game/squad">Open squad</Link> · <Link href="/game/transfers">Sell players</Link></p>
         ) : (
           <p className="cl-note">
-            Players of this league cannot be signed. Look for players outside the league on the <Link href="/game/transfers">transfer market</Link>.
+            {window.open
+              ? <>Tap <b>Offer</b> next to any player to bid for him. {club.name} decide the price, so a low bid can be turned down.</>
+              : <>The transfer window is closed, so no offers can be made right now.</>}
+            {" "}You can also browse the <Link href="/game/transfers">transfer market</Link>.
           </p>
         )}
 
@@ -137,7 +140,15 @@ export default function ClubPage() {
                         <small>{p.position} · {p.age} · {p.nationality || "-"}</small>
                       </span>
                       <span className="tr-val">{money(marketValue(p))}</span>
-                      <span />
+                      {own ? <span /> : (
+                        <button
+                          type="button"
+                          className="tr-offer"
+                          disabled={!window.open || squad.filter((x) => x.position === p.position).length - 1 < MIN_BY_POSITION[p.position]}
+                          title={squad.filter((x) => x.position === p.position).length - 1 < MIN_BY_POSITION[p.position] ? `${club.name} cannot sell their last ${p.position} players.` : undefined}
+                          onClick={() => setBid(p)}
+                        >Offer</button>
+                      )}
                     </div>
                   </li>
                 ))}

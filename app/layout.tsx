@@ -3,11 +3,22 @@ import "./globals.css";
 import "./landscape.css";
 import "./lite.css";
 import OrientationGate from "@/components/OrientationGate";
+import PwaRegister from "@/components/PwaRegister";
 
 export const metadata: Metadata = {
   title: "GSM | Global Soccer Manager",
   description:
     "Choose your league, take charge of a club and build a managerial legacy.",
+  applicationName: "GSM",
+  appleWebApp: { capable: true, title: "GSM", statusBarStyle: "black" },
+  formatDetection: { telephone: false },
+  icons: {
+    icon: [
+      { url: "/icons/icon-192.png", sizes: "192x192", type: "image/png" },
+      { url: "/icons/icon-512.png", sizes: "512x512", type: "image/png" },
+    ],
+    apple: [{ url: "/icons/apple-touch-icon.png", sizes: "180x180", type: "image/png" }],
+  },
 };
 
 export const viewport: Viewport = {
@@ -41,6 +52,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       <body className="min-h-full flex flex-col">
         {children}
         <OrientationGate />
+        <PwaRegister />
       </body>
     </html>
   );
