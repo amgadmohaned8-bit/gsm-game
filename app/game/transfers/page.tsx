@@ -118,7 +118,7 @@ export default function TransfersPage() {
   const balance = useCountUp(ctx?.balanceM ?? 0);
 
   // the market is a different selection every two days: who is on sale now, who is new, who leaves at the next refresh
-const [now, setNow] = useState(0);
+  const [now, setNow] = useState(() => Date.now());
   useEffect(() => {
     const t = setInterval(() => setNow(Date.now()), 60_000);
     return () => clearInterval(t);

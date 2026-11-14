@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import { configureSound } from "@/lib/sound";
 
 /** Game options. They live on this device, so they apply before anything loads. */
 export type Settings = {
@@ -16,9 +17,15 @@ export type Settings = {
   calm: boolean;
   /** bigger text */
   large: boolean;
+  /** game sounds */
+  sound: boolean;
+  /** how loud */
+  volume: "low" | "mid" | "high";
+  /** visual effects: auto picks light mode on phones and weak devices */
+  perf: "auto" | "lite" | "full";
 };
 
-export const defaults: Settings = { press: true, studio: true, speed: "normal", voice: false, calm: false, large: false };
+export const defaults: Settings = { press: true, studio: true, speed: "normal", voice: false, calm: false, large: false, perf: "auto", sound: true, volume: "mid" };
 const KEY = "gsm-settings";
 
 export function readSettings(): Settings {
@@ -29,10 +36,23 @@ export function readSettings(): Settings {
   }
 }
 
+/** Phones, low memory, few cores or data-saver: draw fewer effects so the game stays smooth. */
+export function isWeakDevice(): boolean {
+  try {
+    const nav = navigator as Navigator & { deviceMemory?: number; connection?: { saveData?: boolean } };
+    const phone = window.matchMedia("(pointer: coarse)").matches && Math.min(screen.width, screen.height) <= 900;
+    return phone || (nav.deviceMemory ?? 8) <= 4 || (nav.hardwareConcurrency ?? 8) <= 4 || Boolean(nav.connection?.saveData);
+  } catch {
+    return false;
+  }
+}
+
 export function applySettings(s: Settings) {
   const root = document.documentElement;
   root.dataset.motion = s.calm ? "calm" : "";
   root.dataset.font = s.large ? "large" : "";
+  configureSound(s.sound, s.volume);
+  root.dataset.perf = s.perf === "lite" || (s.perf === "auto" && isWeakDevice()) ? "lite" : "full";
 }
 
 export function useSettings(): [Settings, (patch: Partial<Settings>) => void] {

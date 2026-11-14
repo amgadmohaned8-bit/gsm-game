@@ -7,6 +7,9 @@ import { activeSeason } from "@/lib/football/season";
 import { allClubs as clubs } from "@/lib/football/leagueClubs";
 import { CUP_ROUNDS } from "@/lib/football/cup";
 import Icon from "./Icon";
+import { alertAt, alertNow } from "@/lib/notify";
+import { sfx } from "@/lib/sound";
+import { nextRefresh } from "@/lib/football/market";
 import "./kickoff.css";
 
 
@@ -30,7 +33,7 @@ export default function KickoffNotifier() {
   const pathname = usePathname();
 
   const [next, setNext] = useState<NextMatch | null>(null);
-  const [now, setNow] = useState(0);
+  const [now, setNow] = useState(() => Date.now());
   const [dismissed, setDismissed] = useState<string | null>(null);
 
   // find the manager's next scheduled match (again after every page change)
@@ -126,38 +129,33 @@ export default function KickoffNotifier() {
   }, [pathname]);
 
   // one tick a second: sleeping tabs and long waits both stay correct
-useEffect(() => {
-  setNow(Date.now());
-
-  const timer = setInterval(() => {
-    setNow(Date.now());
-  }, 1000);
-
-  return () => clearInterval(timer);
-}, []);
+  useEffect(() => {
+    const timer = setInterval(() => setNow(Date.now()), 1000);
+    return () => clearInterval(timer);
+  }, []);
 
   const ready =
     !!next?.kickoff_at && new Date(next.kickoff_at).getTime() <= now;
 
-  // browser notification, once per matchday
+  // when the kickoff time is reached while the game is open: chime + phone alert, once per matchday
   useEffect(() => {
     if (!ready || !next) return;
-    try {
-      if (
-        typeof Notification !== "undefined" &&
-        Notification.permission === "granted"
-      ) {
-        const home = clubs.find((c) => c.id === next.home_club)?.name;
-        const away = clubs.find((c) => c.id === next.away_club)?.name;
-        new Notification(next.title, {
-          body: `${home} v ${away}. Open GSM and start your match.`,
-          tag: `gsm-${next.id}`,
-        });
-      }
-    } catch {
-      /* notifications are optional */
-    }
+    sfx("ping");
+    const home = clubs.find((c) => c.id === next.home_club)?.name;
+    const away = clubs.find((c) => c.id === next.away_club)?.name;
+    void alertNow(next.title, `${home} v ${away}. Open GSM and start your match.`, `gsm-${next.id}`);
   }, [ready, next]);
+
+  // alerts that reach the phone even when the game is closed
+  useEffect(() => {
+    if (next?.kickoff_at) {
+      const home = clubs.find((c) => c.id === next.home_club)?.name;
+      const away = clubs.find((c) => c.id === next.away_club)?.name;
+      void alertAt(1, new Date(next.kickoff_at).getTime(), next.title, `${home} v ${away}. Your players are waiting.`);
+    }
+    void alertAt(2, nextRefresh(), "New faces on the transfer market", "The market just refreshed. Come and see who is available.");
+    void alertAt(3, Date.now() + 22 * 3600 * 1000, "Your club needs you, Manager", "Check your squad and the table before the next match.");
+  }, [next]);
 
   if (!next || !ready || dismissed === next.id) return null;
   if (pathname?.startsWith("/game/fixtures") || pathname?.startsWith("/game/cup")) return null;

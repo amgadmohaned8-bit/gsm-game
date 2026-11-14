@@ -1,19 +1,16 @@
 
 "use client";
 
-import { Suspense, useEffect, useState } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
-
 import { egyptClubs } from "@/lib/football/egypt";
 import { africanClubs, isCafCup } from "@/lib/football/africa";
 import { saveContSetup } from "@/lib/football/continental";
 import { activeSeason } from "@/lib/football/season";
+import { useEffect, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { supabase } from "@/lib/supabase";
-
 import GsmMark from "@/components/GsmMark";
 import GameHud from "@/components/GameHud";
 import Icon from "@/components/Icon";
-
 import "./final-contract.css";
 
 type Club = {
@@ -115,11 +112,7 @@ const premierClubs: Record<string, Club> = {
   },
 };
 
-const clubs: Record<string, Club> = {
-  ...premierClubs,
-  ...Object.fromEntries(egyptClubs.map((c) => [c.id, c])),
-  ...Object.fromEntries(africanClubs.map((c) => [c.id, c])),
-};
+const clubs: Record<string, Club> = { ...premierClubs, ...Object.fromEntries(egyptClubs.map((c) => [c.id, c])), ...Object.fromEntries(africanClubs.map((c) => [c.id, c])) };
 
 const experienceTitles: Record<string, string> = {
   C: "Beginner Coach",
@@ -137,7 +130,7 @@ const leagueTitles: Record<string, string> = {
   bundesliga: "Bundesliga",
 };
 
-function FinalContractContent() {
+export default function FinalContractPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
 
@@ -228,7 +221,10 @@ function FinalContractContent() {
   }
 
   async function confirmAppointment() {
-    if (!club || saving || confirmed) return;
+    if (!club || saving) return;
+
+    // لا تمنع التأكيد إلا إذا كان النادي الحالي هو نفسه المعتمد بالفعل.
+    if (confirmed) return;
 
     setSaving(true);
 
@@ -253,26 +249,16 @@ function FinalContractContent() {
 
       if (error) throw error;
 
+      // an update that touched no row would send you back to the start next time
       if (!saved || saved.length === 0 || saved[0].selected_club !== club.id) {
-        throw new Error(
-          "Your club was not saved. Check the update policy on manager_contracts."
-        );
+        throw new Error("Your club was not saved. Check the update policy on manager_contracts.");
       }
 
       if (isCafCup(league)) {
+        // a stand-alone continental career: the cup itself, with the Egyptian clubs picked earlier
         const season = await activeSeason(supabase, authData.user.id, league);
-        const egypt = (searchParams.get("egypt") || "")
-          .split(",")
-          .filter(Boolean);
-
-        await saveContSetup(supabase, authData.user.id, {
-          comp_id: league,
-          season,
-          club_id: club.id,
-          egypt,
-          source: "standalone",
-        });
-
+        const egypt = (searchParams.get("egypt") || "").split(",").filter(Boolean);
+        await saveContSetup(supabase, authData.user.id, { comp_id: league, season, club_id: club.id, egypt, source: "standalone" });
         setConfirmed(true);
         router.push("/game/continental");
         return;
@@ -385,14 +371,7 @@ function FinalContractContent() {
 
             <span className="club-appointed-label">MANAGER APPOINTMENT</span>
             <h2>{club.name}</h2>
-            <p className="club-city">
-              {club.city}
-              {league === "premier-league"
-                ? ", England"
-                : league === "egyptian-premier-league"
-                  ? ", Egypt"
-                  : ""}
-            </p>
+            <p className="club-city">{club.city}{league === "premier-league" ? ", England" : league === "egyptian-premier-league" ? ", Egypt" : ""}</p>
 
             <div className="club-info-list">
               <div>
@@ -460,19 +439,5 @@ function FinalContractContent() {
         </footer>
       </section>
     </main>
-  );
-}
-
-export default function FinalContractPage() {
-  return (
-    <Suspense
-      fallback={
-        <main className="appointment-loading">
-          PREPARING YOUR APPOINTMENT...
-        </main>
-      }
-    >
-      <FinalContractContent />
-    </Suspense>
   );
 }

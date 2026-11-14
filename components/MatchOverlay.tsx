@@ -14,6 +14,7 @@ import type { Player } from "@/lib/football/squads";
 import { supabase } from "@/lib/supabase";
 import type { Quote } from "@/lib/football/press";
 import { readSettings } from "@/lib/settings";
+import { sfx, startCrowd, stopCrowd } from "@/lib/sound";
 import "./broadcast.css";
 import "./pitchview.css";
 
@@ -269,6 +270,8 @@ function Match({
     let ticker: ReturnType<typeof setInterval> | undefined;
 
     if (stage === "kick") {
+      sfx("whistle");
+      startCrowd();
       say(kickoffLine(homeName, awayName, seedBase));
       timers.push(setTimeout(() => setStage("run"), gap(2600)));
     } else if (stage === "run") {
@@ -286,6 +289,7 @@ function Match({
       if (current.kind === "half") {
         const h = moments.slice(0, cursor).filter((m) => m.kind === "goal" && m.team === "home").length;
         const a = moments.slice(0, cursor).filter((m) => m.kind === "goal" && m.team === "away").length;
+        sfx("whistle");
         say(halfLine(h, a, seedBase));
         if (halftime && mineInvolved && !changed.current) {
           timers.push(setTimeout(() => setStage("break"), gap(1800)));
@@ -293,24 +297,31 @@ function Match({
           timers.push(setTimeout(() => { setCursor((c) => c + 1); setStage("run"); }, gap(2600)));
         }
       } else {
+        if (current.kind === "foul") sfx("foul");
+        else { sfx("kick"); setTimeout(() => sfx("chance"), 250); }
         say(current.kind === "foul" ? foulBuildLine(name, `${seedBase}|${cursor}|b`) : current.pen ? penBuildLine(name, `${seedBase}|${cursor}|b`) : buildLine(name, `${seedBase}|${cursor}|b`));
         timers.push(setTimeout(() => setStage("result"), gap(2300)));
       }
     } else if (stage === "result" && current) {
       const name = current.team === "home" ? homeName : awayName;
       if (current.kind === "goal") {
+        const mineScored = mineInvolved ? (current.team === "home") === myIsHome : true;
+        sfx(mineScored ? "goal" : "goalAgainst");
         const upTo = moments.slice(0, cursor + 1).filter((m) => m.kind === "goal");
         const h = upTo.filter((m) => m.team === "home").length;
         const a = upTo.filter((m) => m.team === "away").length;
         const scoredMine = mineInvolved ? (current.team === "home") === myIsHome : null;
         say(current.pen ? penGoalLine(name, h, a, scoredMine, `${seedBase}|${cursor}|g`, { player: current.player }) : goalLine(name, h, a, scoredMine, `${seedBase}|${cursor}|g`, { player: current.player, assist: current.assist }), "goal");
       } else if (current.kind === "foul") {
+        if (current.card) sfx("card");
         say(foulLine(name, current.card ?? false, `${seedBase}|${cursor}|m`, current.by), "miss");
       } else {
+        sfx("groan");
         say(current.pen ? penMissLine(name, current.kind === "save", `${seedBase}|${cursor}|m`) : missLine(name, current.kind === "save", `${seedBase}|${cursor}|m`), "miss");
       }
       timers.push(setTimeout(() => { setCursor((c) => c + 1); setStage("run"); }, gap(current.kind === "goal" ? 3600 : 2800)));
-    
+    } else if (stage === "end") {
+      setMinute(90);
     }
 
     return () => {
@@ -336,9 +347,13 @@ function Match({
     if (!done) return;
     const result = !mineInvolved ? null : verdict === "Victory" ? "win" : verdict === "Defeat" ? "lose" : "draw";
     const extra = penalties ? " والماتش اتحسم بركلات الترجيح!" : "";
+    sfx("whistleEnd");
+    stopCrowd();
     say(fullTimeLine(result, data.homeScore, data.awayScore, seedBase) + extra);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [done]);
+
+  useEffect(() => () => stopCrowd(), []);
 
   useEffect(() => {
     button.current?.focus();

@@ -72,7 +72,7 @@ export function zonedTimeToUtc(
 }
 
 /** The next 8 PM (Cairo) that is at least five minutes away. */
-export function firstKickoff(now: Date): Date {
+export function firstKickoff(now = new Date()): Date {
   const p = zoneParts(now, KICKOFF_TIME_ZONE);
   const today = zonedTimeToUtc(p.y, p.m, p.d, KICKOFF_HOUR, 0);
 
@@ -112,7 +112,7 @@ export function buildSeasonFixtures(
   userId: string,
   leagueId: string,
   season: string,
-  first: Date
+  first: Date = firstKickoff()
 ): ScheduledFixture[] {
   const teams = clubsOfLeague(leagueId).map((club) => club.id);
 

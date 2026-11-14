@@ -9,7 +9,7 @@
  */
 
 /** clubs that already have their real logo (png) */
-const REAL = new Set(["js-kabylie", "usm-alger", "al-merreikh", "enyimba", "asante-kotoko", "hearts-of-oak", "maniema-union", "rs-berkane", "rivers-united", "kaizer-chiefs", "stellenbosch", "cs-sfaxien", "etoile-sahel"]);
+const REAL = new Set(["js-kabylie", "usm-alger", "al-merreikh", "enyimba", "asante-kotoko", "hearts-of-oak", "maniema-union", "rs-berkane", "rivers-united", "kaizer-chiefs", "stellenbosch", "cs-sfaxien", "etoile-sahel", "mamelodi-sundowns", "orlando-pirates", "esperance-tunis", "wydad-ac", "raja-ca", "tp-mazembe", "as-far", "cr-belouizdad", "young-africans", "al-hilal-omdurman", "petro-luanda", "simba-sc", "horoya-ac", "asec-mimosas", "cs-constantine"]);
 
 export type AfricanClub = { id: string; name: string; short: string; country: string; city: string; stadium: string; rating: number; colors: [string, string]; logo: string };
 
@@ -67,14 +67,7 @@ export const CAF_CUPS: CafCup[] = [
 export const EGYPT_LEAGUE = "egyptian-premier-league";
 
 /** Every African club, as a plain club record (names, logos) for the lookups used across the game. */
-export const africanClubs = [...CL_CLUBS, ...CC_CLUBS].map((x) => ({
-  id: x.id,
-  name: x.name,
-  city: x.city,
-  stadium: x.stadium,
-  logo: x.logo,
-  colors: x.colors,
-}));
+export const africanClubs = [...CL_CLUBS, ...CC_CLUBS].map((x) => ({ id: x.id, name: x.name, city: x.city, stadium: x.stadium, logo: x.logo }));
 export const africaRatings: Record<string, number> = Object.fromEntries([...CL_CLUBS, ...CC_CLUBS].map((x) => [x.id, x.rating]));
 export const africaColors: Record<string, string> = Object.fromEntries([...CL_CLUBS, ...CC_CLUBS].map((x) => [x.id, x.colors[0]]));
 export const isAfrican = (id: string) => id in africaRatings;

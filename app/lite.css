@@ -1,0 +1,38 @@
+/* =========================================================
+   Smooth mode (html[data-perf="lite"]) – on by default for phones
+   and weak devices. Same layout and colours; the expensive
+   effects (live blur, endless background motion, grain) are dropped.
+   ========================================================= */
+
+/* live blur re-renders everything behind a panel every frame: the biggest cost on phones */
+html[data-perf="lite"] *, html[data-perf="lite"] *::before, html[data-perf="lite"] *::after {
+  backdrop-filter: none !important; -webkit-backdrop-filter: none !important;
+}
+/* glass panels lose their blur, so give them a little more body to stay readable */
+html[data-perf="lite"] .gx-cut { background-color: rgba(8, 12, 22, .55); }
+html[data-perf="lite"] [class$="-shade"] { opacity: 1; }
+
+/* endless decorative motion */
+html[data-perf="lite"] .gx-kb,
+html[data-perf="lite"] [class*="-beams"] i, html[data-perf="lite"] [class*="-beams"],
+html[data-perf="lite"] .cb-rays, html[data-perf="lite"] .cb-dust i, html[data-perf="lite"] .cb-aura::after,
+html[data-perf="lite"] .cb-intro-rays, html[data-perf="lite"] .pc-hall, html[data-perf="lite"] .pc-flashes i,
+html[data-perf="lite"] .lg-beams i, html[data-perf="lite"] .tr-shine, html[data-perf="lite"] .cl-shine {
+  animation: none !important;
+}
+html[data-perf="lite"] .cb-rays, html[data-perf="lite"] .cb-dust, html[data-perf="lite"] .pc-flashes, html[data-perf="lite"] .cl-shine, html[data-perf="lite"] .tr-shine { display: none !important; }
+html[data-perf="lite"] .gx-grain::after { display: none !important; }
+
+/* big soft glows are blurred bitmaps; a flat gradient is nearly free */
+html[data-perf="lite"] [class*="aura"], html[data-perf="lite"] [class*="glow"], html[data-perf="lite"] [class*="blur"] { filter: none !important; }
+html[data-perf="lite"] .bc-man, html[data-perf="lite"] .cb-intro img, html[data-perf="lite"] .pc-banner img { filter: none !important; }
+
+/* long blur shadows on every card add up in lists */
+html[data-perf="lite"] .tr-row, html[data-perf="lite"] .sq-row, html[data-perf="lite"] .fx-rows li,
+html[data-perf="lite"] .ct-list li, html[data-perf="lite"] .ac-card, html[data-perf="lite"] .cl-tile { box-shadow: none !important; }
+
+/* one iteration for the looping pulses/shines on content (the news ticker keeps scrolling) */
+html[data-perf="lite"] :where(.hub-stat, .hub-match, .tr-star, .mt-slot, .lg-card, .fx-next, .st-you) , html[data-perf="lite"] :where(.hub-stat, .hub-match, .tr-star, .mt-slot, .lg-card, .fx-next, .st-you) *::before { animation-iteration-count: 1 !important; }
+
+/* scrolling lists: let the browser skip work for rows that are off screen */
+html[data-perf="lite"] .tr-row, html[data-perf="lite"] .sq-row, html[data-perf="lite"] .ct-list li, html[data-perf="lite"] .fx-rows li { content-visibility: auto; contain-intrinsic-size: auto 44px; }

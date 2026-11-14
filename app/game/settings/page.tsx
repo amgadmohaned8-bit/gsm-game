@@ -1,5 +1,7 @@
 "use client";
 
+import { sfx } from "@/lib/sound";
+import { alertState, askAlerts } from "@/lib/notify";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
@@ -42,7 +44,7 @@ export default function SettingsPage() {
   const [email, setEmail] = useState("");
   const [contract, setContract] = useState<Contract | null>(null);
   const [code, setCode] = useState<string | null>(null);
-  const [perm, setPerm] = useState<NotificationPermission | "none">("none");
+  const [perm, setPerm] = useState<"granted" | "denied" | "default" | "none">("none");
   const [pw, setPw] = useState({ a: "", b: "" });
   const [note, setNote] = useState<{ key: string; text: string; bad?: boolean } | null>(null);
   const [confirm, setConfirm] = useState<"" | "leave" | "reset">("");
@@ -67,7 +69,7 @@ export default function SettingsPage() {
       setEmail(data.user.email ?? "");
       setContract((c as Contract) ?? null);
       setCode(roomCode);
-      if (typeof Notification !== "undefined") setPerm(Notification.permission);
+      void alertState().then(setPerm);
       setLoading(false);
     })();
     return () => { off = true; };
@@ -87,8 +89,7 @@ export default function SettingsPage() {
   }
 
   async function alerts() {
-    if (typeof Notification === "undefined") return;
-    setPerm(await Notification.requestPermission());
+    setPerm(await askAlerts());
   }
 
   async function logout() {
@@ -181,7 +182,7 @@ export default function SettingsPage() {
             <span>
               <strong>Kickoff alerts</strong>
               <small>
-                {perm === "granted" ? "On. You are told when a matchday kicks off at 8 pm Cairo time." : perm === "denied" ? "Blocked in your browser. Allow notifications for this site in the browser's site settings, then come back." : perm === "none" ? "This browser does not support notifications." : "Off. Turn them on to hear when a matchday kicks off."}
+                {perm === "granted" ? "On. You hear when a matchday is ready, when the transfer market refreshes and when your club needs you. In the installed app they arrive even when the game is closed." : perm === "denied" ? "Blocked in your browser. Allow notifications for this site in the browser's site settings, then come back." : perm === "none" ? "This browser does not support notifications." : "Off. Turn them on to hear when a matchday kicks off."}
               </small>
             </span>
             {perm === "default" && <button type="button" className="st-btn" onClick={alerts}>Turn on</button>}
@@ -190,7 +191,34 @@ export default function SettingsPage() {
         </section>
 
         <section className="st-card gx-cut" style={{ "--i": 2 } as React.CSSProperties}>
+          <h2>Sound</h2>
+          <Switch on={s.sound} onChange={(v) => { set({ sound: v }); if (v) setTimeout(() => sfx("confirm"), 80); }} label="Game sounds" note="Crowd, whistle, goals and button taps." />
+          <p className="st-label">Volume</p>
+          <Choice
+            label="Volume"
+            value={s.volume}
+            onChange={(v) => { set({ volume: v }); setTimeout(() => sfx("goal"), 80); }}
+            options={[
+              { id: "low", name: "Low", note: "Quiet" },
+              { id: "mid", name: "Medium", note: "Balanced" },
+              { id: "high", name: "High", note: "Loud" },
+            ]}
+          />
+        </section>
+
+        <section className="st-card gx-cut" style={{ "--i": 2 } as React.CSSProperties}>
           <h2>Display</h2>
+          <p className="st-label">Graphics</p>
+          <Choice
+            label="Graphics"
+            value={s.perf}
+            onChange={(v) => set({ perf: v })}
+            options={[
+              { id: "auto", name: "Auto", note: "Light on phones, full elsewhere" },
+              { id: "lite", name: "Smooth", note: "Fewer effects, best for older phones" },
+              { id: "full", name: "Full", note: "Blur, glow and moving backdrops" },
+            ]}
+          />
           <Switch on={s.calm} onChange={(v) => set({ calm: v })} label="Calm motion" note="Turns off most animation." />
           <Switch on={s.large} onChange={(v) => set({ large: v })} label="Larger text" />
         </section>

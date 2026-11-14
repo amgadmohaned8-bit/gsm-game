@@ -1,5 +1,6 @@
 "use client";
 
+import { alertState, askAlerts } from "@/lib/notify";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
@@ -64,7 +65,7 @@ export default function FixturesPage() {
   const [confirmRestart, setConfirmRestart] = useState(false);
   const [restarting, setRestarting] = useState(false);
   const [error, setError] = useState("");
-  const [now, setNow] = useState(0);
+  const [now, setNow] = useState(() => Date.now());
   const [tab, setTab] = useState<Tab>("upcoming");
   const [saving, setSaving] = useState(false);
   const liveSquad = useRef<Player[]>([]);
@@ -147,7 +148,7 @@ export default function FixturesPage() {
         ].sort((a, b) => a - b);
 
         if (undated.length > 0) {
-          const first = firstKickoff(new Date());
+          const first = firstKickoff();
           const pending = [
             ...new Set(rows.filter((r) => r.status === "scheduled").map((r) => r.matchday)),
           ].sort((a, b) => a - b);
@@ -200,8 +201,7 @@ export default function FixturesPage() {
   }, [watching]);
 
   useEffect(() => {
-    if (typeof Notification !== "undefined") setPermission(Notification.permission);
-    else setPermission("unsupported");
+    void alertState().then((a) => setPermission(a === "none" ? "unsupported" : a));
   }, []);
 
   const myClub = manager?.selected_club ?? "";
@@ -377,8 +377,7 @@ export default function FixturesPage() {
   }
 
   async function enableAlerts() {
-    if (typeof Notification === "undefined") return;
-    setPermission(await Notification.requestPermission());
+    { const a = await askAlerts(); setPermission(a === "none" ? "unsupported" : a); }
   }
 
   if (loading) {

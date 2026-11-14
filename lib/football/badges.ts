@@ -183,7 +183,7 @@ export const capBoost = (level: number) => 1 + 0.01 * (level - 1);
 /* ---------- the data ---------- */
 
 type M = {
-  league_id: string | null;
+  league_id?: string | null;
   season: string;
   matchday: number;
   home_club: string;
