@@ -61,7 +61,11 @@ export async function sendFriendNotice(
       const { data } = await client.from("friendly_notices").select("id").eq("to_user", n.from).eq("from_user", n.to).eq("kind", "league").eq("season", n.season).eq("matchday", n.matchday ?? -1).limit(1);
       if (data?.length) return;
     }
-    await client.from("friendly_notices").insert({ to_user: n.to, from_user: n.from, from_name: n.fromName, season: n.season, home_club: n.home, away_club: n.away, home_score: n.hs, away_score: n.as, kind, matchday: n.matchday ?? null });
+    const row = { to_user: n.to, from_user: n.from, from_name: n.fromName, season: n.season, home_club: n.home, away_club: n.away, home_score: n.hs, away_score: n.as };
+    let { error } = await client.from("friendly_notices").insert({ ...row, kind, matchday: n.matchday ?? null });
+    // the database may not have the newest columns yet: send the plain message
+    if (error) ({ error } = await client.from("friendly_notices").insert(row));
+    if (error) console.error("friend message not sent:", error.message);
   } catch {
     /* the friendly still counts */
   }
@@ -69,14 +73,11 @@ export async function sendFriendNotice(
 
 export async function unseenNotices(client: SupabaseClient, userId: string): Promise<FriendNotice[]> {
   try {
-    const { data } = await client
-      .from("friendly_notices")
-      .select("id, from_name, home_club, away_club, home_score, away_score, season, kind, matchday")
-      .eq("to_user", userId)
-      .eq("seen", false)
-      .order("created_at", { ascending: true })
-      .limit(10);
-    return (data ?? []) as FriendNotice[];
+    const query = (cols: string) =>
+      client.from("friendly_notices").select(cols).eq("to_user", userId).eq("seen", false).order("created_at", { ascending: true }).limit(10);
+    let res = await query("id, from_name, home_club, away_club, home_score, away_score, season, kind, matchday");
+    if (res.error) res = await query("id, from_name, home_club, away_club, home_score, away_score, season");
+    return ((res.data ?? []) as unknown as FriendNotice[]);
   } catch {
     return [];
   }

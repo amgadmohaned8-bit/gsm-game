@@ -61,10 +61,6 @@ function clubOf(id: string) {
 type Moment = { minute: number; kind: "goal" | "chance" | "save" | "half" | "foul"; team: "home" | "away"; player?: string; assist?: string; /** a penalty (shown on the pitch only) */ pen?: boolean; card?: "yellow" | "red"; by?: string };
 type Said = { id: number; text: string; tone: "plain" | "goal" | "miss" };
 
-function reducedMotion() {
-  return typeof window !== "undefined" && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-}
-
 /** How the manager wants matches to run (see the settings page). */
 const options = () => (typeof window === "undefined" ? null : readSettings());
 
@@ -72,7 +68,7 @@ const options = () => (typeof window === "undefined" ? null : readSettings());
 export default function MatchOverlay(props: Props) {
   const afterPress = () => {
     const o = options();
-    return reducedMotion() || (o && (!o.studio || o.speed === "instant")) ? "match" : "studio";
+    return o && (!o.studio || o.speed === "instant") ? "match" : "studio";
   };
   const [phase, setPhase] = useState<"press" | "studio" | "match">(() => {
     const o = options();
@@ -231,7 +227,9 @@ function Match({
   }, [data.events, seedBase]);
 
   const opts = options();
-  const reduced = reducedMotion() || opts?.speed === "instant";
+  // only the manager's own "Instant" setting skips the match. A phone that removes animations
+  // (Samsung "Remove animations" or power saving) must still play it, or every match ends at once.
+  const reduced = opts?.speed === "instant";
   const fast = opts?.speed === "fast";
   const gap = (ms: number) => (fast ? Math.round(ms * 0.45) : ms);
   const [minute, setMinute] = useState(reduced ? 90 : 0);

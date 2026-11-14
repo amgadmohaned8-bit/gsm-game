@@ -38,8 +38,11 @@ export default function FriendNotices() {
       } catch { /* messages are optional */ }
     }
     void check();
-    const t = setInterval(check, 60_000);
-    return () => { off = true; clearInterval(t); };
+    const t = setInterval(check, 30_000);
+    // coming back to the game (after the screen was off): look right away
+    const back = () => { if (!document.hidden) void check(); };
+    document.addEventListener("visibilitychange", back);
+    return () => { off = true; clearInterval(t); document.removeEventListener("visibilitychange", back); };
   }, [pathname]);
 
   if (!list.length) return null;

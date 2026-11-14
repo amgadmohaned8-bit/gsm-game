@@ -1,6 +1,7 @@
 "use client";
 
 import { sfx } from "@/lib/sound";
+import { registerPush } from "@/lib/push";
 import { alertMode, alertNow, alertState, askAlerts } from "@/lib/notify";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
@@ -90,6 +91,7 @@ export default function SettingsPage() {
 
   async function alerts() {
     setPerm(await askAlerts());
+    void registerPush(supabase, true); // the phone can also be alerted while the game is closed
   }
 
   const [alertTest, setAlertTest] = useState("");
