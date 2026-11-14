@@ -5,7 +5,8 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import { allClubs as clubs } from "@/lib/football/leagueClubs";
-import { seasonRows } from "@/lib/football/rooms";
+import { myRoom, seasonRows } from "@/lib/football/rooms";
+import { sendFriendNotice } from "@/lib/football/friendlies";
 import { bonusFor, currentLineup, loadSim, withTimeout } from "@/lib/football/strength";
 import { activeSeason, nextSeason, seasonLabel } from "@/lib/football/season";
 import { cupForPosition, cafCup } from "@/lib/football/continental";
@@ -323,11 +324,13 @@ export default function FixturesPage() {
   }
 
   async function closeMatch() {
+    const played = playing?.mine?.match ?? null;
     setPlaying(null);
     if (manager) {
       try {
         const fresh = await fetchMatches(userId, manager.selected_league, season);
         setMatches(fresh);
+        void tellFriend(played, fresh);
         // the board has the last word after every result
         if (evaluateBoard(fresh as unknown as BoardMatch[], manager.selected_club, (manager as { club_appointed_at?: string | null }).club_appointed_at).sacked) {
           router.replace("/game/sacked");
@@ -336,6 +339,20 @@ export default function FixturesPage() {
         /* the list refreshes on the next visit */
       }
     }
+  }
+
+  /** when the opponent is a friend of this shared league, he is told the match was played */
+  async function tellFriend(played: { id: string; matchday: number; home_club: string; away_club: string } | null, fresh: { id: string; home_score: number | null; away_score: number | null }[]) {
+    if (!played || !manager?.room_id) return;
+    try {
+      const final = fresh.find((m) => m.id === played.id);
+      if (!final || final.home_score === null || final.away_score === null) return;
+      const opponent = played.home_club === myClub ? played.away_club : played.home_club;
+      const room = await myRoom(supabase, manager.room_id);
+      const pal = room?.members.find((m) => m.club_id === opponent && m.user_id !== userId);
+      if (!pal) return;
+      await sendFriendNotice(supabase, { to: pal.user_id, from: userId, fromName: manager.manager_name || "A friend", season, home: played.home_club, away: played.away_club, hs: final.home_score, as: final.away_score, kind: "league", matchday: played.matchday });
+    } catch { /* the message is optional */ }
   }
 
   async function startNewSeason() {

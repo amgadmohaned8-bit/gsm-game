@@ -3,12 +3,14 @@
 import { useEffect } from "react";
 import { applySettings, readSettings } from "@/lib/settings";
 import { sfx, unlockAudio } from "@/lib/sound";
+import { unlockMusic } from "@/lib/music";
 
 /** Puts the saved options (calm motion, large text) on every game screen. */
 export default function SettingsApplier() {
   useEffect(() => {
     applySettings(readSettings());
     unlockAudio();
+    unlockMusic();
     // one soft tap for every button; the main action buttons get the "confirm" chime
     const tap = (e: PointerEvent) => {
       const el = (e.target as HTMLElement | null)?.closest?.("button, a, [role=button]") as HTMLElement | null;

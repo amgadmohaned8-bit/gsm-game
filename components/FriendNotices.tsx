@@ -9,6 +9,7 @@ import { alertNow } from "@/lib/notify";
 import { sfx } from "@/lib/sound";
 import "./friendnotice.css";
 
+const label = (n: FriendNotice) => (n.kind === "league" ? `league, matchday ${n.matchday ?? ""}`.trim() : "friendly");
 const name = (id: string) => clubs.find((c) => c.id === id)?.name ?? id;
 
 /**
@@ -30,7 +31,7 @@ export default function FriendNotices() {
         void markNoticesSeen(supabase, fresh.map((n) => n.id));
         sfx("ping");
         for (const n of fresh) {
-          void alertNow(`${n.from_name || "A friend"} played you`, `${name(n.home_club)} ${n.home_score}-${n.away_score} ${name(n.away_club)} (friendly)`, `fn-${n.id}`);
+          void alertNow(`${n.from_name || "A friend"} played you`, `${name(n.home_club)} ${n.home_score}-${n.away_score} ${name(n.away_club)} (${label(n)})`, `fn-${n.id}`);
         }
         setList((cur) => [...cur, ...fresh]);
         window.setTimeout(() => setList((cur) => cur.filter((n) => !fresh.some((f) => f.id === n.id))), 9000);
@@ -47,7 +48,7 @@ export default function FriendNotices() {
       {list.map((n) => (
         <button key={n.id} type="button" className="fn-card" onClick={() => setList((cur) => cur.filter((x) => x.id !== n.id))}>
           <b>{n.from_name || "A friend"} played you</b>
-          <span>{name(n.home_club)} <i>{n.home_score}-{n.away_score}</i> {name(n.away_club)} · friendly</span>
+          <span>{name(n.home_club)} <i>{n.home_score}-{n.away_score}</i> {name(n.away_club)} · {label(n)}</span>
         </button>
       ))}
     </div>

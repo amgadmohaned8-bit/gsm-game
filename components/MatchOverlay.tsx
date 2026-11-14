@@ -15,6 +15,7 @@ import { supabase } from "@/lib/supabase";
 import type { Quote } from "@/lib/football/press";
 import { readSettings } from "@/lib/settings";
 import { sfx, startCrowd, stopCrowd } from "@/lib/sound";
+import { duckMusic } from "@/lib/music";
 import "./broadcast.css";
 import "./pitchview.css";
 
@@ -272,6 +273,7 @@ function Match({
     if (stage === "kick") {
       sfx("whistle");
       startCrowd();
+      duckMusic(true);
       say(kickoffLine(homeName, awayName, seedBase));
       timers.push(setTimeout(() => setStage("run"), gap(2600)));
     } else if (stage === "run") {
@@ -349,11 +351,12 @@ function Match({
     const extra = penalties ? " والماتش اتحسم بركلات الترجيح!" : "";
     sfx("whistleEnd");
     stopCrowd();
+    duckMusic(false);
     say(fullTimeLine(result, data.homeScore, data.awayScore, seedBase) + extra);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [done]);
 
-  useEffect(() => () => stopCrowd(), []);
+  useEffect(() => () => { stopCrowd(); duckMusic(false); }, []);
 
   useEffect(() => {
     button.current?.focus();

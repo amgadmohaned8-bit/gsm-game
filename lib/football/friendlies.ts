@@ -28,6 +28,8 @@ export type FriendNotice = {
   home_score: number;
   away_score: number;
   season: string;
+  kind?: "friendly" | "league";
+  matchday?: number | null;
 };
 
 /**
@@ -50,10 +52,16 @@ export async function loadFriendlies(client: SupabaseClient, userId: string, sea
 /** tells a friend (a manager in the same shared league) that he was played */
 export async function sendFriendNotice(
   client: SupabaseClient,
-  n: { to: string; from: string; fromName: string; season: string; home: string; away: string; hs: number; as: number }
+  n: { to: string; from: string; fromName: string; season: string; home: string; away: string; hs: number; as: number; kind?: "friendly" | "league"; matchday?: number }
 ) {
   try {
-    await client.from("friendly_notices").insert({ to_user: n.to, from_user: n.from, from_name: n.fromName, season: n.season, home_club: n.home, away_club: n.away, home_score: n.hs, away_score: n.as });
+    const kind = n.kind ?? "friendly";
+    if (kind === "league") {
+      // he already told me about this match: no need to tell him back
+      const { data } = await client.from("friendly_notices").select("id").eq("to_user", n.from).eq("from_user", n.to).eq("kind", "league").eq("season", n.season).eq("matchday", n.matchday ?? -1).limit(1);
+      if (data?.length) return;
+    }
+    await client.from("friendly_notices").insert({ to_user: n.to, from_user: n.from, from_name: n.fromName, season: n.season, home_club: n.home, away_club: n.away, home_score: n.hs, away_score: n.as, kind, matchday: n.matchday ?? null });
   } catch {
     /* the friendly still counts */
   }
@@ -63,7 +71,7 @@ export async function unseenNotices(client: SupabaseClient, userId: string): Pro
   try {
     const { data } = await client
       .from("friendly_notices")
-      .select("id, from_name, home_club, away_club, home_score, away_score, season")
+      .select("id, from_name, home_club, away_club, home_score, away_score, season, kind, matchday")
       .eq("to_user", userId)
       .eq("seen", false)
       .order("created_at", { ascending: true })

@@ -212,7 +212,19 @@ export default function SettingsPage() {
         <section className="st-card gx-cut" style={{ "--i": 2 } as React.CSSProperties}>
           <h2>Sound</h2>
           <Switch on={s.sound} onChange={(v) => { set({ sound: v }); if (v) setTimeout(() => sfx("confirm"), 80); }} label="Game sounds" note="Crowd, whistle, goals and button taps." />
-          <p className="st-label">Volume</p>
+          <Switch on={s.music} onChange={(v) => set({ music: v })} label="Background music" note="A calm stadium-evening loop. It steps back during matches." />
+          <p className="st-label">Music volume</p>
+          <Choice
+            label="Music volume"
+            value={s.musicVolume}
+            onChange={(v) => set({ musicVolume: v })}
+            options={[
+              { id: "low", name: "Low", note: "Barely there" },
+              { id: "mid", name: "Medium", note: "Balanced" },
+              { id: "high", name: "High", note: "Full" },
+            ]}
+          />
+          <p className="st-label">Sound volume</p>
           <Choice
             label="Volume"
             value={s.volume}

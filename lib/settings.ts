@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { configureSound } from "@/lib/sound";
+import { configureMusic } from "@/lib/music";
 
 /** Game options. They live on this device, so they apply before anything loads. */
 export type Settings = {
@@ -21,11 +22,14 @@ export type Settings = {
   sound: boolean;
   /** how loud */
   volume: "low" | "mid" | "high";
+  /** background music and how loud it is */
+  music: boolean;
+  musicVolume: "low" | "mid" | "high";
   /** visual effects: auto picks light mode on phones and weak devices */
   perf: "auto" | "lite" | "full";
 };
 
-export const defaults: Settings = { press: true, studio: true, speed: "normal", voice: false, calm: false, large: false, perf: "auto", sound: true, volume: "mid" };
+export const defaults: Settings = { press: true, studio: true, speed: "normal", voice: false, calm: false, large: false, perf: "auto", sound: true, volume: "mid", music: true, musicVolume: "mid" };
 const KEY = "gsm-settings";
 
 export function readSettings(): Settings {
@@ -52,6 +56,7 @@ export function applySettings(s: Settings) {
   root.dataset.motion = s.calm ? "calm" : "";
   root.dataset.font = s.large ? "large" : "";
   configureSound(s.sound, s.volume);
+  configureMusic(s.music, s.musicVolume);
   root.dataset.perf = s.perf === "lite" || (s.perf === "auto" && isWeakDevice()) ? "lite" : "full";
 }
 
