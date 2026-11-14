@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "910965310507",
+    "project_id": "gsm1-fde20",
+    "storage_bucket": "gsm1-fde20.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:910965310507:android:cd4ffd18b628747c6e566e",
+        "android_client_info": {
+          "package_name": "com.gsm.game"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBs0C8TQ0lzw7QTf6vlUTTZ801NJl7FG4U"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
