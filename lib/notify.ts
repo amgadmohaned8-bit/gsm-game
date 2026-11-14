@@ -9,6 +9,8 @@
  *  - In a browser they use the Notification API, which only fires while the page is open.
  */
 
+import { Capacitor, registerPlugin } from "@capacitor/core";
+
 export type AlertState = "granted" | "denied" | "default" | "none";
 
 type Local = {
@@ -23,10 +25,16 @@ const CHANNEL = "gsm-main";
 let channelDone = false;
 const timers = new Map<number, ReturnType<typeof setTimeout>>();
 
+let plugin: Local | null = null;
+
+/**
+ * The phone's notification plugin. It is reached through the Capacitor bridge by name
+ * (this works even when the game is loaded from the website), and only inside the app.
+ */
 function local(): Local | null {
   try {
-    const cap = (window as unknown as { Capacitor?: { Plugins?: { LocalNotifications?: Local } } }).Capacitor;
-    return cap?.Plugins?.LocalNotifications ?? null;
+    if (typeof window === "undefined" || !Capacitor.isNativePlatform()) return null;
+    return (plugin ??= registerPlugin<Local>("LocalNotifications"));
   } catch {
     return null;
   }

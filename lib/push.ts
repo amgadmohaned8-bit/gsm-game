@@ -8,6 +8,7 @@
  */
 
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { Capacitor, registerPlugin } from "@capacitor/core";
 
 type PushPlugin = {
   checkPermissions: () => Promise<{ receive: string }>;
@@ -18,9 +19,15 @@ type PushPlugin = {
 
 let listening = false;
 
+let cached: PushPlugin | null = null;
+
 function plugin(): PushPlugin | null {
-  const cap = (typeof window !== "undefined" ? (window as unknown as { Capacitor?: { isNativePlatform?: () => boolean; Plugins?: { PushNotifications?: PushPlugin } } }).Capacitor : undefined);
-  return cap?.isNativePlatform?.() ? cap.Plugins?.PushNotifications ?? null : null;
+  try {
+    if (typeof window === "undefined" || !Capacitor.isNativePlatform()) return null;
+    return (cached ??= registerPlugin<PushPlugin>("PushNotifications"));
+  } catch {
+    return null;
+  }
 }
 
 export async function registerPush(client: SupabaseClient, ask = false): Promise<"unavailable" | "denied" | "ok"> {
