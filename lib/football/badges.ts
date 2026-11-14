@@ -211,7 +211,7 @@ export async function loadBadgeData(client: SupabaseClient, userId: string, club
     }
   };
   const [matches, trophies, deals, sessions, friendlies, press] = await Promise.all([
-    safe(client.from("league_matches").select("league_id, season, matchday, home_club, away_club, home_score, away_score, status").eq("user_id", userId), [] as M[]),
+    safe(client.from("league_matches").select("league_id, season, matchday, home_club, away_club, home_score, away_score, status").eq("user_id", userId), [] as never[]),
     safe(client.from("trophies").select("kind, season, club_id").eq("user_id", userId), [] as BadgeData["trophies"]),
     safe(client.from("transfers").select("kind, fee").eq("user_id", userId), [] as BadgeData["deals"]),
     safe(client.from("training_sessions").select("id").eq("user_id", userId), [] as { id: string }[]),

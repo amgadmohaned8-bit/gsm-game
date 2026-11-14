@@ -15,9 +15,11 @@ function hash(t: string) { let h = 2166136261; for (let i = 0; i < t.length; i++
 export function kitOf(id: string): [string, string] {
   if (PL[id]) return PL[id];
   const e = egyptClubs.find((c) => c.id === id);
-  if (e?.colors) return e.colors;
+  const ec = (e as { colors?: [string, string] } | undefined)?.colors;
+  if (ec) return ec;
   const a = africanClubs.find((c) => c.id === id);
-  if (a?.colors) return a.colors;
+  const ac = (a as { colors?: [string, string] } | undefined)?.colors;
+  if (ac) return ac;
   const h = hash(id) % 360;
   return [`hsl(${h} 70% 50%)`, "#ffffff"];
 }
