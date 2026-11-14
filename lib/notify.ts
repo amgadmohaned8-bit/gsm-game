@@ -47,6 +47,18 @@ export function alertMode(): "app" | "browser" {
   return typeof window !== "undefined" && local() ? "app" : "browser";
 }
 
+/** why alerts do not work inside the app (for the settings page); empty when they do */
+export async function alertProblem(): Promise<string> {
+  const ln = local();
+  if (!ln) return "";
+  try {
+    await ln.checkPermissions();
+    return "";
+  } catch (e) {
+    return e instanceof Error ? e.message : String(e);
+  }
+}
+
 export async function alertState(): Promise<AlertState> {
   if (typeof window === "undefined") return "none";
   const ln = local();

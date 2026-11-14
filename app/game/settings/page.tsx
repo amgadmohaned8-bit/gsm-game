@@ -2,7 +2,7 @@
 
 import { sfx } from "@/lib/sound";
 import { registerPush } from "@/lib/push";
-import { alertMode, alertNow, alertState, askAlerts } from "@/lib/notify";
+import { alertMode, alertNow, alertProblem, alertState, askAlerts } from "@/lib/notify";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
@@ -98,6 +98,11 @@ export default function SettingsPage() {
   async function testAlert() {
     const st = await alertState();
     setPerm(st);
+    const problem = await alertProblem();
+    if (problem) {
+      setAlertTest(`The app cannot reach the notification plugin: ${problem}`);
+      return;
+    }
     if (st !== "granted") {
       setAlertTest(st === "denied" ? "Alerts are blocked. Allow notifications for GSM in the phone settings (App info > Notifications)." : "Alerts are off. Tap Turn on first.");
       return;
