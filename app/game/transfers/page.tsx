@@ -118,8 +118,9 @@ export default function TransfersPage() {
   const balance = useCountUp(ctx?.balanceM ?? 0);
 
   // the market is a different selection every two days: who is on sale now, who is new, who leaves at the next refresh
-  const [now, setNow] = useState(() => Date.now());
+  const [now, setNow] = useState(0); // set after mount: Date.now() during the first render breaks static prerendering
   useEffect(() => {
+    setNow(Date.now());
     const t = setInterval(() => setNow(Date.now()), 60_000);
     return () => clearInterval(t);
   }, []);
@@ -131,7 +132,7 @@ export default function TransfersPage() {
   const onSale = useMemo(() => {
     if (!ctx || !squads) return { list: [] as Player[], isNew: new Set<string>(), leaving: new Set<string>() };
     const stock = new Map((squads[MARKET] ?? []).map((p) => [p.id, p]));
-    const entries = visibleMarket(ctx.userId, now).filter((e) => stock.has(e.player.id));
+    const entries = (now ? visibleMarket(ctx.userId, now) : []).filter((e) => stock.has(e.player.id));
     return {
       list: entries.map((e) => stock.get(e.player.id)!),
       isNew: new Set(entries.filter((e) => e.isNew).map((e) => e.player.id)),

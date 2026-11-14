@@ -65,7 +65,7 @@ export default function FixturesPage() {
   const [confirmRestart, setConfirmRestart] = useState(false);
   const [restarting, setRestarting] = useState(false);
   const [error, setError] = useState("");
-  const [now, setNow] = useState(() => Date.now());
+  const [now, setNow] = useState(0); // set after mount: Date.now() during the first render breaks static prerendering
   const [tab, setTab] = useState<Tab>("upcoming");
   const [saving, setSaving] = useState(false);
   const liveSquad = useRef<Player[]>([]);

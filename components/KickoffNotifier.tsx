@@ -33,7 +33,7 @@ export default function KickoffNotifier() {
   const pathname = usePathname();
 
   const [next, setNext] = useState<NextMatch | null>(null);
-  const [now, setNow] = useState(() => Date.now());
+  const [now, setNow] = useState(0); // set after mount: Date.now() during the first render breaks static prerendering
   const [dismissed, setDismissed] = useState<string | null>(null);
 
   // find the manager's next scheduled match (again after every page change)
@@ -130,6 +130,7 @@ export default function KickoffNotifier() {
 
   // one tick a second: sleeping tabs and long waits both stay correct
   useEffect(() => {
+    setNow(Date.now());
     const timer = setInterval(() => setNow(Date.now()), 1000);
     return () => clearInterval(timer);
   }, []);

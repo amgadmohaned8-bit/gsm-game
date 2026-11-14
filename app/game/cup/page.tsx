@@ -46,7 +46,7 @@ export default function CupPage() {
   const [season, setSeason] = useState("");
   const [first, setFirst] = useState<Date>(() => firstKickoff());
   const [rows, setRows] = useState<CupMatch[]>([]);
-  const [now, setNow] = useState(() => Date.now());
+  const [now, setNow] = useState(0); // set after mount: Date.now() during the first render breaks static prerendering
   const [saving, setSaving] = useState(false);
   const [playing, setPlaying] = useState<PlayedCupRound | null>(null);
 
@@ -128,6 +128,7 @@ export default function CupPage() {
   }, [router, refresh]);
 
   useEffect(() => {
+    setNow(Date.now());
     const timer = setInterval(() => setNow(Date.now()), 1000);
     return () => clearInterval(timer);
   }, []);
