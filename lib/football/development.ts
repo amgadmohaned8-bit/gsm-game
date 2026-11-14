@@ -14,9 +14,19 @@ import type { Player } from "@/lib/football/squads";
 
 export const FIRST_YEAR = 2026;
 export const SLOTS = 3;
+/** a session of up to three players takes this long to finish; the gains count once it is done */
+export const TRAIN_HOURS = 8;
+export const TRAIN_MS = TRAIN_HOURS * 3600_000;
 export const MAX_RATING = 96;
 
-export type TrainingRow = { season: string; matchday: number; player_id: string; gain: number };
+export type TrainingRow = { season: string; matchday: number; player_id: string; gain: number; created_at?: string };
+
+/** When this session finishes (null for old rows without a time: they are done). */
+export function finishesAt(r: TrainingRow): number | null {
+  if (!r.created_at) return null;
+  const t = Date.parse(r.created_at);
+  return Number.isFinite(t) ? t + TRAIN_MS : null;
+}
 
 export function startYear(season: string) {
   const y = parseInt(season.split("-")[0], 10);
@@ -73,7 +83,10 @@ export function seasonCap(age: number) {
 export function gainsAt(rows: TrainingRow[], season: string, matchday: number, players?: Player[]) {
   const ageOf = new Map((players ?? []).map((p) => [p.id, p.age]));
   const perSeason = new Map<string, number>();
+  const now = Date.now();
   for (const r of rows) {
+    const end = finishesAt(r);
+    if (end !== null && end > now) continue; // still training: no gain yet
     const earlier = r.season < season;
     if (!earlier && !(r.season === season && r.matchday <= matchday)) continue;
     const k = `${r.season}|${r.player_id}`;

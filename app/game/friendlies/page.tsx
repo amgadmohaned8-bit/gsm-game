@@ -7,7 +7,8 @@ import { allClubs as clubs, clubsOfLeague } from "@/lib/football/leagueClubs";
 import { getTier } from "@/lib/football/finance";
 import { activeSeason, seasonLabel } from "@/lib/football/season";
 import { simulateFixture, type SimulationResult } from "@/lib/football/matchSim";
-import { friendlyIncome, loadFriendlies, type Friendly } from "@/lib/football/friendlies";
+import { friendlyIncome, loadFriendlies, sendFriendNotice, type Friendly } from "@/lib/football/friendlies";
+import { myRoom } from "@/lib/football/rooms";
 import { loadSim, withTimeout } from "@/lib/football/strength";
 import GsmMark from "@/components/GsmMark";
 import GameHud from "@/components/GameHud";
@@ -32,9 +33,13 @@ export default function FriendliesPage() {
   const [error, setError] = useState("");
   const [played, setPlayed] = useState<Played | null>(null);
   const roomRef = useRef<string | null>(null);
+  const [leagueId, setLeagueId] = useState("");
+  const [myName, setMyName] = useState("");
+  /** clubs run by a friend in the same shared league: club id -> the friend */
+  const [friends, setFriends] = useState<Record<string, { user_id: string; name: string }>>({});
 
-  async function refresh(uid: string, s: string) {
-    setHistory(await loadFriendlies(supabase, uid, s));
+  async function refresh(uid: string, s: string, league = leagueId, club = myClub) {
+    setHistory(await loadFriendlies(supabase, uid, s, { leagueId: league, club }));
   }
 
   useEffect(() => {
@@ -46,7 +51,7 @@ export default function FriendliesPage() {
       if (!user) return router.replace("/");
       const { data: contract } = await supabase
         .from("manager_contracts")
-        .select("selected_club, selected_league, room_id")
+        .select("selected_club, selected_league, room_id, manager_name")
         .eq("user_id", user.id)
         .maybeSingle();
       if (!contract?.selected_club) return router.replace("/game/leagues");
@@ -65,12 +70,23 @@ export default function FriendliesPage() {
       const fallback = clubsOfLeague(leagueId).filter((c) => c.id !== contract.selected_club).map((c) => c.id);
       if (cancelled) return;
       roomRef.current = contract.room_id ?? null;
+      const pals: Record<string, { user_id: string; name: string }> = {};
+      if (contract.room_id) {
+        try {
+          const room = await myRoom(supabase, contract.room_id);
+          for (const m of room?.members ?? []) if (m.user_id !== user.id) pals[m.club_id] = { user_id: m.user_id, name: m.name || "Friend" };
+        } catch { /* no friends to show */ }
+      }
+      if (cancelled) return;
+      setFriends(pals);
+      setLeagueId(leagueId);
+      setMyName(contract.manager_name || "A friend");
       setUserId(user.id);
       setMyClub(contract.selected_club);
       setSeason(s);
       setSlot(open.length ? Math.min(...open) : list.length === 0 ? 1 : null);
       setOpponents(ids.length ? ids : fallback);
-      await refresh(user.id, s);
+      await refresh(user.id, s, leagueId, contract.selected_club);
       setLoading(false);
     })();
     return () => {
@@ -82,8 +98,9 @@ export default function FriendliesPage() {
   const used = slot !== null && history.some((f) => f.after_matchday === slot);
   const earned = history.reduce((sum, f) => sum + Number(f.income), 0);
   const list = useMemo(
-    () => opponents.map((id) => clubs.find((c) => c.id === id)).filter(Boolean) as NonNullable<ReturnType<typeof clubs.find>>[],
-    [opponents]
+    () => (opponents.map((id) => clubs.find((c) => c.id === id)).filter(Boolean) as NonNullable<ReturnType<typeof clubs.find>>[])
+      .sort((a, b) => Number(!!friends[b.id]) - Number(!!friends[a.id])),
+    [opponents, friends]
   );
 
   async function play() {
@@ -118,12 +135,19 @@ export default function FriendliesPage() {
         home_score: result.home_score,
         away_score: result.away_score,
         income,
+        league_id: leagueId || "premier-league",
+        opp_manager: friends[target]?.name ?? null,
       });
       if (insertError) throw insertError;
+      const pal = friends[target];
+      if (pal) {
+        // the friend is told he was played
+        void sendFriendNotice(supabase, { to: pal.user_id, from: userId, fromName: myName, season, home: homeClub, away: awayClub, hs: result.home_score, as: result.away_score });
+      }
       setPlayed({ home: homeClub, away: awayClub, result, income });
     } catch (err) {
       console.error("Friendly error:", err);
-      setError("Could not play the friendly. Make sure supabase/009_scorers_friendlies_managers.sql has been run.");
+      setError("Could not play the friendly. Make sure supabase/009 and 016_friendlies_scope_notices.sql have been run.");
     } finally {
       setBusy(false);
     }
@@ -177,6 +201,7 @@ export default function FriendliesPage() {
           <div className={`fr-side ${opp ? "" : "is-empty"}`}>
             {opp ? <img src={opp.logo} alt="" key={opp.id} /> : <span aria-hidden="true">?</span>}
             <strong>{opp?.name ?? "Opponent"}</strong>
+            {opp && friends[opp.id] && <small className="fr-pal">Friend: {friends[opp.id].name}</small>}
           </div>
         </section>
 
@@ -186,14 +211,14 @@ export default function FriendliesPage() {
               <button
                 key={c.id}
                 type="button"
-                className={`fr-club gx-cut ${target === c.id ? "is-on" : ""}`}
+                className={`fr-club gx-cut ${target === c.id ? "is-on" : ""} ${friends[c.id] ? "is-pal" : ""}`}
                 style={{ animationDelay: `${i * 25}ms` }}
                 onClick={() => setTarget(c.id)}
                 aria-pressed={target === c.id}
               >
                 <img src={c.logo} alt="" />
                 <strong>{c.name}</strong>
-                <small>{tierLabel(c.id)}</small>
+                <small>{friends[c.id] ? `Friend: ${friends[c.id].name}` : tierLabel(c.id)}</small>
                 <em>+{friendlyIncome(c.id).toFixed(2)}M</em>
               </button>
             ))}
@@ -212,7 +237,7 @@ export default function FriendliesPage() {
               {[...history].sort((a, b) => b.after_matchday - a.after_matchday).map((f) => (
                 <li key={f.after_matchday}>
                   <small>Before matchday {f.after_matchday + 1}</small>
-                  <span>{name(f.home_club)} <b>{f.home_score}-{f.away_score}</b> {name(f.away_club)}</span>
+                  <span>{name(f.home_club)} <b>{f.home_score}-{f.away_score}</b> {name(f.away_club)}{f.opp_manager ? <em className="fr-with"> · vs {f.opp_manager}</em> : null}</span>
                   <em>+{Number(f.income).toFixed(2)}M</em>
                 </li>
               ))}

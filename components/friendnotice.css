@@ -1,0 +1,7 @@
+.fn { position: fixed; z-index: 90; top: max(10px, env(safe-area-inset-top)); left: 50%; translate: -50% 0; width: min(420px, calc(100vw - 24px)); display: grid; gap: 8px; pointer-events: none; }
+.fn-card { pointer-events: auto; display: grid; gap: 2px; text-align: left; padding: 10px 14px; border: 1px solid var(--brass); background: rgba(8, 12, 19, 0.96); color: var(--chalk); cursor: pointer; font: inherit; animation: fn-in 0.35s var(--ease-out, ease-out) both; }
+.fn-card b { color: var(--brass-hi); font-size: 14px; }
+.fn-card span { color: var(--chalk-2); font-size: 13px; }
+.fn-card i { font-style: normal; font-weight: 800; color: var(--chalk); }
+@keyframes fn-in { from { opacity: 0; transform: translateY(-12px); } }
+@media (prefers-reduced-motion: reduce) { .fn-card { animation: none; } }

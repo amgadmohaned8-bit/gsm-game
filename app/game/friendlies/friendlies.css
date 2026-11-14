@@ -41,3 +41,8 @@
   .fr-history li { grid-template-columns: 1fr auto; } .fr-history li small { grid-column: 1 / -1; }
 }
 @media (prefers-reduced-motion: reduce) { .fr-side img, .fr-club { animation: none; } }
+
+.fr-pal { color: var(--brass-hi); font-weight: 700; }
+.fr-club.is-pal small { color: var(--brass-hi); font-weight: 700; }
+.fr-club.is-pal { border-color: var(--brass); }
+.fr-with { font-style: normal; color: var(--brass-hi); }

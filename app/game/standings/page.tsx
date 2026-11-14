@@ -76,7 +76,7 @@ export default function StandingsPage() {
 
         let trainingRows: TrainingRow[] = [];
         try {
-          const { data: t } = await supabase.from("training_sessions").select("season, matchday, player_id, gain").eq("user_id", authData.user.id);
+          const { data: t } = await supabase.from("training_sessions").select("season, matchday, player_id, gain, created_at").eq("user_id", authData.user.id);
           trainingRows = (t ?? []) as TrainingRow[];
         } catch {
           /* no training yet */

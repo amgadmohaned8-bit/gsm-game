@@ -1,6 +1,7 @@
 
 "use client";
 
+import { resetCareerData } from "@/lib/football/careerReset";
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
@@ -311,10 +312,6 @@ export default function ManagementPage() {
     );
   }
 
-  function openManagerOffice() {
-    talkToManager();
-  }
-
   if (loading) {
     return (
       <main className="management-loading">
@@ -344,6 +341,8 @@ export default function ManagementPage() {
       const uid = auth.user.id;
       // leaving the club also frees the seat in a shared league
       await supabase.from("room_members").delete().eq("user_id", uid);
+      // the career ends here: nothing of it follows him to the next club
+      if (manager?.selected_league) await resetCareerData(supabase, uid, manager.selected_league, club?.id);
       const { error: updateError } = await supabase
         .from("manager_contracts")
         .update({ selected_league: null, selected_club: null, club_appointed_at: null, room_id: null })
@@ -418,13 +417,8 @@ export default function ManagementPage() {
         </div>
 
         <div className="mg-actions mg-glass">
-          <button type="button" className="gx-btn" onClick={openManagerOffice}>
-            <Icon name="chat" size={20} />
-            Talk to manager
-          </button>
-
           <button type="button" className="mg-resign" onClick={() => setResignModal(true)}>
-            <Icon name="logout" size={18} />
+            <Icon name="logout" size={14} />
             Resign from club
           </button>
         </div>

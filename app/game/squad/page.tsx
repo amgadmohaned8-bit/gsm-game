@@ -68,7 +68,7 @@ export default function SquadPage() {
       if (cancelled) return;
 
       // the squad as it is now: the base players plus every signing and sale
-      const state = await loadTransferState(supabase, user.id, data.selected_club, await activeSeason(supabase, user.id, data.selected_league || "premier-league"), null);
+      const state = await loadTransferState(supabase, user.id, data.selected_club, await activeSeason(supabase, user.id, data.selected_league || "premier-league"), null, data.selected_league || "premier-league");
       const squad = state.squads[data.selected_club] ?? [];
       if (cancelled) return;
       let name: FormationName = "4-3-3";

@@ -1,7 +1,7 @@
 "use client";
 
 import { sfx } from "@/lib/sound";
-import { alertState, askAlerts } from "@/lib/notify";
+import { alertMode, alertNow, alertState, askAlerts } from "@/lib/notify";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
@@ -90,6 +90,18 @@ export default function SettingsPage() {
 
   async function alerts() {
     setPerm(await askAlerts());
+  }
+
+  const [alertTest, setAlertTest] = useState("");
+  async function testAlert() {
+    const st = await alertState();
+    setPerm(st);
+    if (st !== "granted") {
+      setAlertTest(st === "denied" ? "Alerts are blocked. Allow notifications for GSM in the phone settings (App info > Notifications)." : "Alerts are off. Tap Turn on first.");
+      return;
+    }
+    await alertNow("GSM test", "If you can read this, alerts work.", `test-${Date.now()}`);
+    setAlertTest(alertMode() === "app" ? "Sent. You should see it in a second. If not, check the phone's battery and notification settings for GSM." : "Sent. This is the browser, so alerts only show while this page is open. Install the app for alerts when it is closed.");
   }
 
   async function logout() {
@@ -187,6 +199,13 @@ export default function SettingsPage() {
             </span>
             {perm === "default" && <button type="button" className="st-btn" onClick={alerts}>Turn on</button>}
             {perm === "granted" && <em>On</em>}
+          </div>
+          <div className="st-row">
+            <span>
+              <strong>Test an alert</strong>
+              <small>{alertTest || (alertMode() === "app" ? "Installed app detected." : "Running in a browser: alerts only show while the page is open.")}</small>
+            </span>
+            <button type="button" className="st-btn" onClick={testAlert}>Send test</button>
           </div>
         </section>
 

@@ -34,6 +34,11 @@ function local(): Local | null {
 
 const norm = (s: string): AlertState => (s === "granted" ? "granted" : s === "denied" ? "denied" : "default");
 
+/** "app" when running inside the installed Android app with the plugin, otherwise "browser" */
+export function alertMode(): "app" | "browser" {
+  return typeof window !== "undefined" && local() ? "app" : "browser";
+}
+
 export async function alertState(): Promise<AlertState> {
   if (typeof window === "undefined") return "none";
   const ln = local();

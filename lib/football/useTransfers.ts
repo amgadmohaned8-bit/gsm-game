@@ -57,7 +57,7 @@ export function useTransfers() {
 
       const rows = matches ?? [];
       const matchday = currentMatchday(rows);
-      const state = await loadTransferState(supabase, user.id, contract.selected_club, season, matchday);
+      const state = await loadTransferState(supabase, user.id, contract.selected_club, season, matchday, leagueId);
       const finance = buildFinance(contract.selected_club, rows, state.net * 1_000_000);
 
       setCtx({

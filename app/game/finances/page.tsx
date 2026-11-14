@@ -99,7 +99,7 @@ export default function FinancesPage() {
           .eq("season", season);
 
         if (matchesError) throw matchesError;
-        const ts = await loadTransferState(supabase, user.id, contract.selected_club, season, currentMatchday(matchData ?? []));
+        const ts = await loadTransferState(supabase, user.id, contract.selected_club, season, currentMatchday(matchData ?? []), contract.selected_league);
 
         if (!cancelled) {
           setManager(contract as ManagerData);

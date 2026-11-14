@@ -1,5 +1,6 @@
 "use client";
 
+import { resetCareerData } from "@/lib/football/careerReset";
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
@@ -82,6 +83,7 @@ export default function SackedPage() {
     setBusy("leave");
     try {
       await supabase.from("room_members").delete().eq("user_id", userId);
+      await resetCareerData(supabase, userId, league, club);
       await supabase.from("manager_contracts").update({ selected_league: null, selected_club: null, club_appointed_at: null, room_id: null }).eq("user_id", userId);
       router.replace("/game/leagues");
     } catch {

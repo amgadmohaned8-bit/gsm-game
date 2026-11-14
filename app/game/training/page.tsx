@@ -1,10 +1,11 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import { levelOf, loadUnlocked, xpOf, trainingBoost, capBoost } from "@/lib/football/badges";
-import { phase, seasonCap, sessionGain, SLOTS } from "@/lib/football/development";
+import { finishesAt, phase, seasonCap, sessionGain, SLOTS, TRAIN_HOURS, TRAIN_MS } from "@/lib/football/development";
+import { alertAt } from "@/lib/notify";
 import { useTransfers } from "@/lib/football/useTransfers";
 import type { Player, Position } from "@/lib/football/squads";
 import GsmMark from "@/components/GsmMark";
@@ -34,10 +35,28 @@ export default function TrainingPage() {
   const training = ctx?.state.training ?? [];
   const day = ctx?.matchday ?? null;
 
+  const [now, setNow] = useState(0);
+  useEffect(() => {
+    setNow(Date.now());
+    const t = setInterval(() => setNow(Date.now()), 20_000);
+    return () => clearInterval(t);
+  }, []);
+
+  /** the session in progress: its players and when it ends (8 hours after it started) */
   const doneToday = useMemo(
-    () => (ctx && day !== null ? training.filter((t) => t.season === ctx.season && t.matchday === day) : []),
-    [ctx, day, training]
+    () => (now ? training.filter((t) => { const end = finishesAt(t); return end !== null && end > now; }) : []),
+    [now, training]
   );
+  const endsAt = useMemo(() => doneToday.reduce((m, t) => Math.max(m, finishesAt(t) ?? 0), 0), [doneToday]);
+  const wasTraining = useRef(false);
+  useEffect(() => {
+    // the session just finished while the page is open: load the new ratings
+    if (wasTraining.current && !endsAt) void reload();
+    wasTraining.current = endsAt > 0;
+  }, [endsAt, reload]);
+  useEffect(() => {
+    if (endsAt) void alertAt(4, endsAt, "Training finished", "Your players finished training. Start the next session.");
+  }, [endsAt]);
   const seasonGain = useMemo(() => {
     const out: Record<string, number> = {};
     if (!ctx) return out;
@@ -68,7 +87,7 @@ export default function TrainingPage() {
     setPicked((cur) => {
       if (cur.includes(p.id)) return cur.filter((id) => id !== p.id);
       if (cur.length >= SLOTS) {
-        setProblem(`Three players a week. Remove one first.`);
+        setProblem(`Three players per session. Remove one first.`);
         return cur;
       }
       return [...cur, p.id];
@@ -88,17 +107,22 @@ export default function TrainingPage() {
       });
       const { error: insertError } = await supabase.from("training_sessions").insert(rowsToSave);
       if (insertError) throw insertError;
+      void alertAt(4, Date.now() + TRAIN_MS, "Training finished", "Your players finished training. Start the next session.");
       setResult(rowsToSave.map((r) => ({ name: byId.get(r.player_id)!.name, gain: r.gain })));
       setPicked([]);
       await reload();
     } catch (err) {
       console.error("Training error:", err);
-      setProblem("The session did not save. Make sure supabase/010_training.sql has been run.");
+      setProblem("The session did not save. Make sure supabase/010_training.sql and 015_training_cooldown.sql have been run.");
     } finally {
       setBusy(false);
     }
   }
 
+  function left(ms: number) {
+    const m = Math.max(0, Math.ceil(ms / 60000));
+    return m >= 60 ? `${Math.floor(m / 60)}h ${m % 60}m left` : `${m}m left`;
+  }
   const chips: [Filter, string][] = [["ALL", "All"], ["YOUNG", "Young"], ["GK", "GK"], ["DF", "DF"], ["MF", "MF"], ["FW", "FW"]];
 
   return (
@@ -113,9 +137,9 @@ export default function TrainingPage() {
           <div>
             <p>Training ground</p>
             <h1><span className="gx-slant">Training</span></h1>
-            <small>Coach level {level}: training works {Math.round((boost - 1) * 100)}% better (earn levels with achievements). Train three players a week. Young players improve fast, older players only a little. Each new season the young grow and the veterans slow down.</small>
+            <small>Coach level {level}: training works {Math.round((boost - 1) * 100)}% better (earn levels with achievements). Train up to three players per session. A session takes 8 hours; then you can start the next one. Young players improve fast, older players only a little. Each new season the young grow and the veterans slow down.</small>
           </div>
-          <div className="tn-slots" aria-label="This week's session">
+          <div className="tn-slots" aria-label="Current session">
             {Array.from({ length: SLOTS }).map((_, i) => {
               const id = doneToday[i]?.player_id ?? picked[i];
               const p = id ? byId.get(id) : null;
@@ -126,7 +150,7 @@ export default function TrainingPage() {
               );
             })}
             <button type="button" className="gx-btn" disabled={locked || !picked.length || busy} onClick={train}>
-              {day === null ? "Season over" : doneToday.length ? "Done this week" : busy ? "Training..." : `Train ${picked.length || ""}`.trim()}
+              {day === null ? "Season over" : doneToday.length ? `Training ${left(endsAt - now)}` : busy ? "Training..." : `Train ${picked.length || ""}`.trim()}
             </button>
           </div>
         </header>
@@ -134,7 +158,7 @@ export default function TrainingPage() {
         {problem && <p className="tn-problem" role="alert">{problem}</p>}
         {result && (
           <p className="tn-result" role="status">
-            Session done: {result.map((r) => `${r.name} +${r.gain.toFixed(2)}`).join(", ")}. Small gains add up: a player's rating moves up one point when they add up.
+            Session started: {result.map((r) => `${r.name} +${r.gain.toFixed(2)}`).join(", ")}. It finishes in {TRAIN_HOURS} hours, and we will notify you. Small gains add up: a player&apos;s rating moves up one point when they add up.
           </p>
         )}
 

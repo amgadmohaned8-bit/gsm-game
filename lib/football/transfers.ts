@@ -307,19 +307,20 @@ export async function loadTransferState(
   userId: string,
   myClub: string,
   season: string,
-  matchday: number | null
+  matchday: number | null,
+  leagueId?: string
 ): Promise<TransferState> {
   const [{ data: dealRows }, { data: listingRows }] = await Promise.all([
     client.from("transfers").select("*").eq("user_id", userId),
     client.from("transfer_listings").select("*").eq("user_id", userId).eq("status", "open"),
   ]);
 
-  const friendlyMoney = (await loadFriendlies(client, userId))
+  const friendlyMoney = (await loadFriendlies(client, userId, undefined, { leagueId }))
     .filter((f) => f.home_club === myClub || f.away_club === myClub)
     .reduce((sum, f) => sum + Number(f.income), 0);
   let training: TrainingRow[] = [];
   try {
-    const { data: t } = await client.from("training_sessions").select("season, matchday, player_id, gain").eq("user_id", userId);
+    const { data: t } = await client.from("training_sessions").select("season, matchday, player_id, gain, created_at").eq("user_id", userId);
     training = (t ?? []) as TrainingRow[];
   } catch {
     /* no training yet */

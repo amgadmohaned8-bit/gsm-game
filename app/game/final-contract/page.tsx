@@ -1,6 +1,7 @@
 
 "use client";
 
+import { resetCareerData } from "@/lib/football/careerReset";
 import { egyptClubs } from "@/lib/football/egypt";
 import { africanClubs, isCafCup } from "@/lib/football/africa";
 import { saveContSetup } from "@/lib/football/continental";
@@ -236,6 +237,9 @@ export default function FinalContractPage() {
         router.replace("/");
         return;
       }
+
+      // a new appointment is a new career: whatever was done before in this league starts again
+      await resetCareerData(supabase, authData.user.id, league, club.id);
 
       const { data: saved, error } = await supabase
         .from("manager_contracts")

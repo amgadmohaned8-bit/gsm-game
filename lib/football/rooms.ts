@@ -10,6 +10,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { buildSeasonFixtures, type ScheduledFixture } from "@/lib/football/schedule";
 import { activeSeason } from "@/lib/football/season";
+import { resetCareerData } from "@/lib/football/careerReset";
 
 export type Card = {
   user_id: string;
@@ -214,9 +215,13 @@ export async function joinRoom(
   const { error } = await client.rpc("join_room", { p_code: room.code, p_club: club });
   if (error) return /taken/i.test(error.message) ? "Somebody just took that club. Pick another." : "Could not join this league.";
 
+  // a new appointment is a new career: nothing of an earlier one in this league is kept
+  await resetCareerData(client, userId, room.league_id, club);
+
   // this manager's old copy of that season (league + cup) makes way for the shared one
   await client.from("league_matches").delete().eq("user_id", userId).eq("league_id", room.league_id).eq("season", room.season);
   await client.from("cup_matches").delete().eq("user_id", userId).eq("season", room.season);
+  await client.from("friendlies").delete().eq("user_id", userId).eq("league_id", room.league_id).eq("season", room.season);
 
   const rows = await seasonRows(client, userId, room.league_id, room.season, room.id);
   for (let i = 0; i < rows.length; i += 190) {
