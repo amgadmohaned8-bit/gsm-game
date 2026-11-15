@@ -780,4 +780,32 @@ html .mg-stats dd { font-size: 14px !important; white-space: nowrap; margin: 0; 
 html .tn-head small { display: -webkit-box !important; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; font-size: 10px !important; line-height: 1.3 !important; }
 html .tn-head h1 { font-size: 26px !important; }
 html .tn-slot { min-height: 46px !important; }
+html .tx.tr .tx-wrap { display: grid; grid-template-columns: 196px minmax(0, 1fr); grid-template-rows: auto auto auto 1fr; gap: 6px 14px; align-content: start; }
+html .tx.tr .tx-wrap > * { grid-column: 1; min-width: 0; }
+html .tx.tr .tx-wrap > .tx-pane,
+html .tx.tr .tx-wrap > .tx-clubs { grid-column: 2; grid-row: 1 / span 4; height: calc(100dvh - 58px - var(--sa-b)); overflow-y: auto; scrollbar-width: none; align-content: start; }
+html .tx .tx-pane::-webkit-scrollbar,
+html .tx .tx-clubs::-webkit-scrollbar { display: none; }
+html .tx .tx-top { display: grid; gap: 4px; }
+html .tx .tx-title h1 { font-size: 30px; }
+html .tx .tx-title p { font-size: 11px; margin-top: 2px; }
+html .tx .tx-bal { justify-items: start; padding: 4px 10px; grid-template-columns: auto 1fr; column-gap: 8px; align-items: baseline; }
+html .tx .tx-bal strong { font-size: 22px; }
+html .tx .tx-bal small { display: none; }
+html .tx .tx-tabs { display: grid; grid-template-columns: 1fr 1fr; gap: 3px; border: 0; }
+html .tx .tx-tabs button { min-height: 32px; padding: 0; font-size: 14px; border: 1px solid var(--line-2); margin: 0; }
+html .tx .tx-tabs .is-on { background: var(--brass); color: var(--brass-ink); border-color: var(--brass); }
+html .tx .tx-bar { gap: 5px 8px; position: sticky; top: 0; z-index: 2; background: var(--ink-0); padding-bottom: 4px; }
+html .tx .tx-search { min-width: 120px; min-height: 30px; flex: 1; }
+html .tx .tx-chips button { min-height: 28px; padding: 0 8px; font-size: 12px; }
+html .tx .tx-row { min-height: 44px; padding: 3px 8px; gap: 8px; grid-template-columns: 38px minmax(0, 1fr) 70px auto; }
+html .tx .tx-row.is-news { grid-template-columns: 38px minmax(0, 1fr) minmax(0, 1.2fr) 60px; }
+html .tx .tx-rate { height: 30px; font-size: 17px; }
+html .tx .tx-name strong { font-size: 14px; }
+html .tx .tx-btn { min-height: 30px; padding: 0 9px; font-size: 12px; }
+html .tx .tx-row.is-sell .tx-acts { min-width: 0; }
+html .tx .tx-hint { font-size: 11px; }
+html .tx .tx-note { font-size: 12px; padding: 5px 8px; }
+html .tx .tx-row.is-talk { grid-template-columns: 38px minmax(0, 1fr) auto; }
+html .tx .tx-counter { min-height: 30px; }
 }

@@ -17,6 +17,7 @@ import { marketPlayers, originOf } from "@/lib/football/market";
 import { contractOf, seasonsLeft, type Renewal } from "@/lib/football/contracts";
 import { evolve, gainsAt, type TrainingRow } from "@/lib/football/development";
 import { loadFriendlies } from "@/lib/football/friendlies";
+import { aiDeals, aiDealsAt } from "@/lib/football/aiTransfers";
 
 export const MARKET = "market";
 export const ABROAD = "abroad";
@@ -82,6 +83,10 @@ export type SquadOpts = {
   matchday?: number;
   /** the manager's club and renewals: players whose contract ran out have left it */
   own?: { club: string; renewals: Renewal[] };
+  /** deals between the computer clubs, applied in time order with the manager's own */
+  ai?: Deal[];
+  /** deals of the other managers of a shared league: they only move players that are where they say */
+  others?: Deal[];
 };
 
 export function applyDeals(deals: Deal[], opts: SquadOpts = {}): Squads {
@@ -89,16 +94,36 @@ export function applyDeals(deals: Deal[], opts: SquadOpts = {}): Squads {
   for (const [club, list] of Object.entries(baseSquads)) out[club] = [...list];
   out[MARKET] = marketPlayers.map((p) => ({ ...p }));
 
-  const ordered = [...deals].sort((a, b) => a.created_at.localeCompare(b.created_at));
-  for (const deal of ordered) {
-    const from = out[deal.from_club];
-    if (!from) continue;
-    const i = from.findIndex((p) => p.id === deal.player_id);
-    if (i < 0) continue;
-    const [player] = from.splice(i, 1);
-    if (deal.to_club === ABROAD) continue;
+  const mine: { deal: Deal; anywhere: boolean }[] = [
+    ...deals.map((deal) => ({ deal, anywhere: true })),
+    ...(opts.others ?? []).map((deal) => ({ deal, anywhere: false })),
+  ].sort((a, b) => a.deal.created_at.localeCompare(b.deal.created_at));
+  const ai = [...(opts.ai ?? [])].sort((a, b) => a.season.localeCompare(b.season) || a.matchday - b.matchday || a.id.localeCompare(b.id));
+  // a deal of the manager's in the off-season is recorded as matchday 0: it comes after the whole season
+  const keyOf = (d: Deal) => `${d.season}|${String(d.matchday === 0 ? 99 : d.matchday).padStart(3, "0")}`;
+  let next = 0;
+
+  const move = (deal: Deal, anywhere: boolean) => {
+    let fromClub = deal.from_club;
+    let i = out[fromClub]?.findIndex((p) => p.id === deal.player_id) ?? -1;
+    if (i < 0 && anywhere) {
+      for (const [club, list] of Object.entries(out)) {
+        const j = list.findIndex((p) => p.id === deal.player_id);
+        if (j >= 0) { fromClub = club; i = j; break; }
+      }
+    }
+    if (i < 0) return; // he is no longer there: nobody can buy him from that club
+    const [player] = out[fromClub].splice(i, 1);
+    if (deal.to_club === ABROAD) return;
     (out[deal.to_club] ??= []).push({ ...player, club: deal.to_club });
+  };
+
+  for (const { deal, anywhere } of mine) {
+    const k = keyOf(deal);
+    while (next < ai.length && keyOf(ai[next]) <= k) move(ai[next++], false);
+    move(deal, anywhere);
   }
+  while (next < ai.length) move(ai[next++], false);
 
   // contracts that ran out: the player leaves the manager's club, unless that would leave a position short
   if (opts.season && opts.own) {
@@ -294,6 +319,8 @@ export type TransferState = {
   training: TrainingRow[];
   renewals: Renewal[];
   offers: Offer[];
+  /** deals between the other clubs of the league up to now */
+  aiDeals: Deal[];
   net: number;
   matchday: number | null;
 };
@@ -333,7 +360,24 @@ export async function loadTransferState(
     /* no renewals yet */
   }
   const renewalFees = renewals.filter((r) => r.club_id === myClub).reduce((sum, r) => sum + Number(r.fee), 0);
-  const view = (list: Deal[]) => applyDeals(list, { season, training, matchday: matchday ?? 99, own: { club: myClub, renewals } });
+  const league = leagueId || leagueOfClub(myClub);
+  // the other managers of a shared league: their clubs do not trade by themselves, and their deals count
+  let human: string[] = [];
+  let friendDeals: Deal[] = [];
+  try {
+    const { data: c } = await client.from("manager_contracts").select("room_id").eq("user_id", userId).maybeSingle();
+    const rid = (c?.room_id as string | null) ?? null;
+    if (rid) {
+      const { data: mem } = await client.from("room_members").select("club_id, user_id").eq("room_id", rid);
+      human = (mem ?? []).filter((m: { user_id: string }) => m.user_id !== userId).map((m: { club_id: string }) => m.club_id);
+      const { data: fd } = await client.rpc("room_member_deals");
+      friendDeals = ((fd ?? []) as Deal[]).map((d) => ({ ...d, fee: Number(d.fee), created_at: String(d.created_at) }));
+    }
+  } catch {
+    /* playing alone, or supabase/020 has not been run */
+  }
+  const others = aiDealsAt(aiDeals(userId, league, myClub, season, human), season, matchday);
+  const view = (list: Deal[]) => applyDeals(list, { season, training, matchday: matchday ?? 99, own: { club: myClub, renewals }, ai: others, others: friendDeals });
   let deals = (dealRows ?? []) as Deal[];
   let listings = (listingRows ?? []) as Listing[];
   let squads = view(deals);
@@ -369,8 +413,8 @@ export async function loadTransferState(
       listings = (l2 ?? []) as Listing[];
       squads = view(deals);
     }
-    return { deals, listings, squads, training, renewals, offers: resolveListings(userId, listings, squads, myClub, matchday).offers, net: transfersNet(deals, myClub) + friendlyMoney - renewalFees, matchday };
+    return { deals, listings, squads, training, renewals, offers: resolveListings(userId, listings, squads, myClub, matchday).offers, aiDeals: others, net: transfersNet(deals, myClub) + friendlyMoney - renewalFees, matchday };
   }
 
-  return { deals, listings, squads, training, renewals, offers: [], net: transfersNet(deals, myClub) + friendlyMoney - renewalFees, matchday };
+  return { deals, listings, squads, training, renewals, offers: [], aiDeals: others, net: transfersNet(deals, myClub) + friendlyMoney - renewalFees, matchday };
 }

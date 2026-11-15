@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
@@ -9,6 +9,7 @@ import { getTier } from "@/lib/football/finance";
 import { marketValue, teamRating, type Player, type Position } from "@/lib/football/squads";
 import { askingPrice, canBuy, MIN_BY_POSITION, recordDeal, windowStatus } from "@/lib/football/transfers";
 import { useTransfers } from "@/lib/football/useTransfers";
+import { myRoom } from "@/lib/football/rooms";
 import { BidModal, money } from "@/components/TransferModals";
 import GsmMark from "@/components/GsmMark";
 import GameHud from "@/components/GameHud";
@@ -30,6 +31,23 @@ export default function ClubPage() {
   const clubId = String(params?.id ?? "");
   const { ctx, loading, error, reload } = useTransfers();
   const [bid, setBid] = useState<Player | null>(null);
+
+  // a club run by a friend answers offers itself: those go through the Talks page
+  const [managed, setManaged] = useState<string | null>(null);
+  const uid = ctx?.userId;
+  useEffect(() => {
+    if (!uid) return;
+    (async () => {
+      try {
+        const { data: c } = await supabase.from("manager_contracts").select("room_id").eq("user_id", uid).maybeSingle();
+        const room = await myRoom(supabase, (c?.room_id as string | null) ?? null);
+        const m = room?.members.find((x) => x.club_id === clubId && x.user_id !== uid);
+        setManaged(m ? (m.name || "a friend") : null);
+      } catch {
+        setManaged(null);
+      }
+    })();
+  }, [uid, clubId]);
 
   const club = clubs.find((c) => c.id === clubId);
   const squad = useMemo(() => (ctx ? (ctx.state.squads[clubId] ?? []) : []), [ctx, clubId]);
@@ -102,7 +120,9 @@ export default function ClubPage() {
             {" "}<Link href="/game/squad">Open squad</Link> · <Link href="/game/transfers">Sell players</Link></p>
         ) : (
           <p className="cl-note">
-            {window.open
+            {managed
+              ? <>{club.name} are managed by <b>{managed}</b>. Make your offers in <Link href="/game/transfers">Transfers</Link>, League clubs, Negotiate: he answers himself.</>
+              : window.open
               ? <>Tap <b>Offer</b> next to any player to bid for him. {club.name} decide the price, so a low bid can be turned down.</>
               : <>The transfer window is closed, so no offers can be made right now.</>}
             {" "}You can also browse the <Link href="/game/transfers">transfer market</Link>.
@@ -140,7 +160,7 @@ export default function ClubPage() {
                         <small>{p.position} · {p.age} · {p.nationality || "-"}</small>
                       </span>
                       <span className="tr-val">{money(marketValue(p))}</span>
-                      {own ? <span /> : (
+                      {own || managed ? <span /> : (
                         <button
                           type="button"
                           className="tr-offer"

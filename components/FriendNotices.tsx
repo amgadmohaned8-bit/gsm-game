@@ -31,7 +31,8 @@ export default function FriendNotices() {
         void markNoticesSeen(supabase, fresh.map((n) => n.id));
         sfx("ping");
         for (const n of fresh) {
-          void alertNow(`${n.from_name || "A friend"} played you`, `${name(n.home_club)} ${n.home_score}-${n.away_score} ${name(n.away_club)} (${label(n)})`, `fn-${n.id}`);
+          if (n.kind === "offer") void alertNow(n.from_name || "A manager", n.home_club, `fn-${n.id}`);
+          else void alertNow(`${n.from_name || "A friend"} played you`, `${name(n.home_club)} ${n.home_score}-${n.away_score} ${name(n.away_club)} (${label(n)})`, `fn-${n.id}`);
         }
         setList((cur) => [...cur, ...fresh]);
         window.setTimeout(() => setList((cur) => cur.filter((n) => !fresh.some((f) => f.id === n.id))), 9000);
@@ -50,8 +51,17 @@ export default function FriendNotices() {
     <div className="fn" role="status" aria-live="polite">
       {list.map((n) => (
         <button key={n.id} type="button" className="fn-card" onClick={() => setList((cur) => cur.filter((x) => x.id !== n.id))}>
-          <b>{n.from_name || "A friend"} played you</b>
-          <span>{name(n.home_club)} <i>{n.home_score}-{n.away_score}</i> {name(n.away_club)} · {label(n)}</span>
+          {n.kind === "offer" ? (
+            <>
+              <b>{n.from_name || "A manager"}</b>
+              <span>{n.home_club}</span>
+            </>
+          ) : (
+            <>
+              <b>{n.from_name || "A friend"} played you</b>
+              <span>{name(n.home_club)} <i>{n.home_score}-{n.away_score}</i> {name(n.away_club)} · {label(n)}</span>
+            </>
+          )}
         </button>
       ))}
     </div>

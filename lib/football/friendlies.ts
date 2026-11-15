@@ -28,7 +28,7 @@ export type FriendNotice = {
   home_score: number;
   away_score: number;
   season: string;
-  kind?: "friendly" | "league";
+  kind?: "friendly" | "league" | "offer";
   matchday?: number | null;
 };
 
@@ -52,7 +52,7 @@ export async function loadFriendlies(client: SupabaseClient, userId: string, sea
 /** tells a friend (a manager in the same shared league) that he was played */
 export async function sendFriendNotice(
   client: SupabaseClient,
-  n: { to: string; from: string; fromName: string; season: string; home: string; away: string; hs: number; as: number; kind?: "friendly" | "league"; matchday?: number }
+  n: { to: string; from: string; fromName: string; season: string; home: string; away: string; hs: number; as: number; kind?: "friendly" | "league" | "offer"; matchday?: number }
 ) {
   try {
     const kind = n.kind ?? "friendly";

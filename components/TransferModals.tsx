@@ -323,3 +323,81 @@ export function SellModal({
     </Shell>
   );
 }
+
+/* ------------------------------------------------------------------ */
+/* an offer to another manager: he decides                             */
+/* ------------------------------------------------------------------ */
+
+export function OfferModal({
+  player,
+  manager,
+  balanceM,
+  blocked,
+  onClose,
+  onSend,
+}: {
+  player: Player;
+  manager: string;
+  balanceM: number;
+  blocked: string | null;
+  onClose: () => void;
+  onSend: (amount: number) => Promise<void>;
+}) {
+  const value = marketValue(player);
+  const [offer, setOffer] = useState(value.toFixed(1));
+  const [saving, setSaving] = useState(false);
+  const [done, setDone] = useState(false);
+  const [error, setError] = useState("");
+  const amount = Math.round(Math.max(0, Number(offer) || 0) * 10) / 10;
+  const problem = blocked ?? (amount > balanceM ? "Your club cannot afford that offer." : null);
+
+  async function send() {
+    if (problem || amount <= 0) return;
+    setSaving(true);
+    setError("");
+    try {
+      await onSend(amount);
+      setDone(true);
+    } catch (err) {
+      console.error(err);
+      setError("The offer was not sent. Make sure supabase/020_manager_offers.sql has been run, and that you have no open offer for this player.");
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  return (
+    <Shell title={`Offer for ${player.name}`} onClose={onClose}>
+      <PlayerHead player={player} sub={`${manager}'s player`} />
+      {done ? (
+        <div className="tb-stage tb-done">
+          <div className="tb-stamp is-yes"><Icon name="check" size={34} /></div>
+          <h3>Offer sent</h3>
+          <p>{manager} can accept, refuse or answer with another price. You will see it in Talks.</p>
+          <button type="button" className="gx-btn" onClick={onClose}>Done</button>
+        </div>
+      ) : (
+        <div className="tb-stage">
+          <label className="tb-label" htmlFor="tb-moffer">Your offer (millions)</label>
+          <div className="tb-input">
+            <span>€</span>
+            <input id="tb-moffer" inputMode="decimal" value={offer} onChange={(e) => setOffer(e.target.value.replace(/[^0-9.]/g, ""))} />
+            <span>M</span>
+          </div>
+          <div className="tb-quick" role="group" aria-label="Quick amounts">
+            {[0.8, 1, 1.2, 1.5].map((f) => (
+              <button key={f} type="button" onClick={() => setOffer((Math.round(value * f * 10) / 10).toString())}>{Math.round(f * 100)}%</button>
+            ))}
+          </div>
+          <dl className="tb-facts">
+            <div><dt>Your balance</dt><dd>{money(balanceM)}</dd></div>
+            <div><dt>After the deal</dt><dd className={amount > balanceM ? "is-bad" : ""}>{money(balanceM - amount)}</dd></div>
+          </dl>
+          {problem ? <p className="tb-error" role="alert">{problem}</p> : <p className="tb-note">{manager} decides. Nothing is paid until he accepts.</p>}
+          {error && <p className="tb-error" role="alert">{error}</p>}
+          <button type="button" className="gx-btn" onClick={send} disabled={saving || !!problem || amount <= 0}>{saving ? "Sending..." : "Send offer"}</button>
+        </div>
+      )}
+    </Shell>
+  );
+}

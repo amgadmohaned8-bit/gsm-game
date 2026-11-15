@@ -51,8 +51,9 @@ Deno.serve(async (req) => {
     const sa = JSON.parse(Deno.env.get("FIREBASE_SERVICE_ACCOUNT")!);
     const access = await accessToken(sa);
     const where = n.kind === "league" ? `league, matchday ${n.matchday ?? ""}`.trim() : "friendly";
-    const title = `${n.from_name || "A friend"} played you`;
-    const text = `${nice(n.home_club)} ${n.home_score}-${n.away_score} ${nice(n.away_club)} (${where})`;
+    const offer = n.kind === "offer";
+    const title = offer ? `${n.from_name || "A manager"}` : `${n.from_name || "A friend"} played you`;
+    const text = offer ? `${n.home_club}` : `${nice(n.home_club)} ${n.home_score}-${n.away_score} ${nice(n.away_club)} (${where})`;
 
     for (const { token } of tokens) {
       const res = await fetch(`https://fcm.googleapis.com/v1/projects/${sa.project_id}/messages:send`, {
