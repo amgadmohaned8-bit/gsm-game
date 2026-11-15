@@ -1,6 +1,7 @@
 
 "use client";
 
+import { baseLeague } from "@/lib/football/leagueIds";
 import { egyptClubs } from "@/lib/football/egypt";
 import { useEffect, useState, useRef } from "react";
 import { useRouter } from "next/navigation";
@@ -370,7 +371,7 @@ export default function DashboardPage() {
   if (!manager || !club) return null;
 
   const leagueName =
-    leagueNames[manager.selected_league || ""] || "Competition";
+    leagueNames[baseLeague(manager.selected_league) || ""] || "Competition";
 
   const myIndex = table.findIndex((row) => row.clubId === club.id);
   const myRow = myIndex >= 0 ? table[myIndex] : null;

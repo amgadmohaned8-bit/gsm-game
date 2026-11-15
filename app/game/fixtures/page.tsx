@@ -237,7 +237,7 @@ export default function FixturesPage() {
     if (!next || !ready || saving || !manager) return;
     setSaving(true);
     try {
-      const sim = await withTimeout(loadSim(supabase, { userId, clubId: myClub, roomId: manager?.room_id ?? null, season, matchday: next.matchday }), 8000);
+      const sim = await withTimeout(loadSim(supabase, { userId, clubId: myClub, roomId: manager?.room_id ?? null, season, matchday: next.matchday, leagueId: manager?.selected_league }), 8000);
       setSheet({ squad: sim.squads?.[myClub] ?? squadOf(myClub), fitness: sim.fitness ?? {} });
     } catch {
       setSheet({ squad: squadOf(myClub), fitness: {} });
@@ -253,7 +253,7 @@ export default function FixturesPage() {
     setError("");
 
     try {
-      const sim = await withTimeout(loadSim(supabase, { userId, clubId: myClub, roomId: manager.room_id, season, matchday: next.matchday }), 8000).catch(() => ({ bonus: {} as Record<string, number>, roomId: manager.room_id, squads: undefined }));
+      const sim = await withTimeout(loadSim(supabase, { userId, clubId: myClub, roomId: manager.room_id, season, matchday: next.matchday, leagueId: manager.selected_league }), 8000).catch(() => ({ bonus: {} as Record<string, number>, roomId: manager.room_id, squads: undefined }));
       const result = await withTimeout(
         playMatchday(supabase, matches, next.matchday, myClub, manager.room_id ?? userId, sim),
         20000

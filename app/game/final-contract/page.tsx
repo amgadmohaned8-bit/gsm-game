@@ -1,6 +1,7 @@
 
 "use client";
 
+import { baseLeague } from "@/lib/football/leagueIds";
 import { resetCareerData } from "@/lib/football/careerReset";
 import { egyptClubs } from "@/lib/football/egypt";
 import { africanClubs, isCafCup } from "@/lib/football/africa";
@@ -375,12 +376,12 @@ export default function FinalContractPage() {
 
             <span className="club-appointed-label">MANAGER APPOINTMENT</span>
             <h2>{club.name}</h2>
-            <p className="club-city">{club.city}{league === "premier-league" ? ", England" : league === "egyptian-premier-league" ? ", Egypt" : ""}</p>
+            <p className="club-city">{club.city}{baseLeague(league) === "premier-league" ? ", England" : baseLeague(league) === "egyptian-premier-league" ? ", Egypt" : ""}</p>
 
             <div className="club-info-list">
               <div>
                 <span>COMPETITION</span>
-                <strong>{leagueTitles[league] || league}</strong>
+                <strong>{leagueTitles[baseLeague(league)] || league}</strong>
               </div>
               <div>
                 <span>HOME STADIUM</span>

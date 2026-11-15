@@ -19,7 +19,7 @@ export const TRAIN_HOURS = 8;
 export const TRAIN_MS = TRAIN_HOURS * 3600_000;
 export const MAX_RATING = 96;
 
-export type TrainingRow = { season: string; matchday: number; player_id: string; gain: number; created_at?: string };
+export type TrainingRow = { season: string; matchday: number; player_id: string; gain: number; created_at?: string; league_id?: string | null };
 
 /** When this session finishes (null for old rows without a time: they are done). */
 export function finishesAt(r: TrainingRow): number | null {

@@ -1,5 +1,6 @@
 "use client";
 
+import { leaveCurrentRoom } from "@/lib/football/careers";
 import { resetCareerData } from "@/lib/football/careerReset";
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
@@ -63,7 +64,7 @@ export default function SackedPage() {
     setBusy(clubId);
     setError("");
     try {
-      await supabase.from("room_members").delete().eq("user_id", userId);
+      await leaveCurrentRoom(supabase, userId);
       const { data: saved, error: e } = await supabase
         .from("manager_contracts")
         .update({ selected_league: league, selected_club: clubId, club_appointed_at: new Date().toISOString(), room_id: null })
@@ -82,7 +83,7 @@ export default function SackedPage() {
   async function leave() {
     setBusy("leave");
     try {
-      await supabase.from("room_members").delete().eq("user_id", userId);
+      await leaveCurrentRoom(supabase, userId);
       await resetCareerData(supabase, userId, league, club);
       await supabase.from("manager_contracts").update({ selected_league: null, selected_club: null, club_appointed_at: null, room_id: null }).eq("user_id", userId);
       router.replace("/game/leagues");

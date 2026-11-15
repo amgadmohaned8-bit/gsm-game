@@ -9,6 +9,7 @@
 
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { clubsOfLeague } from "@/lib/football/leagueClubs";
+import { isSlot } from "@/lib/football/leagueIds";
 
 const chunks = <T,>(list: T[], n = 100) => {
   const out: T[][] = [];
@@ -17,10 +18,14 @@ const chunks = <T,>(list: T[], n = 100) => {
 };
 
 export async function resetCareerData(client: SupabaseClient, userId: string, leagueId: string, clubId?: string | null) {
+  // the first team of a league also clears what older versions saved without a team label;
+  // the other teams of the same league are separate saves and are never touched
+  const first = !isSlot(leagueId);
   const ids = new Set<string>();
-  try { for (const c of clubsOfLeague(leagueId)) ids.add(c.id); } catch { /* not a club league */ }
+  if (first) { try { for (const c of clubsOfLeague(leagueId)) ids.add(c.id); } catch { /* not a club league */ } }
   if (clubId) ids.add(clubId);
   const clubIds = [...ids];
+  const mineRow = (row: { league_id?: string | null }, legacy: boolean) => (row.league_id ? row.league_id === leagueId : first && legacy);
 
   const step = async (job: () => PromiseLike<unknown>) => {
     try { await job(); } catch { /* one table failing must not stop the rest */ }
@@ -30,16 +35,16 @@ export async function resetCareerData(client: SupabaseClient, userId: string, le
   // signings and sales that touch a club of this league, and the players in them
   const players = new Set<string>();
   await step(async () => {
-    const { data } = await client.from("transfers").select("id, player_id, from_club, to_club").eq("user_id", userId);
-    const mine = ((data ?? []) as { id: string; player_id: string; from_club: string; to_club: string }[]).filter((d) => ids.has(d.from_club) || ids.has(d.to_club));
+    const { data } = await client.from("transfers").select("id, player_id, from_club, to_club, league_id").eq("user_id", userId);
+    const mine = ((data ?? []) as { id: string; player_id: string; from_club: string; to_club: string; league_id?: string | null }[]).filter((d) => mineRow(d, ids.has(d.from_club) || ids.has(d.to_club)));
     mine.forEach((d) => players.add(d.player_id));
     for (const part of chunks(mine.map((d) => d.id))) await client.from("transfers").delete().in("id", part);
   });
 
   for (const table of ["training_sessions", "transfer_listings"]) {
     await step(async () => {
-      const { data } = await client.from(table).select("id, player_id").eq("user_id", userId);
-      const mine = ((data ?? []) as { id: string; player_id: string }[]).filter((r) => players.has(r.player_id) || isPlayerOfLeague(r.player_id));
+      const { data } = await client.from(table).select("id, player_id, league_id").eq("user_id", userId);
+      const mine = ((data ?? []) as { id: string; player_id: string; league_id?: string | null }[]).filter((r) => mineRow(r, players.has(r.player_id) || isPlayerOfLeague(r.player_id)));
       for (const part of chunks(mine.map((r) => r.id))) await client.from(table).delete().in("id", part);
     });
   }
@@ -55,7 +60,7 @@ export async function resetCareerData(client: SupabaseClient, userId: string, le
       await client.from("continental_seasons").delete().eq("user_id", userId).eq("comp_id", leagueId);
       return;
     }
-    if (!clubIds.length) return;
+    if (!first || !clubIds.length) return;
     const { data } = await client.from("continental_seasons").select("comp_id, season, club_id").eq("user_id", userId).in("club_id", clubIds);
     for (const s of (data ?? []) as { comp_id: string; season: string }[]) {
       await client.from("continental_matches").delete().eq("user_id", userId).eq("comp_id", s.comp_id).eq("season", s.season);
@@ -63,9 +68,10 @@ export async function resetCareerData(client: SupabaseClient, userId: string, le
     }
   });
 
-  if (clubIds.length) {
+  const own = clubId ? [clubId] : clubIds; // lineups, renewals and press belong to the club itself
+  if (own.length) {
     for (const table of ["match_lineups", "contract_renewals", "press_quotes"]) {
-      await step(() => client.from(table).delete().eq("user_id", userId).in("club_id", clubIds));
+      await step(() => client.from(table).delete().eq("user_id", userId).in("club_id", own));
     }
   }
   await step(() => client.from("manager_careers").delete().eq("user_id", userId).eq("league_id", leagueId));
@@ -75,7 +81,7 @@ export async function resetCareerData(client: SupabaseClient, userId: string, le
     const gone: string[] = [];
     for (let i = 0; i < localStorage.length; i++) {
       const k = localStorage.key(i) ?? "";
-      if (k.startsWith(`gsm-talks:${userId}:`) || clubIds.some((c) => k === `gsm-lineup:${userId}:${c}` || k === `gsm-tactic:${userId}:${c}`)) gone.push(k);
+      if ((first && k.startsWith(`gsm-talks:${userId}:`)) || own.some((c) => k === `gsm-lineup:${userId}:${c}` || k === `gsm-tactic:${userId}:${c}`)) gone.push(k);
     }
     gone.forEach((k) => localStorage.removeItem(k));
   } catch { /* storage is optional */ }

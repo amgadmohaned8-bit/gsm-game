@@ -12,6 +12,7 @@
 import { clubs as premierClubs } from "@/lib/football/clubs";
 import { egyptClubs } from "@/lib/football/egypt";
 import { africanClubs } from "@/lib/football/africa";
+import { baseLeague } from "@/lib/football/leagueIds";
 
 export type LeagueClub = { id: string; name: string; city: string; stadium: string; logo: string };
 
@@ -26,6 +27,6 @@ export const allClubs: LeagueClub[] = [...Object.values(LEAGUE_CLUBS).flat(), ..
 const owner = new Map<string, string>();
 for (const [league, list] of Object.entries(LEAGUE_CLUBS)) for (const c of list) owner.set(c.id, league);
 
-export const clubsOfLeague = (leagueId: string | null | undefined): LeagueClub[] => LEAGUE_CLUBS[leagueId || "premier-league"] ?? LEAGUE_CLUBS["premier-league"];
+export const clubsOfLeague = (leagueId: string | null | undefined): LeagueClub[] => LEAGUE_CLUBS[baseLeague(leagueId) || "premier-league"] ?? LEAGUE_CLUBS["premier-league"];
 export const leagueOfClub = (clubId: string | null | undefined): string => (clubId && owner.get(clubId)) || "premier-league";
-export const hasClubs = (leagueId: string) => !!LEAGUE_CLUBS[leagueId]?.length;
+export const hasClubs = (leagueId: string) => !!LEAGUE_CLUBS[baseLeague(leagueId)]?.length;

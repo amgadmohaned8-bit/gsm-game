@@ -16,6 +16,7 @@ import { marketValue, squads as baseSquads, type Player, type Position } from "@
 import { marketPlayers, originOf } from "@/lib/football/market";
 import { contractOf, seasonsLeft, type Renewal } from "@/lib/football/contracts";
 import { evolve, gainsAt, type TrainingRow } from "@/lib/football/development";
+import { inCareer } from "@/lib/football/leagueIds";
 import { loadFriendlies } from "@/lib/football/friendlies";
 import { aiDeals, aiDealsAt } from "@/lib/football/aiTransfers";
 
@@ -37,6 +38,8 @@ export type Deal = {
   kind: "buy" | "sell";
   matchday: number;
   created_at: string;
+  /** the team (career) this deal belongs to */
+  league_id?: string | null;
 };
 
 export type Listing = {
@@ -47,6 +50,7 @@ export type Listing = {
   asking: number;
   listed_matchday: number;
   status: "open" | "sold" | "withdrawn";
+  league_id?: string | null;
 };
 
 export type Offer = { player_id: string; matchday: number; club: string; amount: number };
@@ -337,18 +341,23 @@ export async function loadTransferState(
   matchday: number | null,
   leagueId?: string
 ): Promise<TransferState> {
-  const [{ data: dealRows }, { data: listingRows }] = await Promise.all([
+  // each team a manager runs is its own save: only this team's deals, listings and training count
+  const mineOnly = <T extends { league_id?: string | null }>(rows: T[] | null | undefined): T[] =>
+    (rows ?? []).filter((r) => !leagueId || inCareer(r.league_id, leagueId));
+  const [{ data: dealRows0 }, { data: listingRows0 }] = await Promise.all([
     client.from("transfers").select("*").eq("user_id", userId),
     client.from("transfer_listings").select("*").eq("user_id", userId).eq("status", "open"),
   ]);
+  const dealRows = mineOnly(dealRows0 as Deal[] | null);
+  const listingRows = mineOnly(listingRows0 as Listing[] | null);
 
   const friendlyMoney = (await loadFriendlies(client, userId, undefined, { leagueId }))
     .filter((f) => f.home_club === myClub || f.away_club === myClub)
     .reduce((sum, f) => sum + Number(f.income), 0);
   let training: TrainingRow[] = [];
   try {
-    const { data: t } = await client.from("training_sessions").select("season, matchday, player_id, gain, created_at").eq("user_id", userId);
-    training = (t ?? []) as TrainingRow[];
+    const { data: t } = await client.from("training_sessions").select("season, matchday, player_id, gain, created_at, league_id").eq("user_id", userId);
+    training = mineOnly((t ?? []) as (TrainingRow & { league_id?: string | null })[]);
   } catch {
     /* no training yet */
   }
@@ -371,7 +380,7 @@ export async function loadTransferState(
       const { data: mem } = await client.from("room_members").select("club_id, user_id").eq("room_id", rid);
       human = (mem ?? []).filter((m: { user_id: string }) => m.user_id !== userId).map((m: { club_id: string }) => m.club_id);
       const { data: fd } = await client.rpc("room_member_deals");
-      friendDeals = ((fd ?? []) as Deal[]).map((d) => ({ ...d, fee: Number(d.fee), created_at: String(d.created_at) }));
+      friendDeals = ((fd ?? []) as Deal[]).filter((d) => !leagueId || inCareer(d.league_id, leagueId)).map((d) => ({ ...d, fee: Number(d.fee), created_at: String(d.created_at) }));
     }
   } catch {
     /* playing alone, or supabase/020 has not been run */
@@ -409,8 +418,8 @@ export async function loadTransferState(
         client.from("transfers").select("*").eq("user_id", userId),
         client.from("transfer_listings").select("*").eq("user_id", userId).eq("status", "open"),
       ]);
-      deals = (d2 ?? []) as Deal[];
-      listings = (l2 ?? []) as Listing[];
+      deals = mineOnly(d2 as Deal[] | null);
+      listings = mineOnly(l2 as Listing[] | null);
       squads = view(deals);
     }
     return { deals, listings, squads, training, renewals, offers: resolveListings(userId, listings, squads, myClub, matchday).offers, aiDeals: others, net: transfersNet(deals, myClub) + friendlyMoney - renewalFees, matchday };

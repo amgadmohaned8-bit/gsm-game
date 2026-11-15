@@ -90,13 +90,13 @@ export function withTimeout<T>(p: Promise<T>, ms: number): Promise<T> {
 /** Everything a match needs to know about squad strength. Never throws: the base ratings are the fallback. */
 export async function loadSim(
   client: SupabaseClient,
-  opts: { userId: string; clubId: string; roomId?: string | null; season: string; matchday: number | null }
+  opts: { userId: string; clubId: string; roomId?: string | null; season: string; matchday: number | null; leagueId?: string | null }
 ): Promise<SimContext> {
   const bonus: Record<string, number> = {};
   let squads: Squads | undefined;
   let fitness: Record<string, number> = {};
   try {
-    const state = await withTimeout(loadTransferState(client, opts.userId, opts.clubId, opts.season, opts.matchday), 8000);
+    const state = await withTimeout(loadTransferState(client, opts.userId, opts.clubId, opts.season, opts.matchday, opts.leagueId ?? undefined), 8000);
     if (opts.matchday !== null) squads = squadsAt(state.deals, opts.season, opts.matchday, state.training, { club: opts.clubId, renewals: state.renewals });
     const mySquad = state.squads[opts.clubId] ?? [];
     if (opts.matchday !== null) fitness = await withTimeout(loadFitness(client, opts.userId, opts.season, opts.matchday, state.training, mySquad), 6000).catch(() => ({}));

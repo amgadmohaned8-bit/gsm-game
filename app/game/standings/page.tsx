@@ -1,5 +1,6 @@
 "use client";
 
+import { inCareer } from "@/lib/football/leagueIds";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
@@ -76,8 +77,8 @@ export default function StandingsPage() {
 
         let trainingRows: TrainingRow[] = [];
         try {
-          const { data: t } = await supabase.from("training_sessions").select("season, matchday, player_id, gain, created_at").eq("user_id", authData.user.id);
-          trainingRows = (t ?? []) as TrainingRow[];
+          const { data: t } = await supabase.from("training_sessions").select("season, matchday, player_id, gain, created_at, league_id").eq("user_id", authData.user.id);
+          trainingRows = ((t ?? []) as TrainingRow[]).filter((r) => inCareer(r.league_id, league));
         } catch {
           /* no training yet */
         }
@@ -91,7 +92,7 @@ export default function StandingsPage() {
         let dealRows: Deal[] = [];
         try {
           const { data: d } = await supabase.from("transfers").select("*").eq("user_id", authData.user.id);
-          dealRows = (d ?? []) as Deal[];
+          dealRows = ((d ?? []) as Deal[]).filter((r) => inCareer(r.league_id, league));
         } catch {
           /* base squads are the fallback */
         }

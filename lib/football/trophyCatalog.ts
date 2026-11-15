@@ -9,6 +9,7 @@
  * still shows up in the room, with a plain gold cup, so nothing is ever lost.
  */
 
+import { baseLeague } from "@/lib/football/leagueIds";
 import { CUPS, isCup, leagueOf } from "@/lib/football/leaguesCatalog";
 
 export type Kind = {
@@ -62,7 +63,7 @@ export function kindInfo(kind: string): Kind {
 
 /** "Premier League champion", "La Liga Cup"... */
 export function trophyTitle(kind: string, leagueId: string) {
-  const own = LEAGUE_OVERRIDES[leagueId]?.[kind]?.title;
+  const own = LEAGUE_OVERRIDES[baseLeague(leagueId)]?.[kind]?.title;
   if (own) return own;
   const l = leagueOf(leagueId).name;
   if (kind === "league") return `${l} champion`;
@@ -75,7 +76,10 @@ export type Win = { kind: string; season: string; club_id: string | null; league
 export type Slot = { soon: boolean; kind: string; leagueId: string; title: string; note: string; image: string; small: boolean; rank: number; wins: Win[] };
 
 /** Every slot of every league: the won ones and the locked ones, plus any kind found only in the data. */
-export function buildCabinet(wins: Win[], leagueIds: string[]): { leagueId: string; cup: boolean; slots: Slot[] }[] {
+export function buildCabinet(allWins: Win[], rawLeagueIds: string[]): { leagueId: string; cup: boolean; slots: Slot[] }[] {
+  // a second team in the same league adds to the same cabinet
+  const wins = allWins.map((w) => ({ ...w, league_id: baseLeague(w.league_id) }));
+  const leagueIds = rawLeagueIds.map((l) => baseLeague(l));
   // every continental cup always has its own cabinet, after the leagues
   const ids = [...new Set([...leagueIds, ...wins.map((w) => w.league_id)])].filter((id) => !isCup(id)).concat(CUPS.map((c) => c.id));
   return ids.map((leagueId) => {
@@ -90,7 +94,7 @@ export function buildCabinet(wins: Win[], leagueIds: string[]): { leagueId: stri
           leagueId,
           title: trophyTitle(kind, leagueId),
           note: info.note,
-          image: LEAGUE_OVERRIDES[leagueId]?.[kind]?.image ?? info.image,
+          image: LEAGUE_OVERRIDES[baseLeague(leagueId)]?.[kind]?.image ?? info.image,
           small: !!info.small,
           rank: info.rank,
           wins: wins.filter((w) => w.league_id === leagueId && w.kind === kind).sort((a, b) => (a.season < b.season ? 1 : -1)),

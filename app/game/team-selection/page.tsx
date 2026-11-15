@@ -1,5 +1,8 @@
 "use client";
 
+import { supabase } from "@/lib/supabase";
+import { baseLeague } from "@/lib/football/leagueIds";
+import { loadCareers } from "@/lib/football/careers";
 import { egyptClubs, egyptColors } from "@/lib/football/egypt";
 import { useEffect, useMemo, useState } from "react";
 import type { CSSProperties } from "react";
@@ -74,14 +77,22 @@ export default function TeamSelectionPage() {
   const cupDef = CAF_CUPS.find((c) => c.id === league);
   // in a CAF cup the manager first picks the Egyptian clubs; the club list is then those two plus the African clubs
   const [egypt, setEgypt] = useState<string[] | null>(cupDef ? null : []);
+  const [usedClubs, setUsedClubs] = useState<string[]>([]);
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data }) => {
+      if (data.user) loadCareers(supabase, data.user.id).then((rows) => setUsedClubs(rows.filter((r) => r.league_id !== league).map((r) => r.club_id))).catch(() => setUsedClubs([]));
+    });
+  }, [league]);
   const clubs: Club[] = useMemo(() => {
     if (cupDef) {
       const africa = africanClubs.filter((a) => cupDef.clubs.some((c) => c.id === a.id));
       const mine = (egypt ?? []).map((id) => egyptClubs.find((c) => c.id === id)).filter(Boolean) as Club[];
       return [...mine, ...africa];
     }
-    return league === "egyptian-premier-league" ? egyptClubs : premierClubs;
-  }, [league, egypt, cupDef]);
+    const all = baseLeague(league) === "egyptian-premier-league" ? egyptClubs : premierClubs;
+    // a club another team of yours already manages is not free
+    return all.filter((c) => !usedClubs.includes(c.id));
+  }, [league, egypt, cupDef, usedClubs]);
 
   const [selectedClub, setSelectedClub] = useState<Club>(clubs[0] ?? egyptClubs[0]);
   const [search, setSearch] = useState("");

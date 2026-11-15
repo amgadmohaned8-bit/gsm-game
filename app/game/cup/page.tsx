@@ -52,7 +52,7 @@ export default function CupPage() {
 
   const refresh = useCallback(
     async (uid: string, seasonName: string, club: string, start: Date, seed?: string | null, leagueId = "premier-league") => {
-      const sim = await loadSim(supabase, { userId: uid, clubId: club, roomId: seed, season: seasonName, matchday: null });
+      const sim = await loadSim(supabase, { userId: uid, clubId: club, roomId: seed, season: seasonName, matchday: null, leagueId });
       const next = await settleCup(supabase, uid, seasonName, club, start, Date.now(), seed ?? uid, sim, leagueId);
       await recordCupWin(supabase, uid, seasonName, club, next, leagueId);
       setRows(next);
@@ -159,7 +159,7 @@ export default function CupPage() {
     setSaving(true);
     setError("");
     try {
-      const sim = await loadSim(supabase, { userId, clubId: myClub, roomId: manager?.room_id, season, matchday: null });
+      const sim = await loadSim(supabase, { userId, clubId: myClub, roomId: manager?.room_id, season, matchday: null, leagueId: manager?.selected_league });
       const result = await playCupRound(supabase, rows, next.round_no, myClub, manager?.room_id ?? userId, sim);
       setPlaying(result);
     } catch (err) {

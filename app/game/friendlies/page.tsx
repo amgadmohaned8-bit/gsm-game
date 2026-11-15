@@ -108,7 +108,7 @@ export default function FriendliesPage() {
     setBusy(true);
     setError("");
     try {
-      const sim = await withTimeout(loadSim(supabase, { userId, clubId: myClub, roomId: null, season, matchday: slot }), 8000).catch(() => ({
+      const sim = await withTimeout(loadSim(supabase, { userId, clubId: myClub, roomId: null, season, matchday: slot, leagueId }), 8000).catch(() => ({
         bonus: {} as Record<string, number>,
         squads: undefined,
       }));

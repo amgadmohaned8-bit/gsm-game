@@ -184,6 +184,7 @@ export default function TransfersPage() {
 
   async function sign(player: Player, fee: number) {
     await recordDeal(supabase, {
+      league_id: ctx!.leagueId,
       user_id: ctx!.userId,
       season: ctx!.season,
       player_id: player.id,
@@ -246,6 +247,7 @@ export default function TransfersPage() {
 
   async function list(player: Player, asking: number) {
     const { error: e } = await supabase.from("transfer_listings").insert({
+      league_id: ctx!.leagueId,
       user_id: ctx!.userId,
       season: ctx!.season,
       player_id: player.id,
@@ -270,6 +272,7 @@ export default function TransfersPage() {
     setBusy(playerId);
     try {
       await recordDeal(supabase, {
+        league_id: ctx!.leagueId,
         user_id: ctx!.userId,
         season: ctx!.season,
         player_id: playerId,
@@ -302,6 +305,7 @@ export default function TransfersPage() {
       const buyer = buyers[(player.rating + player.age) % Math.max(1, buyers.length)] ?? otherClubs[0];
       const listing = ctx!.state.listings.find((l) => l.player_id === player.id);
       await recordDeal(supabase, {
+        league_id: ctx!.leagueId,
         user_id: ctx!.userId,
         season: ctx!.season,
         player_id: player.id,

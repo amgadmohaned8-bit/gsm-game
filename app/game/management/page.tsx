@@ -1,6 +1,7 @@
 
 "use client";
 
+import { leaveCurrentRoom, loadCareers, switchCareer } from "@/lib/football/careers";
 import { resetCareerData } from "@/lib/football/careerReset";
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
@@ -339,10 +340,17 @@ export default function ManagementPage() {
       const { data: auth } = await supabase.auth.getUser();
       if (!auth.user) return router.replace("/");
       const uid = auth.user.id;
-      // leaving the club also frees the seat in a shared league
-      await supabase.from("room_members").delete().eq("user_id", uid);
-      // the career ends here: nothing of it follows him to the next club
+      // leaving this club frees the seat in this shared league only: the other teams he manages stay as they are
+      await leaveCurrentRoom(supabase, uid);
+      // this career ends here: nothing of it follows him to the next club
       if (manager?.selected_league) await resetCareerData(supabase, uid, manager.selected_league, club?.id);
+      const others = (await loadCareers(supabase, uid)).filter((c) => c.league_id !== manager?.selected_league);
+      if (others.length) {
+        // he still manages another team: go back to it
+        await switchCareer(supabase, uid, { selected_league: manager?.selected_league ?? null, selected_club: null }, others[0]);
+        router.replace("/game/dashboard");
+        return;
+      }
       const { error: updateError } = await supabase
         .from("manager_contracts")
         .update({ selected_league: null, selected_club: null, club_appointed_at: null, room_id: null })
@@ -430,7 +438,7 @@ export default function ManagementPage() {
             <div className="mg-modal-icon"><Icon name="warning" size={24} /></div>
             <h2 id="resign-title">Resign from {club.name}?</h2>
             <p dir="auto">هل أنت متأكد إنك عايز تقدم استقالتك من تدريب {club.name}؟</p>
-            <p className="mg-modal-warning" dir="auto">الاستقالة هتنهي مهمتك كمدير فني، وهتختار دوري ونادي جديد. موسم الدوري هيكمل زي ما هو.</p>
+            <p className="mg-modal-warning" dir="auto">الاستقالة هتنهي الفريق ده بس (موسمه وصفقاته). باقي الفرق اللي بتدربها زي ما هي.</p>
             {resignError && <p className="mg-modal-error" role="alert">{resignError}</p>}
 
             <div className="mg-modal-buttons">

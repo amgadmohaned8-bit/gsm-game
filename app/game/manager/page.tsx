@@ -1,5 +1,6 @@
 "use client";
 
+import { MAX_CAREERS } from "@/lib/football/leagueIds";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import type { CSSProperties } from "react";
 import Link from "next/link";
@@ -112,7 +113,8 @@ export default function ManagerPage() {
   const cups = wins.filter((w) => w.kind !== "league" && w.kind !== "objective").length;
   const winRate = stats.totals.played ? Math.round((stats.totals.w / stats.totals.played) * 100) : 0;
   const bestFinish = stats.seasons.filter((s) => s.done).reduce((b, s) => Math.min(b, s.pos), 99);
-  const open = LEAGUES.filter((l) => l.available && !careers.some((c) => c.league_id === l.id));
+  // up to four teams, in any league, also two in the same one
+  const open = careers.length >= MAX_CAREERS ? [] : LEAGUES.filter((l) => l.available);
   const shown = cabTab === "all" ? cabinet : cabTab === "cups" ? cabinet.filter((c) => c.cup) : cabinet.filter((c) => c.leagueId === cabTab);
   const totalTrophies = wins.filter((w) => w.kind !== "objective").length;
   const picked = pick ? cabinet.find((c) => c.leagueId === pick.league)?.slots.find((s) => s.kind === pick.kind) : null;
@@ -337,8 +339,8 @@ export default function ManagerPage() {
             <li className="mgr-add">
               <Icon name="flag" size={28} />
               <strong>Add another league</strong>
-              <small>{open.length ? "Pick a league and a club. Both careers keep their own seasons, table and trophies." : "No other league is open yet. As soon as you add one to the game it appears here."}</small>
-              <button type="button" className="gx-btn" disabled={!open.length || !!busy} onClick={addLeague}>{busy === "add" ? "Opening..." : open.length ? "Choose a league" : "Coming soon"}</button>
+              <small>{open.length ? "Pick a league and a club. Every team keeps its own seasons, table, squad and trophies." : `You manage ${MAX_CAREERS} teams, the most you can have. Resign from one to start another.`}</small>
+              <button type="button" className="gx-btn" disabled={!open.length || !!busy} onClick={addLeague}>{busy === "add" ? "Opening..." : open.length ? "Add a team" : "Full"}</button>
             </li>
           </ul>
         </section>

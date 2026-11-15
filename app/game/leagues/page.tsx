@@ -11,6 +11,7 @@ import { CAF_CUPS } from "@/lib/football/africa";
 import { CUPS, LEAGUES } from "@/lib/football/leaguesCatalog";
 import { supabase } from "@/lib/supabase";
 import { loadCareers } from "@/lib/football/careers";
+import { baseLeague, freeSlot, MAX_CAREERS } from "@/lib/football/leagueIds";
 import "./leagues.css";
 
 export default function LeaguesPage() {
@@ -46,7 +47,8 @@ export default function LeaguesPage() {
   }, []);
 
   const currentLeague = leagues[centerIndex];
-  const taken = owned.includes(currentLeague.id);
+  // a manager can run up to four teams, also in the same league: only the limit stops him
+  const taken = adding && owned.length >= MAX_CAREERS;
 
   // left / right arrow keys move through the leagues
   useEffect(() => {
@@ -71,7 +73,7 @@ export default function LeaguesPage() {
     if (!currentLeague.available || taken || loading) return;
 
     setLoading(true);
-    router.push(`/game/team-selection?league=${currentLeague.id}`);
+    router.push(`/game/team-selection?league=${adding ? freeSlot(currentLeague.id, owned) : currentLeague.id}`);
   }
 
   return (
@@ -123,7 +125,7 @@ export default function LeaguesPage() {
                 key={league.id}
                 type="button"
                 data-league={league.id}
-                className={`lg-card ${active ? "is-active" : ""} ${league.available && !owned.includes(league.id) ? "" : "is-locked"} ${league.facts ? "is-cup" : ""}`}
+                className={`lg-card ${active ? "is-active" : ""} ${league.available && !taken ? "" : "is-locked"} ${league.facts ? "is-cup" : ""}`}
                 style={{ "--c1": league.color, "--c2": league.color2 } as CSSProperties}
                 onClick={() => setCenterIndex(index)}
                 aria-pressed={active}
@@ -209,7 +211,7 @@ export default function LeaguesPage() {
           {loading
             ? "Loading..."
             : taken
-              ? "You manage a club here"
+              ? `You already manage ${MAX_CAREERS} teams`
               : currentLeague.available
                 ? "Choose your club"
                 : "Coming soon"}

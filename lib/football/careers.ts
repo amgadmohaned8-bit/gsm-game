@@ -103,3 +103,14 @@ export function careerStats(matches: M[], careers: { league_id: string; club_id:
   seasons.sort((a, b) => (a.season < b.season ? 1 : a.season > b.season ? -1 : 0));
   return { totals, seasons };
 }
+
+/** Leaves the shared league of the career in play, and only that one: the other careers keep their seats. */
+export async function leaveCurrentRoom(client: SupabaseClient, userId: string) {
+  try {
+    const { data } = await client.from("manager_contracts").select("room_id").eq("user_id", userId).maybeSingle();
+    const rid = (data?.room_id as string | null) ?? null;
+    if (rid) await client.from("room_members").delete().eq("user_id", userId).eq("room_id", rid);
+  } catch {
+    /* the seat is freed the next time */
+  }
+}

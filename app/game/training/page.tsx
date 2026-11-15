@@ -103,7 +103,7 @@ export default function TrainingPage() {
         const p = byId.get(id)!;
         const spent = seasonGain[id] ?? 0;
         const gain = Math.max(0, Math.min(sessionGain(p.age) * boost, cap(p.age) - spent));
-        return { user_id: ctx.userId, season: ctx.season, matchday: day, player_id: id, gain: Math.round(gain * 100) / 100 };
+        return { user_id: ctx.userId, league_id: ctx.leagueId, season: ctx.season, matchday: day, player_id: id, gain: Math.round(gain * 100) / 100 };
       });
       const { error: insertError } = await supabase.from("training_sessions").insert(rowsToSave);
       if (insertError) throw insertError;

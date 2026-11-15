@@ -81,6 +81,7 @@ export default function ClubPage() {
 
   async function sign(player: Player, fee: number) {
     await recordDeal(supabase, {
+      league_id: ctx!.leagueId,
       user_id: ctx!.userId,
       season: ctx!.season,
       player_id: player.id,

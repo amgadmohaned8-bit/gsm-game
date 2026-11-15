@@ -1,5 +1,6 @@
 "use client";
 
+import { leaveCurrentRoom } from "@/lib/football/careers";
 import { sfx } from "@/lib/sound";
 import { registerPush } from "@/lib/push";
 import { alertMode, alertNow, alertProblem, alertState, askAlerts } from "@/lib/notify";
@@ -119,7 +120,7 @@ export default function SettingsPage() {
   async function leaveRoom() {
     setBusy(true);
     try {
-      await supabase.from("room_members").delete().eq("user_id", userId);
+      await leaveCurrentRoom(supabase, userId);
       await supabase.from("manager_contracts").update({ room_id: null }).eq("user_id", userId);
       setCode(null);
       setContract((c) => (c ? { ...c, room_id: null } : c));

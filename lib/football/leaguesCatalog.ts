@@ -4,6 +4,8 @@
  * `available: false` shows it as "Coming soon".
  */
 
+import { baseLeague } from "@/lib/football/leagueIds";
+
 export type League = {
   id: string;
   name: string;
@@ -35,10 +37,11 @@ export const CUPS: League[] = [
 
 export const isCup = (id: string | null | undefined) => CUPS.some((c) => c.id === id);
 
-export const leagueOf = (id: string | null | undefined): League =>
+export const leagueOf = (rawId: string | null | undefined): League => leagueOfBase(baseLeague(rawId), rawId);
+const leagueOfBase = (id: string | null | undefined, rawId: string | null | undefined): League =>
   LEAGUES.find((l) => l.id === id) ??
   CUPS.find((c) => c.id === id) ?? {
-    id: id ?? "unknown",
+    id: rawId ?? "unknown",
     name: (id ?? "League").replace(/-/g, " ").replace(/\b\w/g, (c) => c.toUpperCase()),
     country: "",
     logo: "",

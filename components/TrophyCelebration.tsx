@@ -1,5 +1,6 @@
 "use client";
 
+import { baseLeague } from "@/lib/football/leagueIds";
 import { useEffect, useMemo, useState } from "react";
 import { sfx } from "@/lib/sound";
 import { supabase } from "@/lib/supabase";
@@ -48,7 +49,7 @@ export default function TrophyCelebration() {
   const confetti = useMemo(() => Array.from({ length: 46 }, (_, i) => ({ x: (i * 53) % 100, d: 5 + (i % 6), delay: -((i * 0.7) % 6), w: 6 + (i % 4) * 2, r: (i * 47) % 360, c: ["#e3b258", "#f7db96", "#ffffff", "#7dd3fc", "#f87171", "#86efac"][i % 6] })), []);
   if (!now) return null;
 
-  const image = LEAGUE_OVERRIDES[now.league_id]?.[now.kind]?.image ?? kindInfo(now.kind).image;
+  const image = LEAGUE_OVERRIDES[baseLeague(now.league_id)]?.[now.kind]?.image ?? kindInfo(now.kind).image;
   const club = allClubs.find((c) => c.id === now.club_id);
 
   return (
