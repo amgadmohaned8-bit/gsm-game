@@ -742,4 +742,42 @@ html .sc-tabs button { grid-auto-flow: column; justify-content: center; align-it
 html .sc-tabs button svg { width: 18px; height: 18px; }
 html .mg-actions { align-self: end; justify-items: end; overflow: visible; padding: 0 !important; background: none; border: 0; box-shadow: none; backdrop-filter: none; -webkit-backdrop-filter: none; }
 html .mg-actions .mg-resign { min-height: 28px; padding: 0 12px; font-size: 11px; width: auto; border-radius: 9px; }
+html .cl-body { grid-template-columns: 262px minmax(0, 1fr) !important; }
+html .cl-feature { display: grid !important; grid-template-columns: 72px minmax(0, 1fr); grid-template-rows: auto auto 1fr auto; column-gap: 10px; row-gap: 4px; padding: 8px 10px !important; }
+html .cl-stage { grid-column: 1; grid-row: 1 / span 2; height: 72px !important; width: 72px; align-self: center; }
+html .cl-stage .cl-crest,
+html .cl-stage .cl-crest img { width: 56px !important; height: 56px !important; }
+html .cl-stage .cl-ring,
+html .cl-stage .cl-halo,
+html .cl-stage .cl-burst { display: none; }
+html .cl-sr { display: none !important; }
+html .cl-id { grid-column: 2; grid-row: 1 / span 2; align-self: center; gap: 2px; min-width: 0; }
+html .cl-count { font-size: 11px !important; }
+html .cl-id h2 { font-size: 20px !important; line-height: 1.05; }
+html .cl-specs { grid-column: 1 / -1; grid-row: 3; align-content: start; overflow: hidden; min-height: 0; }
+html .cl-specs > div { padding: 3px 0 !important; gap: 8px; }
+html .cl-specs > div:nth-child(3) { display: none; }
+html .cl-specs dt { font-size: 11px !important; white-space: nowrap; }
+html .cl-specs dd { font-size: 12px !important; line-height: 1.15; }
+html .cl-actions { grid-column: 1 / -1; grid-row: 4; grid-template-columns: 40px 1fr 40px !important; gap: 6px; }
+html .cl-step { min-height: 38px !important; }
+html .cl-confirm { min-height: 38px !important; font-size: 14px !important; }
+html .cl-dir-head { display: flex !important; align-items: center; gap: 10px; flex-wrap: nowrap; }
+html .cl-dir-head h2 { font-size: 18px !important; margin: 0; white-space: nowrap; }
+html .cl-search { flex: 1; min-width: 0; }
+html .cl-search input { min-height: 32px !important; font-size: 13px; }
+html .cl-head { padding-top: 2px; }
+html .cl-confirm { white-space: nowrap; gap: 4px; padding-inline: 6px !important; }
+html .cl-confirm svg { width: 16px; height: 16px; }
+html .mg-side { padding: 8px 12px !important; gap: 4px !important; }
+html .mg-side-head h1,
+html .mg-side-head h2 { font-size: 18px !important; margin: 0; line-height: 1.1; }
+html .mg-side-head p { font-size: 12px !important; margin: 2px 0 0 !important; }
+html .mg-stats { gap: 0 !important; row-gap: 0 !important; }
+html .mg-stats > div { padding: 5px 0 !important; display: flex !important; justify-content: space-between; align-items: baseline; gap: 6px; }
+html .mg-stats dt { font-size: 11px !important; }
+html .mg-stats dd { font-size: 14px !important; white-space: nowrap; margin: 0; }
+html .tn-head small { display: -webkit-box !important; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; font-size: 10px !important; line-height: 1.3 !important; }
+html .tn-head h1 { font-size: 26px !important; }
+html .tn-slot { min-height: 46px !important; }
 }
