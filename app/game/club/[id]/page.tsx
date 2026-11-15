@@ -1,5 +1,6 @@
 "use client";
 
+import { signingBan } from "@/lib/football/bank";
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
@@ -74,7 +75,7 @@ export default function ClubPage() {
   const own = club.id === ctx.clubId;
   const window = windowStatus(ctx.matchday);
   const mine = ctx.state.squads[ctx.clubId] ?? [];
-  const blocked = canBuy({ balance: ctx.balanceM, fee: 0, squadSize: mine.length, windowOpen: window.open });
+  const blocked = canBuy({ ban: signingBan(ctx.state.bank), balance: ctx.spendM, fee: 0, squadSize: mine.length, windowOpen: window.open });
   const tier = getTier(club.id);
   const sorted = squad.slice().sort((a, b) => b.rating - a.rating);
   const stars = sorted.slice(0, 3);
@@ -186,7 +187,7 @@ export default function ClubPage() {
           userId={ctx.userId}
           season={ctx.season}
           matchday={ctx.matchday}
-          balanceM={ctx.balanceM}
+          balanceM={ctx.spendM}
           blocked={blocked}
           onClose={() => setBid(null)}
           onSign={(fee) => sign(bid, fee)}

@@ -4,6 +4,7 @@ import { alertState, askAlerts } from "@/lib/notify";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
+import { loadDeductions } from "@/lib/football/bank";
 import { allClubs as clubs } from "@/lib/football/leagueClubs";
 import { myRoom, seasonRows } from "@/lib/football/rooms";
 import { sendFriendNotice } from "@/lib/football/friendlies";
@@ -62,6 +63,7 @@ export default function FixturesPage() {
   const [userId, setUserId] = useState("");
   const [manager, setManager] = useState<ManagerData | null>(null);
   const [matches, setMatches] = useState<StoredMatch[]>([]);
+  const [cut, setCut] = useState(0);
   const [season, setSeason] = useState("");
   const [confirmRestart, setConfirmRestart] = useState(false);
   const [restarting, setRestarting] = useState(false);
@@ -120,6 +122,8 @@ export default function FixturesPage() {
 
         const current = await activeSeason(supabase, user.id, contract.selected_league);
         let rows = await fetchMatches(user.id, contract.selected_league, current);
+
+        setCut(await loadDeductions(supabase, user.id, contract.selected_league, current));
 
         // first visit: build the whole season with its dates
         if (rows.length === 0) {
@@ -221,7 +225,7 @@ export default function FixturesPage() {
     next?.kickoff_at ? new Date(next.kickoff_at).getTime() - now : 0;
   const t = splitDuration(remaining);
 
-  const standings = useMemo(() => calculateStandings(matches), [matches]);
+  const standings = useMemo(() => calculateStandings(matches, undefined, myClub ? { [myClub]: cut } : undefined), [matches, cut, myClub]);
   const position = standings.findIndex((s) => s.clubId === myClub) + 1;
 
   const visible = mine.filter((m) =>
@@ -302,29 +306,22 @@ export default function FixturesPage() {
           theirSquad: availableSquad(squadOf(opp), day.key, day.season, day.matchday),
           clubName: { mine: clubOf(myClub)?.name ?? myClub, theirs: clubOf(opp)?.name ?? opp },
         });
-        // the shared result first: if it cannot be saved, nothing changes and the manager sees the error
-        if (manager.room_id) {
-          const { error: roomError } = await supabase.from("room_results").upsert(
-            {
-              room_id: manager.room_id,
-              season,
-              matchday: match.matchday,
-              home_club: match.home_club,
-              away_club: match.away_club,
-              home_score: revised.home_score,
-              away_score: revised.away_score,
-            },
-            { onConflict: "room_id,season,matchday,home_club,away_club" }
-          );
-          if (roomError) throw roomError;
-        }
-        const { data: saved, error: upError } = await supabase
+        const { error: upError } = await supabase
           .from("league_matches")
           .update({ home_score: revised.home_score, away_score: revised.away_score })
-          .eq("id", match.id)
-          .select("id");
+          .eq("id", match.id);
         if (upError) throw upError;
-        if (!saved?.length) throw new Error("Half-time score was not saved");
+        if (manager.room_id) {
+          // the shared result follows, when the league allows the update
+          await supabase
+            .from("room_results")
+            .update({ home_score: revised.home_score, away_score: revised.away_score })
+            .eq("room_id", manager.room_id)
+            .eq("season", season)
+            .eq("matchday", match.matchday)
+            .eq("home_club", match.home_club)
+            .eq("away_club", match.away_club);
+        }
         return revised;
       },
     };

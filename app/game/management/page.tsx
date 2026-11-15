@@ -6,6 +6,7 @@ import { resetCareerData } from "@/lib/football/careerReset";
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
+import { loadDeductions } from "@/lib/football/bank";
 import { activeSeason } from "@/lib/football/season";
 import { allClubs as clubs } from "@/lib/football/leagueClubs";
 import { calculateStandings, type Match } from "@/lib/football/table";
@@ -42,6 +43,7 @@ export default function ManagementPage() {
   const [loading, setLoading] = useState(true);
   const [manager, setManager] = useState<ManagerData | null>(null);
   const [matches, setMatches] = useState<LeagueMatch[]>([]);
+  const [cut, setCut] = useState(0);
   const [dialogueIndex, setDialogueIndex] = useState(0);
   const [bubbleVisible, setBubbleVisible] = useState(false);
   const [resignModal, setResignModal] = useState(false);
@@ -89,7 +91,10 @@ export default function ManagementPage() {
 
         if (matchesError) throw matchesError;
 
+        const taken = await loadDeductions(supabase, user.id, contract.selected_league, season);
+
         if (!cancelled) {
+          setCut(taken);
           setManager(contract as ManagerData);
           setMatches((matchData ?? []) as LeagueMatch[]);
         }
@@ -116,8 +121,8 @@ export default function ManagementPage() {
   );
 
   const standings = useMemo(
-    () => calculateStandings(matches),
-    [matches]
+    () => calculateStandings(matches, undefined, manager?.selected_club ? { [manager.selected_club]: cut } : undefined),
+    [matches, cut, manager?.selected_club]
   );
 
   const managerStanding = standings.findIndex(

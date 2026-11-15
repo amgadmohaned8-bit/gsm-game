@@ -31,7 +31,8 @@ export type StandingRow = {
   points: number;
 };
 
-export function calculateStandings(matches: Match[], leagueId?: string): StandingRow[] {
+/** `deductions`: league points taken away from a club (by the bank), by club id. */
+export function calculateStandings(matches: Match[], leagueId?: string, deductions?: Record<string, number>): StandingRow[] {
   const league = leagueId ?? (matches.length ? leagueOfClub(matches[0].home_club) : "premier-league");
   const table = new Map<string, StandingRow>();
   for (const c of clubsOfLeague(league)) {
@@ -52,6 +53,6 @@ export function calculateStandings(matches: Match[], leagueId?: string): Standin
   }
 
   return [...table.values()]
-    .map((r) => ({ ...r, gd: r.gf - r.ga }))
+    .map((r) => ({ ...r, gd: r.gf - r.ga, points: r.points - (deductions?.[r.clubId] ?? 0) }))
     .sort((x, y) => y.points - x.points || y.gd - x.gd || y.gf - x.gf || x.name.localeCompare(y.name));
 }

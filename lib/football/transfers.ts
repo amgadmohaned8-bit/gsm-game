@@ -19,6 +19,7 @@ import { evolve, gainsAt, type TrainingRow } from "@/lib/football/development";
 import { inCareer } from "@/lib/football/leagueIds";
 import { loadFriendlies } from "@/lib/football/friendlies";
 import { aiDeals, aiDealsAt } from "@/lib/football/aiTransfers";
+import { gameDay, loadBank, needsSync, syncBank, type Bank } from "@/lib/football/bank";
 
 export const MARKET = "market";
 export const ABROAD = "abroad";
@@ -244,7 +245,10 @@ export function canBuy(args: {
   fee: number;
   squadSize: number;
   windowOpen: boolean;
+  /** why the bank forbids signings, if it does */
+  ban?: string | null;
 }): string | null {
+  if (args.ban) return args.ban;
   if (!args.windowOpen) return "The transfer window is closed.";
   if (args.squadSize >= MAX_SQUAD) return `Your squad is full (${MAX_SQUAD} players). Sell someone first.`;
   if (args.fee > args.balance) return "Your club cannot afford this fee.";
@@ -327,6 +331,8 @@ export type TransferState = {
   aiDeals: Deal[];
   net: number;
   matchday: number | null;
+  /** loans, fines and the credit score of this team */
+  bank: Bank;
 };
 
 /**
@@ -391,6 +397,40 @@ export async function loadTransferState(
   let listings = (listingRows ?? []) as Listing[];
   let squads = view(deals);
 
+  // the bank: late stages come due with the game calendar, and a club in crisis has to sell
+  const day = gameDay(season, matchday);
+  let bank = await loadBank(client, userId, league, season);
+  if (bank.ready && needsSync(bank, day)) {
+    try {
+      await syncBank(client, league, day, season, matchday);
+      bank = await loadBank(client, userId, league, season);
+    } catch {
+      /* it will be tried again on the next visit */
+    }
+  }
+  const crisisLoan = bank.ready ? bank.loans.find((l) => l.status === "active" && l.stage >= 4) : undefined;
+  if (crisisLoan) {
+    const round = Math.floor((day - crisisLoan.due_day - 31) / 8);
+    const sellable = [...(squads[myClub] ?? [])].sort((a, b) => marketValue(b) - marketValue(a)).slice(3).find((p) => !canSell(squads[myClub] ?? [], p));
+    if (round >= 0 && sellable && !bank.events.some((e) => e.key === `forced:${round}`)) {
+      try {
+        const fee = round1(Math.max(0.5, marketValue(sellable) * 0.8));
+        const { data: paid } = await client.rpc("bank_forced_sale", {
+          p_loan: crisisLoan.id, p_round: round, p_amount: fee, p_player: sellable.name, p_day: day, p_season: season, p_matchday: matchday,
+        });
+        if (Number(paid ?? 0) > 0) {
+          await recordDeal(client, { user_id: userId, season, player_id: sellable.id, from_club: myClub, to_club: ABROAD, fee, kind: "sell", matchday: matchday ?? 0, league_id: leagueId });
+          const { data: d3 } = await client.from("transfers").select("*").eq("user_id", userId);
+          deals = mineOnly(d3 as Deal[] | null);
+          squads = view(deals);
+          bank = await loadBank(client, userId, league, season);
+        }
+      } catch {
+        /* the sale is claimed once; if the deal failed it is not retried */
+      }
+    }
+  }
+
   if (matchday !== null && listings.length) {
     const { sales, offers } = resolveListings(userId, listings, squads, myClub, matchday);
 
@@ -422,8 +462,8 @@ export async function loadTransferState(
       listings = mineOnly(l2 as Listing[] | null);
       squads = view(deals);
     }
-    return { deals, listings, squads, training, renewals, offers: resolveListings(userId, listings, squads, myClub, matchday).offers, aiDeals: others, net: transfersNet(deals, myClub) + friendlyMoney - renewalFees, matchday };
+    return { deals, listings, squads, training, renewals, offers: resolveListings(userId, listings, squads, myClub, matchday).offers, aiDeals: others, net: transfersNet(deals, myClub) + friendlyMoney - renewalFees + bank.cash, matchday, bank };
   }
 
-  return { deals, listings, squads, training, renewals, offers: [], aiDeals: others, net: transfersNet(deals, myClub) + friendlyMoney - renewalFees, matchday };
+  return { deals, listings, squads, training, renewals, offers: [], aiDeals: others, net: transfersNet(deals, myClub) + friendlyMoney - renewalFees + bank.cash, matchday, bank };
 }

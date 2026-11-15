@@ -100,6 +100,7 @@ const navigation: {
   { icon: "ball", label: "Friendlies", note: "Warm-up matches", active: false, href: "/game/friendlies" },
   { icon: "transfer", label: "Transfers", note: "Buy and sell", active: false, href: "/game/transfers" },
   { icon: "wallet", label: "Finances", note: "Income, spending, balance", active: false, href: "/game/finances" },
+  { icon: "wallet", label: "Bank", note: "Loans, debts and credit", active: false, href: "/game/bank" },
   { icon: "star", label: "League Cup", note: "Knockout cup", active: false, href: "/game/cup" },
   { icon: "chat", label: "Social", note: "Feed, stories and coaches", active: false, href: "/game/social" },
   { icon: "news", label: "Press conference", note: "Face the journalists", active: false, action: "press" },
@@ -246,7 +247,7 @@ export default function DashboardPage() {
           clubBalance = buildFinance(data.selected_club, matchData ?? [], ts.net * 1_000_000).balance;
           setMySquad(ts.squads[data.selected_club] ?? []);
 
-          tableRows = calculateStandings((matchData ?? []) as never[]) as Row[];
+          tableRows = calculateStandings((matchData ?? []) as never[], undefined, { [data.selected_club]: ts.bank.deduction }) as Row[];
           formRows = (matchData ?? [])
             .filter((m) => m.status === "completed" && m.home_score !== null && m.away_score !== null && (m.home_club === data.selected_club || m.away_club === data.selected_club))
             .sort((a, b) => b.matchday - a.matchday)

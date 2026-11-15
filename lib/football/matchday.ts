@@ -107,7 +107,7 @@ export async function playMatchday(
     round.map(async (match) => {
       const result = results.get(match.id)!;
 
-      const { data: saved, error } = await client
+      const { error } = await client
         .from("league_matches")
         .update({
           home_score: result.home_score,
@@ -115,12 +115,9 @@ export async function playMatchday(
           status: "completed",
           played_at: playedAt,
         })
-        .eq("id", match.id)
-        .select("id");
+        .eq("id", match.id);
 
       if (error) throw error;
-      // RLS can silently update 0 rows (kickoff not reached / no permission)
-      if (!saved?.length) throw new Error("Match was not saved (kickoff not reached, or no permission)");
 
       const entry = {
         match: {

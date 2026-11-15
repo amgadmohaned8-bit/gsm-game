@@ -1,0 +1,112 @@
+/* =========================================================
+   The bank: a banker's office in black and brass
+   ========================================================= */
+
+.bk-loading { min-height: 100svh; display: grid; place-content: center; justify-items: center; gap: 16px; background: var(--ink-1); color: var(--chalk-2); font-weight: 700; }
+.bk-loading p { margin: 0; }
+.bk-loading button { min-height: 48px; padding: 0 22px; border: 1px solid var(--brass); background: transparent; color: var(--brass-hi); font-weight: 700; }
+
+.bk { position: relative; min-height: 100svh; isolation: isolate; overflow-x: clip; background: var(--ink-0); }
+.bk-bg { position: fixed; inset: -3%; z-index: -5; background: url("/studio/bank-hall.jpg") center / cover no-repeat; filter: saturate(0.5) brightness(0.28) blur(3px); }
+.bk-shade { position: fixed; inset: 0; z-index: -4; background: radial-gradient(ellipse 50% 40% at 85% 8%, rgba(227, 178, 88, 0.2), transparent 70%), linear-gradient(180deg, rgba(4, 6, 10, 0.45), var(--ink-0) 92%); }
+
+.bk-wrap { width: min(1240px, 100% - 32px); margin: 0 auto; padding: 24px 0 72px; display: grid; grid-template-columns: minmax(0, 1fr); gap: 18px; }
+.bk-wrap > * { min-width: 0; }
+
+/* hero: the banker behind his desk, the balance in front of him */
+.bk-hero { --bg: var(--ink-1); --bd: var(--brass-lo); --cut: 26px; position: relative; overflow: hidden; min-height: clamp(280px, 42vw, 440px); display: grid; align-items: end; animation: bk-rise 0.7s var(--ease-out) both; }
+.bk-hero-pic { position: absolute; inset: 0 0 0 26%; background: linear-gradient(0deg, rgba(4, 6, 10, 0.7), transparent 40%), url("/studio/bank-hall.jpg") 50% 30% / cover no-repeat; -webkit-mask-image: linear-gradient(90deg, transparent, #000 32%); mask-image: linear-gradient(90deg, transparent, #000 32%); transform: scale(1.04); animation: bk-drift 18s ease-in-out infinite alternate; }
+.bk-hero-in { position: relative; z-index: 1; display: grid; gap: 10px; justify-items: start; padding: clamp(18px, 3vw, 36px); max-width: 560px; }
+.bk-club { margin: 0; color: var(--brass); font-size: 14px; font-weight: 800; letter-spacing: 0.14em; text-transform: uppercase; }
+.bk-hero h1 { margin: 0; font-family: var(--font-display); font-size: clamp(52px, 8vw, 104px); font-weight: 900; line-height: 0.86; text-transform: uppercase; text-shadow: 0 6px 40px rgba(0, 0, 0, 0.6); }
+.bk-bal { display: grid; gap: 2px; margin-top: 6px; }
+.bk-bal small { color: var(--chalk-2); font-size: 14px; font-weight: 700; }
+.bk-bal strong { font-family: var(--font-display); font-size: clamp(44px, 6vw, 76px); font-weight: 900; line-height: 1; font-variant-numeric: tabular-nums; background: linear-gradient(180deg, var(--brass-hi), var(--brass) 60%, var(--brass-lo)); -webkit-background-clip: text; background-clip: text; color: transparent; }
+.bk-bal em { color: var(--card-red); font-size: 13px; font-style: normal; font-weight: 700; }
+.bk-hero-act { display: flex; flex-wrap: wrap; align-items: center; gap: 14px; margin-top: 8px; }
+.bk-hero-act .gx-btn { min-height: 52px; padding-inline: 26px; }
+.bk-day { color: var(--chalk-2); font-size: 13px; font-weight: 700; }
+
+/* notices */
+.bk-alert { display: flex; gap: 12px; align-items: flex-start; margin: 0; padding: 14px 18px; border: 1px solid; font-size: 15px; line-height: 1.5; animation: bk-rise 0.5s var(--ease-out) both; }
+.bk-alert svg { flex: none; margin-top: 2px; }
+.bk-alert.is-warn { color: var(--brass-hi); border-color: var(--brass-lo); background: color-mix(in srgb, var(--brass) 10%, var(--ink-1)); }
+.bk-alert.is-bad { color: #ffb4ad; border-color: var(--card-red); background: color-mix(in srgb, var(--card-red) 14%, var(--ink-1)); }
+
+/* totals */
+.bk-kpis { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); border-block: 1px solid var(--line-2); background: rgba(4, 6, 10, 0.65); backdrop-filter: blur(8px); }
+.bk-kpi { position: relative; display: grid; align-content: center; gap: 2px; padding: 18px 20px; border-right: 1px solid var(--line); }
+.bk-kpi:last-child { border-right: 0; }
+.bk-kpi span { color: var(--chalk-2); font-size: 13px; font-weight: 700; }
+.bk-kpi strong { font-family: var(--font-display); font-size: clamp(28px, 3vw, 40px); font-weight: 800; line-height: 1.05; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+.bk-kpi small { color: var(--chalk-3); font-size: 12px; }
+.bk-kpi.is-debt strong { color: var(--card-red); }
+.bk-kpi.is-late strong { color: var(--card-red); }
+.bk-score svg { width: 100%; max-width: 120px; height: auto; margin-bottom: -6px; }
+.bk-arc-bg, .bk-arc { fill: none; stroke-width: 9; stroke-linecap: round; }
+.bk-arc-bg { stroke: var(--ink-4); }
+.bk-arc { stroke: var(--brass); transition: stroke-dasharray 1.2s var(--ease-out); }
+.bk-arc.is-great { stroke: var(--pitch); } .bk-arc.is-good { stroke: #8fd86a; } .bk-arc.is-fair { stroke: var(--brass); } .bk-arc.is-poor { stroke: #f09a4a; } .bk-arc.is-bad { stroke: var(--card-red); }
+
+/* cards */
+.bk-cols { display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr); gap: 18px; }
+.bk-card { --bg: rgba(8, 12, 19, 0.9); --bd: var(--line-2); --cut: 20px; padding: 22px 24px 24px; }
+.bk-card h2 { margin: 0 0 16px; font-family: var(--font-display); font-size: 28px; font-weight: 800; letter-spacing: 0.03em; text-transform: uppercase; }
+.bk-empty { margin: 0; color: var(--chalk-3); font-size: 15px; line-height: 1.6; }
+
+.bk-loans { display: grid; gap: 14px; margin: 0; padding: 0; list-style: none; }
+.bk-loans li { display: grid; gap: 10px; padding: 16px 18px; background: var(--ink-2); border-left: 3px solid var(--brass); }
+.bk-loans li.is-late { border-left-color: var(--card-red); background: color-mix(in srgb, var(--card-red) 8%, var(--ink-2)); }
+.bk-loan-top { display: flex; justify-content: space-between; gap: 12px; align-items: flex-start; }
+.bk-loan-top b { display: block; font-family: var(--font-display); font-size: 26px; font-weight: 800; }
+.bk-loan-top small { color: var(--chalk-3); font-size: 13px; }
+.bk-due { flex: none; padding: 5px 12px; background: color-mix(in srgb, var(--brass) 16%, transparent); color: var(--brass-hi); font-size: 14px; font-weight: 800; }
+.bk-due.is-bad { background: color-mix(in srgb, var(--card-red) 20%, transparent); color: #ffb4ad; }
+.bk-bar { height: 8px; background: var(--ink-4); overflow: hidden; }
+.bk-bar i { display: block; height: 100%; background: linear-gradient(90deg, var(--brass-lo), var(--brass-hi)); transition: width 1s var(--ease-out); }
+.bk-loan-nums { display: flex; flex-wrap: wrap; gap: 6px 20px; color: var(--chalk-3); font-size: 13px; }
+.bk-loan-nums b { color: var(--chalk); font-weight: 700; }
+.bk-stage { margin: 0; color: #ffb4ad; font-size: 13px; font-weight: 700; }
+.bk-loan-act { display: flex; gap: 10px; }
+.bk-loan-act button { min-height: 44px; padding: 0 22px; font-weight: 800; font-size: 14px; border: 1px solid var(--line-2); color: var(--chalk-2); transition: color 0.2s, border-color 0.2s, background 0.2s; }
+.bk-loan-act .bk-pay { background: var(--brass); border-color: var(--brass); color: var(--brass-ink); }
+.bk-loan-act .bk-pay:hover { background: var(--brass-hi); }
+.bk-loan-act .bk-alt:hover:not(:disabled) { color: var(--brass); border-color: var(--brass); }
+.bk-loan-act button:disabled { opacity: 0.4; cursor: not-allowed; }
+
+.bk-ladder { display: grid; gap: 12px; margin: 0; padding: 0; list-style: none; }
+.bk-ladder li { display: flex; gap: 12px; align-items: flex-start; }
+.bk-ladder i { flex: none; display: grid; place-items: center; width: 28px; height: 28px; border: 1px solid var(--line-2); color: var(--chalk-3); font-style: normal; font-size: 13px; font-weight: 800; }
+.bk-ladder li.is-hit i { background: var(--card-red); border-color: var(--card-red); color: #fff; }
+.bk-ladder b { display: block; font-size: 15px; }
+.bk-ladder small { display: block; color: var(--chalk-3); font-size: 13px; line-height: 1.45; }
+.bk-fine { margin: 16px 0 0; color: var(--chalk-3); font-size: 13px; line-height: 1.55; }
+
+/* history */
+.bk-table { overflow-x: auto; }
+.bk-hist table { width: 100%; min-width: 640px; border-collapse: collapse; text-align: left; font-variant-numeric: tabular-nums; }
+.bk-hist th { height: 42px; padding: 0 14px; background: rgba(255, 255, 255, 0.04); color: var(--chalk-3); font-size: 13px; font-weight: 700; }
+.bk-hist td { padding: 12px 14px; border-top: 1px solid var(--line); color: var(--chalk-2); font-size: 14px; font-weight: 600; }
+.bk-hist .is-up { color: var(--pitch); } .bk-hist .is-down { color: var(--card-red); }
+.bk-tag { display: inline-block; padding: 3px 10px; background: var(--ink-3); color: var(--chalk-2); font-size: 12px; font-weight: 800; }
+.bk-tag.k-loan, .bk-tag.k-cleared { background: color-mix(in srgb, var(--pitch) 18%, transparent); color: var(--pitch); }
+.bk-tag.k-warning, .bk-tag.k-reschedule { background: color-mix(in srgb, var(--brass) 18%, transparent); color: var(--brass-hi); }
+.bk-tag.k-restriction, .bk-tag.k-freeze, .bk-tag.k-crisis, .bk-tag.k-points, .bk-tag.k-forced_sale { background: color-mix(in srgb, var(--card-red) 20%, transparent); color: #ffb4ad; }
+
+@keyframes bk-rise { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: none; } }
+@keyframes bk-drift { from { transform: scale(1.04) translateX(0); } to { transform: scale(1.08) translateX(-1.5%); } }
+@media (prefers-reduced-motion: reduce) { .bk-hero, .bk-alert { animation: none; } .bk-hero-pic { animation: none; } .bk-arc, .bk-bar i { transition: none; } }
+
+@media (max-width: 980px) {
+  .bk-kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .bk-kpi { border-bottom: 1px solid var(--line); }
+  .bk-cols { grid-template-columns: minmax(0, 1fr); }
+  .bk-hero { display: block; min-height: 0; }
+  .bk-hero-pic { position: relative; inset: auto; height: clamp(170px, 36vw, 300px); background-position: 50% 22%; -webkit-mask-image: linear-gradient(180deg, #000 55%, transparent); mask-image: linear-gradient(180deg, #000 55%, transparent); }
+  .bk-hero-in { margin-top: -56px; max-width: none; }
+}
+@media (max-width: 560px) {
+  .bk-wrap { width: calc(100% - 24px); }
+  .bk-hero-act .gx-btn { width: 100%; }
+  .bk-card { padding: 18px 16px 20px; }
+}

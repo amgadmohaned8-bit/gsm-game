@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import { activeSeason } from "@/lib/football/season";
 import { buildFinance } from "@/lib/football/finance";
+import { spendable } from "@/lib/football/bank";
 import { loadTransferState, type TransferState } from "@/lib/football/transfers";
 
 export type TransferContext = {
@@ -16,6 +17,8 @@ export type TransferContext = {
   state: TransferState;
   /** club balance in millions, transfers included */
   balanceM: number;
+  /** what can go on transfers: the balance minus any part the bank froze */
+  spendM: number;
 };
 
 /** The current matchday: the first one not played yet. Null once the season is over. */
@@ -68,6 +71,7 @@ export function useTransfers() {
         matchday,
         state,
         balanceM: finance.balance / 1_000_000,
+        spendM: spendable(finance.balance / 1_000_000, state.bank),
       });
       setError("");
     } catch (err) {

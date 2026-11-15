@@ -1,0 +1,21 @@
+/* bank pop-ups: they borrow the transfer pop-up frame (.tb) */
+.bk-mh { display: flex; align-items: center; gap: 12px; padding-right: 44px; margin-bottom: 16px; }
+.bk-mh-ic { flex: none; display: grid; place-items: center; width: 44px; height: 44px; border: 1px solid var(--brass); color: var(--brass-hi); background: color-mix(in srgb, var(--brass) 14%, transparent); }
+.bk-mh h2 { margin: 0; font-family: var(--font-display); font-weight: 800; font-size: 30px; line-height: 1; text-transform: uppercase; }
+.bk-ask { margin: 0; color: var(--chalk-2); font-size: 15px; line-height: 1.5; }
+.bk-sum { display: grid; gap: 6px; margin: 0; }
+.bk-sum div { display: flex; justify-content: space-between; gap: 14px; align-items: baseline; padding: 10px 14px; background: var(--ink-2); border-left: 2px solid var(--brass-lo); }
+.bk-sum dt { color: var(--chalk-3); font-size: 13px; font-weight: 700; }
+.bk-sum dd { margin: 0; font-family: var(--font-display); font-size: 22px; font-weight: 800; text-align: right; font-variant-numeric: tabular-nums; }
+.bk-sum .is-bad { color: var(--card-red); }
+.bk-sum .is-good { color: var(--pitch); }
+.bk-range { width: 100%; accent-color: var(--brass); }
+.tb-quick button:disabled { opacity: 0.35; cursor: not-allowed; }
+.bk-opts { display: grid; gap: 8px; }
+.bk-opts button { display: grid; gap: 2px; padding: 12px 16px; text-align: left; border: 1px solid var(--line-2); background: var(--ink-2); color: var(--chalk-2); transition: border-color 0.2s, background 0.2s; }
+.bk-opts button b { font-family: var(--font-display); font-size: 24px; color: var(--chalk); }
+.bk-opts button span { font-size: 14px; font-weight: 600; }
+.bk-opts button small { color: var(--chalk-3); font-size: 12px; }
+.bk-opts button.is-on { border-color: var(--brass); background: color-mix(in srgb, var(--brass) 12%, var(--ink-2)); }
+.bk-opts button.is-on b { color: var(--brass-hi); }
+@media (max-width: 640px) { .bk-mh h2 { font-size: 24px; } }

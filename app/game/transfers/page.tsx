@@ -1,5 +1,6 @@
 "use client";
 
+import { signingBan } from "@/lib/football/bank";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -179,7 +180,7 @@ export default function TransfersPage() {
   }
 
   const myClub = clubs.find((c) => c.id === ctx.clubId);
-  const blocked = canBuy({ balance: ctx.balanceM, fee: 0, squadSize: mine.length, windowOpen: window.open });
+  const blocked = canBuy({ ban: signingBan(ctx.state.bank), balance: ctx.spendM, fee: 0, squadSize: mine.length, windowOpen: window.open });
   const otherClubs = clubsOfLeague(leagueId).filter((c) => c.id !== ctx.clubId);
 
   async function sign(player: Player, fee: number) {
@@ -200,7 +201,7 @@ export default function TransfersPage() {
   async function buyFromManager(player: Player) {
     const l = mlist.find((x) => x.player_id === player.id);
     if (!l) return;
-    const why = canBuy({ balance: ctx!.balanceM, fee: l.asking, squadSize: mine.length, windowOpen: window.open });
+    const why = canBuy({ ban: signingBan(ctx!.state.bank), balance: ctx!.spendM, fee: l.asking, squadSize: mine.length, windowOpen: window.open });
     if (why) return setNotice(why);
     setBusy(player.id);
     setNotice("");
@@ -372,7 +373,7 @@ export default function TransfersPage() {
     if (!p) return setNotice("That player is not available any more.");
     const why = selling
       ? (mine.some((x) => x.id === p.id) ? canSell(mine, p) : "He is no longer in your squad.")
-      : canBuy({ balance: ctx!.balanceM, fee: price, squadSize: mine.length, windowOpen: window.open });
+      : canBuy({ ban: signingBan(ctx!.state.bank), balance: ctx!.spendM, fee: price, squadSize: mine.length, windowOpen: window.open });
     if (why) return setNotice(why);
     setBusy(o.id);
     setNotice("");
@@ -420,6 +421,9 @@ export default function TransfersPage() {
           <div className="tx-bal" aria-live="polite">
             <small>Balance</small>
             <strong>{money(ctx.balanceM)}</strong>
+            {ctx.state.bank.noSigning && (
+              <Link href="/game/bank" className="tx-frozen">Bank freeze: {money(ctx.spendM)} spendable, signings banned</Link>
+            )}
             <span className={`tx-win ${window.open ? "is-open" : "is-shut"}`}><i aria-hidden="true" />{window.label}</span>
           </div>
         </header>
@@ -666,7 +670,7 @@ export default function TransfersPage() {
           userId={ctx.userId}
           season={ctx.season}
           matchday={ctx.matchday}
-          balanceM={ctx.balanceM}
+          balanceM={ctx.spendM}
           blocked={blocked}
           onClose={() => setBid(null)}
           onSign={(fee) => sign(bid, fee)}
@@ -676,7 +680,7 @@ export default function TransfersPage() {
         <OfferModal
           player={offerFor}
           manager={humans.get(offerFor.club)?.name || clubName(offerFor.club)}
-          balanceM={ctx.balanceM}
+          balanceM={ctx.spendM}
           blocked={blocked}
           onClose={() => setOfferFor(null)}
           onSend={(amount) => sendOffer(offerFor, amount)}

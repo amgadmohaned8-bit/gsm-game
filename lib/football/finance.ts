@@ -94,6 +94,11 @@ export const tierProfiles: Record<ClubTier, TierProfile> = {
   },
 };
 
+/** Extra money a club starts the game with, on top of its tier (euros). Man United: 45M + 100M = 145M. */
+export const openingExtra: Record<string, number> = {
+  "man-united": 100_000_000,
+};
+
 export function getTier(clubId: string | null | undefined): ClubTier {
   return (clubId && (clubTiers[clubId] ?? egyptTiers[clubId])) || "mid";
 }
@@ -158,7 +163,8 @@ export function buildFinance(
     )
     .sort((a, b) => a.matchday - b.matchday);
 
-  let balance = p.openingBalance + transfersNet;
+  const opening = p.openingBalance + (openingExtra[clubId] ?? 0);
+  let balance = opening + transfersNet;
   const incomeByType = { tv: 0, sponsors: 0, gate: 0, prize: 0 };
   const expensesByType = { wages: 0, operations: 0, bonuses: 0 };
 
@@ -218,7 +224,7 @@ export function buildFinance(
   return {
     tier,
     profile: p,
-    opening: p.openingBalance + transfersNet,
+    opening: opening + transfersNet,
     transfersNet,
     balance,
     totalIncome,

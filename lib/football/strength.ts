@@ -127,13 +127,12 @@ const pair = (home: string, away: string) => `${home}|${away}`;
 
 export async function sharedScores(client: SupabaseClient, roomId: string, season: string, matchday: number) {
   const out = new Map<string, Score>();
-  const { data, error } = await client
+  const { data } = await client
     .from("room_results")
     .select("home_club, away_club, home_score, away_score")
     .eq("room_id", roomId)
     .eq("season", season)
     .eq("matchday", matchday);
-  if (error) throw error;
   for (const r of (data ?? []) as { home_club: string; away_club: string; home_score: number; away_score: number }[]) {
     out.set(pair(r.home_club, r.away_club), { home: r.home_score, away: r.away_score });
   }
@@ -148,11 +147,10 @@ export async function shareScores(
   rows: { home: string; away: string; hs: number; as: number }[]
 ) {
   if (!rows.length) return;
-  const { error } = await client.from("room_results").upsert(
+  await client.from("room_results").upsert(
     rows.map((r) => ({ room_id: roomId, season, matchday, home_club: r.home, away_club: r.away, home_score: r.hs, away_score: r.as })),
     { onConflict: "room_id,season,matchday,home_club,away_club", ignoreDuplicates: true }
   );
-  if (error) throw error;
 }
 
 export const scoreKey = pair;

@@ -4,6 +4,7 @@ import { inCareer } from "@/lib/football/leagueIds";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
+import { loadDeductions } from "@/lib/football/bank";
 import { leagueOf } from "@/lib/football/leaguesCatalog";
 import { activeSeason, seasonLabel } from "@/lib/football/season";
 import { calculateStandings, Match } from "@/lib/football/table";
@@ -24,6 +25,7 @@ export default function StandingsPage() {
   const [loading, setLoading] = useState(true);
   const [managerClub, setManagerClub] = useState("");
   const [matches, setMatches] = useState<Match[]>([]);
+  const [cut, setCut] = useState(0);
   const [error, setError] = useState("");
   const [seasonName, setSeasonName] = useState("");
   const [deals, setDeals] = useState<Deal[]>([]);
@@ -97,7 +99,10 @@ export default function StandingsPage() {
           /* base squads are the fallback */
         }
 
+        const taken = await loadDeductions(supabase, authData.user.id, league, season);
+
         if (!cancelled) {
+          setCut(taken);
           setDeals(dealRows);
           setTraining(trainingRows);
           setRenewals(renewalRows);
@@ -125,7 +130,7 @@ export default function StandingsPage() {
     };
   }, [router]);
 
-  const standings = calculateStandings(matches);
+  const standings = calculateStandings(matches, undefined, managerClub ? { [managerClub]: cut } : undefined);
   const completedMatches = matches.filter(
     (match) => match.status === "completed"
   ).length;
