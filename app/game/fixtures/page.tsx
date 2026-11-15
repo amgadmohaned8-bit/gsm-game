@@ -302,22 +302,29 @@ export default function FixturesPage() {
           theirSquad: availableSquad(squadOf(opp), day.key, day.season, day.matchday),
           clubName: { mine: clubOf(myClub)?.name ?? myClub, theirs: clubOf(opp)?.name ?? opp },
         });
-        const { error: upError } = await supabase
+        // the shared result first: if it cannot be saved, nothing changes and the manager sees the error
+        if (manager.room_id) {
+          const { error: roomError } = await supabase.from("room_results").upsert(
+            {
+              room_id: manager.room_id,
+              season,
+              matchday: match.matchday,
+              home_club: match.home_club,
+              away_club: match.away_club,
+              home_score: revised.home_score,
+              away_score: revised.away_score,
+            },
+            { onConflict: "room_id,season,matchday,home_club,away_club" }
+          );
+          if (roomError) throw roomError;
+        }
+        const { data: saved, error: upError } = await supabase
           .from("league_matches")
           .update({ home_score: revised.home_score, away_score: revised.away_score })
-          .eq("id", match.id);
+          .eq("id", match.id)
+          .select("id");
         if (upError) throw upError;
-        if (manager.room_id) {
-          // the shared result follows, when the league allows the update
-          await supabase
-            .from("room_results")
-            .update({ home_score: revised.home_score, away_score: revised.away_score })
-            .eq("room_id", manager.room_id)
-            .eq("season", season)
-            .eq("matchday", match.matchday)
-            .eq("home_club", match.home_club)
-            .eq("away_club", match.away_club);
-        }
+        if (!saved?.length) throw new Error("Half-time score was not saved");
         return revised;
       },
     };
