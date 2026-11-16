@@ -6,7 +6,13 @@ import { formatMoney } from "@/lib/football/finance";
 import Icon from "@/components/Icon";
 import "./transfers.css";
 
+// التصديرات المطلوبة لتجنب خطأ الـ Build
 export const fm = formatMoney;
+export const money = formatMoney;
+
+export function BidModal(props: any) {
+  return <TransferModals {...props} />;
+}
 
 export function TransferModals({
   listing,
@@ -22,7 +28,6 @@ export function TransferModals({
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // دالة الشراء الفوري
   async function handleBuyNow() {
     setBusy(true);
     setError(null);
@@ -30,17 +35,15 @@ export function TransferModals({
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("يجب تسجيل الدخول أولاً");
 
-      // استدعاء دالة Supabase التي أنشأناها في الـ SQL
       const { error: rpcError } = await supabase.rpc("buy_player_now", {
         p_listing_id: listing.id,
         p_buyer_id: user.id,
-        p_buyer_club: "my-club-id", // سيتم ربطه بناديك الحالي
+        p_buyer_club: "my-club-id",
         p_season: listing.season || "2025/2026",
         p_matchday: listing.listed_matchday || 1
       });
 
       if (rpcError) throw rpcError;
-
       alert("تمت صفقة الشراء بنجاح!");
       onDone();
     } catch (err: any) {
@@ -50,7 +53,6 @@ export function TransferModals({
     }
   }
 
-  // دالة إرسال عرض تفاوضي
   async function handleMakeOffer() {
     setBusy(true);
     setError(null);
@@ -71,8 +73,7 @@ export function TransferModals({
       });
 
       if (insertError) throw insertError;
-
-      alert("تم إرسال العرض بنجاح إلى النادي البائع!");
+      alert("تم إرسال العرض بنجاح!");
       onDone();
     } catch (err: any) {
       setError(err.message || "فشل إرسال العرض");
@@ -84,93 +85,29 @@ export function TransferModals({
   return (
     <div className="tb bk-modal" role="presentation" onClick={onClose}>
       <div className="tb-panel gx-cut" role="dialog" onClick={(e) => e.stopPropagation()}>
-        <button type="button" className="tb-close" onClick={onClose} aria-label="Close">
-          <Icon name="close" size={20} />
-        </button>
-        
-        <header className="bk-mh">
-          <h2>إدارة صفقة اللاعب</h2>
-        </header>
-
+        <button type="button" className="tb-close" onClick={onClose}><Icon name="close" size={20} /></button>
+        <header className="bk-mh"><h2>إدارة الصفقة</h2></header>
         <div className="tb-stage" style={{ padding: "20px" }}>
-          <div style={{ marginBottom: "20px", textAlign: "center" }}>
-            <h3 style={{ fontSize: "1.2rem", color: "#fff", marginBottom: "8px" }}>
-              {listing.players?.name || "اللاعب"}
-            </h3>
-            <p style={{ color: "#aaa", fontSize: "0.9rem" }}>
-              السعر المطلوب: <strong style={{ color: "#fff" }}>{fm(listing.asking)}</strong>
-            </p>
-            {listing.buy_now_price && (
-              <p style={{ color: "#d4af37", fontSize: "0.95rem", marginTop: "4px" }}>
-                سعر الشراء الفوري: <strong>{fm(listing.buy_now_price)}</strong>
-              </p>
-            )}
-          </div>
-
           {phase === "options" && (
-            <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
+            <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
+              <p>اللاعب: {listing.players?.name}</p>
+              <p>السعر المطلوب: {formatMoney(listing.asking)}</p>
               {listing.buy_now_price && (
-                <button 
-                  type="button" 
-                  className="gx-btn" 
-                  style={{ background: "linear-gradient(135deg, #d4af37, #aa8c2a)", color: "#000", fontWeight: "bold" }}
-                  disabled={busy}
-                  onClick={handleBuyNow}
-                >
-                  {busy ? "جاري الشراء..." : `شراء الآن (${fm(listing.buy_now_price)})`}
+                <button className="gx-btn" style={{ background: "#d4af37", color: "#000" }} onClick={handleBuyNow} disabled={busy}>
+                  شراء الآن ({formatMoney(listing.buy_now_price)})
                 </button>
               )}
-              <button 
-                type="button" 
-                className="gx-btn" 
-                onClick={() => setPhase("offer")}
-                disabled={busy}
-              >
-                تقديم عرض تفاوضي
-              </button>
+              <button className="gx-btn" onClick={() => setPhase("offer")}>تقديم عرض</button>
             </div>
           )}
-
           {phase === "offer" && (
-            <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
-              <label className="tb-label" style={{ color: "#ccc" }}>قيمة العرض (بالمليون):</label>
-              <input 
-                type="number" 
-                value={offerAmount} 
-                onChange={(e) => setOfferAmount(Number(e.target.value))}
-                style={{ 
-                  padding: "10px", 
-                  width: "100%", 
-                  background: "#111", 
-                  color: "#fff", 
-                  border: "1px solid #d4af37",
-                  borderRadius: "4px"
-                }} 
-              />
-              <button 
-                type="button" 
-                className="gx-btn" 
-                disabled={busy}
-                onClick={handleMakeOffer}
-              >
-                {busy ? "جاري الإرسال..." : "تأكيد وإرسال العرض"}
-              </button>
-              <button 
-                type="button" 
-                className="tb-ghost" 
-                style={{ background: "transparent", border: "1px solid #444", color: "#aaa", padding: "8px", cursor: "pointer" }}
-                onClick={() => setPhase("options")}
-              >
-                رجوع
-              </button>
+            <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
+              <input type="number" value={offerAmount} onChange={(e) => setOfferAmount(Number(e.target.value))} />
+              <button className="gx-btn" onClick={handleMakeOffer} disabled={busy}>تأكيد العرض</button>
+              <button className="tb-ghost" onClick={() => setPhase("options")}>رجوع</button>
             </div>
           )}
-
-          {error && (
-            <p role="alert" style={{ color: "#ff4d4d", marginTop: "12px", textAlign: "center", fontSize: "0.85rem" }}>
-              {error}
-            </p>
-          )}
+          {error && <p style={{ color: "red" }}>{error}</p>}
         </div>
       </div>
     </div>
