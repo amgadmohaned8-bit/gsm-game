@@ -504,7 +504,7 @@ export default function TransfersPage() {
         {tab === "sell" && (
           <section className="tx-pane" aria-label="Sell players">
             <p className="tx-hint">
-              <b>Sell now</b> pays {Math.round(QUICK * 100)}% of the value at once. <b>List</b> asks for more, but clubs answer over the next matchdays.
+              <b>Sell now</b> pays {Math.round(QUICK * 100)}% of the value at once. <b>List</b> asks for more: a club that meets your price pays it the same day, otherwise he goes today at a fair price.
               {!window.open && <> The window is closed, so players can only be listed.</>}
             </p>
 

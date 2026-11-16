@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { allClubs as clubs } from "@/lib/football/leagueClubs";
 import { marketValue, type Player } from "@/lib/football/squads";
 import { originLabel, originOf, realClubOf } from "@/lib/football/market";
-import { respondToBid, fairPrice, LISTING_DAYS, type BidResult } from "@/lib/football/transfers";
+import { respondToBid, fairPrice, type BidResult } from "@/lib/football/transfers";
 import Icon from "@/components/Icon";
 import "./transfers.css";
 
@@ -287,8 +287,8 @@ export function SellModal({
       {done ? (
         <div className="tb-stage tb-done">
           <div className="tb-stamp is-yes"><Icon name="check" size={34} /></div>
-          <h3>Listed for {money(amount)}</h3>
-          <p>Clubs bid each matchday. If nobody pays your price in {LISTING_DAYS} matchdays, the club sells him for about {money(fairPrice(player))}.</p>
+          <h3>Sold today</h3>
+          <p>A club that matches {money(amount)} takes him at once. If none does, he goes today for about {money(fairPrice(player))}. The money is already in your balance.</p>
           <button type="button" className="gx-btn" onClick={onClose}>Done</button>
         </div>
       ) : (
@@ -311,7 +311,7 @@ export function SellModal({
             ))}
           </div>
           <p className="tb-note">
-            A high price may sell for more, but it can also wait. After {LISTING_DAYS} matchdays without a buyer at your price, he goes for a fair price of about {money(fairPrice(player))}.
+            The sale is done the same day. A club that matches your price pays it. If none does, he goes for a fair price of about {money(fairPrice(player))}.
           </p>
           {warning && <p className="tb-error" role="alert">{warning}</p>}
           {error && <p className="tb-error" role="alert">{error}</p>}

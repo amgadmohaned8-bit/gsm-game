@@ -25,8 +25,8 @@ export const MARKET = "market";
 export const ABROAD = "abroad";
 export const MAX_SQUAD = 35;
 export const MIN_BY_POSITION: Record<Position, number> = { GK: 2, DF: 5, MF: 5, FW: 3 };
-/** a listed player is sold by the game after this many matchdays */
-export const LISTING_DAYS = 3;
+/** a listed player is sold on the day he is listed: no waiting */
+export const LISTING_DAYS = 0;
 
 export type Deal = {
   id: string;
@@ -257,13 +257,13 @@ export function canBuy(args: {
 
 /* ---------- listings: bids from AI clubs ---------- */
 
-/** Bids that came in for a listed player, one per matchday since listing. */
+/** Bids for a listed player, one per matchday from the day he is listed (the first one is the same day). */
 export function bidsFor(userId: string, listing: Listing, player: Player, myClub: string, matchday: number): Offer[] {
   const value = marketValue(player);
   const buyers = clubsOfLeague(leagueOfClub(myClub)).filter((c) => c.id !== myClub);
   const out: Offer[] = [];
 
-  for (let d = listing.listed_matchday + 1; d <= matchday; d++) {
+  for (let d = listing.listed_matchday; d <= matchday; d++) {
     const rnd = unit(`${userId}|${listing.player_id}|${d}|bid`);
     const club = buyers[Math.floor(unit(`${userId}|${listing.player_id}|${d}|who`) * buyers.length)].id;
     out.push({ player_id: listing.player_id, matchday: d, club, amount: round1(value * (0.78 + 0.34 * rnd)) });
