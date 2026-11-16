@@ -99,6 +99,7 @@ export const openingExtra: Record<string, number> = {
   "man-united": 305_000_000,
   "arsenal": 200_000_000,
    "hull-city" : 792_000_000,
+   "liverpool" : 300_000_00,
 };
 
 export function getTier(clubId: string | null | undefined): ClubTier {
