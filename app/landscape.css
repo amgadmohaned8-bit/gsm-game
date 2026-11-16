@@ -864,4 +864,25 @@ html .bk-ask,
 html .bk-modal .tb-note,
 html .bk-modal .tb-error { font-size: 12px; }
 html .bk-range { display: none; }
+html .sx-modal { padding: 0; }
+html .sx-sheet { max-height: 100svh; height: 100svh; width: min(900px, 100%); }
+html .sx-head { padding: 4px 10px; grid-template-columns: 40px 1fr auto; }
+html .sx-x { width: 36px; height: 36px; }
+html .sx-seg button { min-height: 28px; padding: 0 18px; font-size: 13px; }
+html .sx-go { min-height: 32px; padding: 0 16px; }
+html .sx-body { grid-template-columns: 190px minmax(0, 1fr); gap: 14px; padding: 10px 14px; }
+html .sx-prev { max-height: 190px; }
+html .sx-prev.is-story { max-height: 230px; width: auto; aspect-ratio: 9 / 16; }
+html .sx-glass { padding: 10px 10px; width: calc(100% - 16px); border-radius: 14px; }
+html .sx-glass p.is-lg { font-size: 17px; }
+html .sx-glass p.is-md { font-size: 14px; }
+html .sx-glass p.is-sm { font-size: 12px; }
+html .sx-tools { gap: 6px; }
+html .sx-tools textarea { min-height: 54px; padding: 8px 10px; font-size: 14px; }
+html .sx-add,
+html .sx-remove { min-height: 34px; }
+html .sx-flags { grid-template-columns: repeat(12, 1fr); gap: 4px; }
+html .sx-hint { display: none; }
+html .sx-story-in { height: 100svh; width: auto; max-width: 100%; }
+html .sx-bar { padding: 8px 14px; }
 }

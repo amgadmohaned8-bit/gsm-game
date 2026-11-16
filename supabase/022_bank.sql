@@ -7,6 +7,15 @@
 -- Amounts are in millions. "Days" are game days: one matchday is one day, a season is
 -- 38 days, and mid-season is day 19 (see lib/football/bank.ts).
 
+-- Safe to run more than once, and over an earlier draft of the bank: old bank functions
+-- are dropped first (they hold no data) and any missing column is added to the tables.
+do $$ declare f record; begin
+  for f in select p.oid::regprocedure as sig from pg_proc p join pg_namespace n on n.oid = p.pronamespace
+           where n.nspname = 'public' and p.proname like 'bank\_%' loop
+    execute 'drop function if exists ' || f.sig || ' cascade';
+  end loop;
+end $$;
+
 create table if not exists public.bank_profile (
   user_id uuid not null references auth.users(id) on delete cascade,
   league_id text not null,
@@ -62,6 +71,36 @@ create table if not exists public.bank_events (
 );
 create index if not exists bank_events_user_idx on public.bank_events (user_id, league_id, created_at desc);
 
+-- an earlier draft of these tables may exist: bring it up to date
+alter table public.bank_profile add column if not exists score int not null default 600;
+alter table public.bank_profile add column if not exists updated_at timestamptz not null default now();
+alter table public.bank_loans add column if not exists club_id text;
+alter table public.bank_loans add column if not exists request_id uuid not null default gen_random_uuid();
+alter table public.bank_loans add column if not exists principal numeric(10, 2) not null default 0;
+alter table public.bank_loans add column if not exists rate numeric(5, 4) not null default 0;
+alter table public.bank_loans add column if not exists interest numeric(10, 2) not null default 0;
+alter table public.bank_loans add column if not exists fees numeric(10, 2) not null default 0;
+alter table public.bank_loans add column if not exists penalties numeric(10, 2) not null default 0;
+alter table public.bank_loans add column if not exists paid numeric(10, 2) not null default 0;
+alter table public.bank_loans add column if not exists status text not null default 'active';
+alter table public.bank_loans add column if not exists taken_day int not null default 0;
+alter table public.bank_loans add column if not exists taken_season text not null default '';
+alter table public.bank_loans add column if not exists taken_matchday int;
+alter table public.bank_loans add column if not exists due_day int not null default 0;
+alter table public.bank_loans add column if not exists stage int not null default 0;
+alter table public.bank_loans add column if not exists reschedules int not null default 0;
+alter table public.bank_loans add column if not exists closed_day int;
+alter table public.bank_events add column if not exists club_id text;
+alter table public.bank_events add column if not exists amount numeric(10, 2) not null default 0;
+alter table public.bank_events add column if not exists debt numeric(10, 2) not null default 0;
+alter table public.bank_events add column if not exists points int not null default 0;
+alter table public.bank_events add column if not exists score_delta int not null default 0;
+alter table public.bank_events add column if not exists stage int;
+alter table public.bank_events add column if not exists note text;
+alter table public.bank_events add column if not exists season text;
+alter table public.bank_events add column if not exists matchday int;
+alter table public.bank_events add column if not exists game_day int;
+alter table public.bank_events add column if not exists key text;
 alter table public.bank_profile enable row level security;
 alter table public.bank_loans enable row level security;
 alter table public.bank_events enable row level security;

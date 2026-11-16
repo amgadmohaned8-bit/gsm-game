@@ -63,6 +63,7 @@ end $$;
 grant execute on function public.accept_manager_offer(uuid, text, int) to authenticated;
 
 -- the transfers of the other managers of my shared league (so their squads are right in my game)
+drop function if exists public.room_member_deals();
 create or replace function public.room_member_deals()
 returns table (id uuid, user_id uuid, season text, player_id text, from_club text, to_club text, fee numeric, kind text, matchday int, created_at timestamptz)
 language sql security definer stable set search_path = public as $$
