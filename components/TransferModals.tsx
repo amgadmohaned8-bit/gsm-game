@@ -6,7 +6,7 @@ import { marketValue, type Player } from "@/lib/football/squads";
 import { originLabel, originOf, realClubOf } from "@/lib/football/market";
 import { respondToBid, fairPrice, type BidResult } from "@/lib/football/transfers";
 import Icon from "@/components/Icon";
-import { explain } from "@/lib/football/roomTransfers";
+import { dealError } from "@/lib/football/dealing";
 import "./transfers.css";
 
 const money = (m: number) => (m >= 1000 ? `€${(m / 1000).toFixed(2)}B` : `€${m.toFixed(1)}M`);
@@ -159,7 +159,7 @@ export function BidModal({
       setPhase("done");
     } catch (err) {
       console.error(err);
-      setError(explain(err, "The deal could not be saved. Try again."));
+      setError(dealError(err));
     } finally {
       setSaving(false);
     }
@@ -275,7 +275,7 @@ export function SellModal({
       setDone(true);
     } catch (err) {
       console.error(err);
-      setError(explain(err, "Could not list the player. Try again."));
+      setError(dealError(err));
     } finally {
       setSaving(false);
     }
@@ -334,6 +334,7 @@ export function OfferModal({
   manager,
   balanceM,
   blocked,
+  asking,
   onClose,
   onSend,
 }: {
@@ -341,10 +342,12 @@ export function OfferModal({
   manager: string;
   balanceM: number;
   blocked: string | null;
+  /** the asking price when the player is listed for sale */
+  asking?: number;
   onClose: () => void;
   onSend: (amount: number) => Promise<void>;
 }) {
-  const value = marketValue(player);
+  const value = asking ?? marketValue(player);
   const [offer, setOffer] = useState(value.toFixed(1));
   const [saving, setSaving] = useState(false);
   const [done, setDone] = useState(false);
@@ -361,7 +364,7 @@ export function OfferModal({
       setDone(true);
     } catch (err) {
       console.error(err);
-      setError(explain(err, "The offer was not sent. You may already have an open offer for this player."));
+      setError(dealError(err));
     } finally {
       setSaving(false);
     }
@@ -374,7 +377,7 @@ export function OfferModal({
         <div className="tb-stage tb-done">
           <div className="tb-stamp is-yes"><Icon name="check" size={34} /></div>
           <h3>Offer sent</h3>
-          <p>{manager} can accept, refuse or answer with another price. You will see it in Talks.</p>
+          <p>{manager} can accept, refuse or answer with another price. You will see the answer in Negotiations.</p>
           <button type="button" className="gx-btn" onClick={onClose}>Done</button>
         </div>
       ) : (
@@ -391,6 +394,7 @@ export function OfferModal({
             ))}
           </div>
           <dl className="tb-facts">
+            {asking !== undefined && <div><dt>Asking price</dt><dd>{money(asking)}</dd></div>}
             <div><dt>Your balance</dt><dd>{money(balanceM)}</dd></div>
             <div><dt>After the deal</dt><dd className={amount > balanceM ? "is-bad" : ""}>{money(balanceM - amount)}</dd></div>
           </dl>

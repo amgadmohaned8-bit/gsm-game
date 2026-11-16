@@ -10,6 +10,8 @@ import { loadTransferState, type TransferState } from "@/lib/football/transfers"
 
 export type TransferContext = {
   userId: string;
+  /** the shared league this team plays in, null when playing alone */
+  roomId: string | null;
   clubId: string;
   leagueId: string;
   season: string;
@@ -41,18 +43,9 @@ export function useTransfers() {
       } = await supabase.auth.getUser();
       if (!user) return router.replace("/");
 
-      // the time BEFORE we read anything: the database adds every deal made after it to the budget we report
-      let stamp: string | null = null;
-      try {
-        const r = await supabase.rpc("wallet_stamp");
-        stamp = (r.data as string | null) ?? null;
-      } catch {
-        /* supabase/024 has not been run yet */
-      }
-
       const { data: contract } = await supabase
         .from("manager_contracts")
-        .select("selected_club, selected_league")
+        .select("selected_club, selected_league, room_id")
         .eq("user_id", user.id)
         .maybeSingle();
       if (!contract?.selected_club) return router.replace("/game/leagues");
@@ -69,29 +62,21 @@ export function useTransfers() {
 
       const rows = matches ?? [];
       const matchday = currentMatchday(rows);
-      const state = await loadTransferState(supabase, user.id, contract.selected_club, season, matchday, leagueId);
+      const state = await loadTransferState(supabase, user.id, contract.selected_club, season, matchday, leagueId, true);
       const finance = buildFinance(contract.selected_club, rows, state.net * 1_000_000);
-      const spendM = spendable(finance.balance / 1_000_000, state.bank);
 
       setCtx({
         userId: user.id,
+        roomId: (contract.room_id as string | null) ?? null,
         clubId: contract.selected_club,
         leagueId,
         season,
         matchday,
         state,
         balanceM: finance.balance / 1_000_000,
-        spendM,
+        spendM: spendable(finance.balance / 1_000_000, state.bank),
       });
       setError("");
-
-      // the database checks every deal against this budget
-      if (stamp) {
-        const spendable1 = Math.round(spendM * 10) / 10;
-        void supabase
-          .rpc("report_balance", { p_league: leagueId, p_balance: spendable1, p_stamp: stamp })
-          .then(() => undefined, () => undefined);
-      }
     } catch (err) {
       console.error("Transfer load error:", err);
       setError("Could not load the transfer market. Run supabase/004_transfers.sql first, then try again.");

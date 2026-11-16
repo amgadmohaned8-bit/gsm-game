@@ -243,7 +243,7 @@ export default function DashboardPage() {
             return;
           }
 
-          const ts = await loadTransferState(supabase, authData.user.id, data.selected_club, season, currentMatchday(matchData ?? []), data.selected_league);
+          const ts = await loadTransferState(supabase, authData.user.id, data.selected_club, season, currentMatchday(matchData ?? []), data.selected_league, true);
           clubBalance = buildFinance(data.selected_club, matchData ?? [], ts.net * 1_000_000).balance;
           setMySquad(ts.squads[data.selected_club] ?? []);
 

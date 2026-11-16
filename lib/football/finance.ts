@@ -59,7 +59,7 @@ export const tierProfiles: Record<ClubTier, TierProfile> = {
   elite: {
     label: "Elite budget",
     note: "Global brand and a packed stadium, but the wage bill is huge. Sell before you buy.",
-    openingBalance: 145_000_000,
+    openingBalance: 45_000_000,
     tv: 3_000_000,
     sponsors: 2_000_000,
     gate: 2_500_000,
@@ -94,12 +94,13 @@ export const tierProfiles: Record<ClubTier, TierProfile> = {
   },
 };
 
-/** Extra money a club starts the game with, on top of its tier (euros). Man United: 45M tier + 305M = 350M. */
+/** Every club starts with this much more than its tier says (euros). */
+export const openingBonusAll = 100_000_000;
+
+/** Extra money for one club on top of the tier and the bonus for everybody (euros). Change a number here to change that club's budget. */
 export const openingExtra: Record<string, number> = {
-  "man-united": 305_000_000,
-  "arsenal": 300_000_000,
-   "hull-city" : 792_000_000,
-   "liverpool" : 370_000_000,
+  arsenal: 100_000_000, // elite 45M + 100M for everybody + 100M = 245M
+  "man-united": 205_000_000, // elite 45M + 100M for everybody + 205M = 350M
 };
 
 export function getTier(clubId: string | null | undefined): ClubTier {
@@ -166,7 +167,7 @@ export function buildFinance(
     )
     .sort((a, b) => a.matchday - b.matchday);
 
-  const opening = p.openingBalance + (openingExtra[clubId] ?? 0);
+  const opening = p.openingBalance + openingBonusAll + (openingExtra[clubId] ?? 0);
   let balance = opening + transfersNet;
   const incomeByType = { tv: 0, sponsors: 0, gate: 0, prize: 0 };
   const expensesByType = { wages: 0, operations: 0, bonuses: 0 };

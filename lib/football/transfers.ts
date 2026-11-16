@@ -316,26 +316,8 @@ export async function recordDeal(
   client: SupabaseClient,
   deal: Omit<Deal, "id" | "created_at">
 ) {
-  // In a shared league the database checks the owner, the window, the budget and the squad,
-  // and writes the league's shared transfer record. Playing alone it just saves the deal.
-  const { error } = await client.rpc("room_record_deal", {
-    p_season: deal.season,
-    p_player: deal.player_id,
-    p_from: deal.from_club,
-    p_to: deal.to_club,
-    p_fee: deal.fee,
-    p_kind: deal.kind,
-    p_matchday: deal.matchday,
-    p_league: deal.league_id ?? null,
-  });
-  if (!error) return;
-  // supabase/024 has not been run yet: the old direct save still works for a solo career
-  if (error.code === "PGRST202" || error.code === "42883") {
-    const { error: direct } = await client.from("transfers").insert(deal);
-    if (direct) throw direct;
-    return;
-  }
-  throw error;
+  const { error } = await client.from("transfers").insert(deal);
+  if (error) throw error;
 }
 
 export type TransferState = {
@@ -363,7 +345,9 @@ export async function loadTransferState(
   myClub: string,
   season: string,
   matchday: number | null,
-  leagueId?: string
+  leagueId?: string,
+  /** only a page that knows the real current matchday may let the bank apply late fines or undo wrong ones */
+  syncTheBank = false
 ): Promise<TransferState> {
   // each team a manager runs is its own save: only this team's deals, listings and training count
   const mineOnly = <T extends { league_id?: string | null }>(rows: T[] | null | undefined): T[] =>
@@ -396,13 +380,11 @@ export async function loadTransferState(
   const league = leagueId || leagueOfClub(myClub);
   // the other managers of a shared league: their clubs do not trade by themselves, and their deals count
   let human: string[] = [];
-  let roomSeed = userId; // the computer clubs of a shared league trade the same way for every manager
   let friendDeals: Deal[] = [];
   try {
     const { data: c } = await client.from("manager_contracts").select("room_id").eq("user_id", userId).maybeSingle();
     const rid = (c?.room_id as string | null) ?? null;
     if (rid) {
-      roomSeed = rid;
       const { data: mem } = await client.from("room_members").select("club_id, user_id").eq("room_id", rid);
       human = (mem ?? []).filter((m: { user_id: string }) => m.user_id !== userId).map((m: { club_id: string }) => m.club_id);
       const { data: fd } = await client.rpc("room_member_deals");
@@ -411,7 +393,7 @@ export async function loadTransferState(
   } catch {
     /* playing alone, or supabase/020 has not been run */
   }
-  const others = aiDealsAt(aiDeals(roomSeed, league, myClub, season, human), season, matchday);
+  const others = aiDealsAt(aiDeals(userId, league, myClub, season, human), season, matchday);
   const view = (list: Deal[]) => applyDeals(list, { season, training, matchday: matchday ?? 99, own: { club: myClub, renewals }, ai: others, others: friendDeals });
   let deals = (dealRows ?? []) as Deal[];
   let listings = (listingRows ?? []) as Listing[];
@@ -420,10 +402,17 @@ export async function loadTransferState(
   // the bank: late stages come due with the game calendar, and a club in crisis has to sell
   const day = gameDay(season, matchday);
   let bank = await loadBank(client, userId, league, season);
-  if (bank.ready && needsSync(bank, day)) {
+  if (bank.ready && syncTheBank && matchday !== null) {
     try {
-      await syncBank(client, league, day, season, matchday);
-      bank = await loadBank(client, userId, league, season);
+      // fines stamped with a day that has not come yet were a mistake: take them back
+      if (bank.events.some((e) => e.game_day !== null && e.game_day > day && /^stage[1-5]$/.test(e.key ?? ""))) {
+        await client.rpc("bank_rewind", { p_league: league, p_day: day, p_season: season, p_matchday: matchday });
+        bank = await loadBank(client, userId, league, season);
+      }
+      if (needsSync(bank, day)) {
+        await syncBank(client, league, day, season, matchday);
+        bank = await loadBank(client, userId, league, season);
+      }
     } catch {
       /* it will be tried again on the next visit */
     }
@@ -456,7 +445,6 @@ export async function loadTransferState(
 
     for (const sale of sales) {
       if (canSell(squads[myClub] ?? [], sale.player)) continue; // would leave a position short: keep him
-      if (human.includes(sale.club)) continue; // a club run by a manager is only sold to through a listing
       try {
         await recordDeal(client, {
           user_id: userId,
@@ -467,7 +455,6 @@ export async function loadTransferState(
           fee: sale.fee,
           kind: "sell",
           matchday: sale.matchday,
-          league_id: leagueId,
         });
         await client.from("transfer_listings").update({ status: "sold" }).eq("id", sale.listing.id);
       } catch {

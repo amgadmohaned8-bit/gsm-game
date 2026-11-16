@@ -7,8 +7,8 @@ import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import { allClubs as clubs, clubsOfLeague, leagueOfClub } from "@/lib/football/leagueClubs";
 import { getTier } from "@/lib/football/finance";
-import { squads as baseSquads, marketValue, teamRating, type Player, type Position } from "@/lib/football/squads";
-import { marketPlayers, nextRefresh, originOf, visibleMarket } from "@/lib/football/market";
+import { marketValue, teamRating, type Player, type Position } from "@/lib/football/squads";
+import { nextRefresh, originOf, visibleMarket } from "@/lib/football/market";
 import {
   MARKET,
   askingPrice,
@@ -17,31 +17,24 @@ import {
   findPlayer,
   recordDeal,
   windowStatus,
-  type Deal,
+  MIN_BY_POSITION,
 } from "@/lib/football/transfers";
 import { useTransfers } from "@/lib/football/useTransfers";
 import { BidModal, OfferModal, SellModal, money, sellerLabel } from "@/components/TransferModals";
 import { myRoom, type RoomMember } from "@/lib/football/rooms";
 import { loadOffers, tellAbout, type ManagerOffer } from "@/lib/football/offers";
 import {
-  answerOffer,
-  explain,
-  listPlayer,
-  loadLedger,
-  sendOffer as sendRoomOffer,
-  watchRoom,
-  withdrawListing as withdrawRoomListing,
-  type RoomDeal,
-} from "@/lib/football/roomTransfers";
+  acceptOffer as dbAccept, answerOffer, buyNow, dealError, listPlayer, loadListings, loadLog, makeOffer, signFromClub, withdrawListing,
+  type DealCtx, type LogRow, type ManagerListing,
+} from "@/lib/football/dealing";
 import GsmMark from "@/components/GsmMark";
 import GameHud from "@/components/GameHud";
 import Icon from "@/components/Icon";
 import "./transfers.css";
 
-type Tab = "buy" | "sell" | "talks" | "clubs" | "news";
+type Tab = "market" | "talks" | "clubs" | "windows";
+type MView = "sale" | "world" | "mine";
 type Pos = "ALL" | Position;
-type Source = "world" | "league" | "managers";
-type MListing = { id: string; room_id: string; seller_id: string; seller_club: string; player_id: string; asking: number; status: string };
 type Sort = "rating" | "value" | "age";
 
 const PAGE = 40;
@@ -55,81 +48,54 @@ function untilRefresh(ms: number) {
 }
 
 const clubName = (id: string) => clubs.find((c) => c.id === id)?.name ?? (id === MARKET ? "World market" : "Abroad");
+const tierLabel = (id: string) => (getTier(id) === "elite" ? "Big club" : getTier(id) === "mid" ? "Mid-table" : "Smaller club");
+const dateOf = (iso: string) => { const d = new Date(iso); return Number.isNaN(d.getTime()) ? "" : d.toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" }); };
 
 export default function TransfersPage() {
   const router = useRouter();
   const { ctx, loading, error, reload } = useTransfers();
-  const [tab, setTab] = useState<Tab>("buy");
+  const [tab, setTab] = useState<Tab>("market");
+  const [view, setView] = useState<MView>("sale");
   const [pos, setPos] = useState<Pos>("ALL");
-  const [source, setSource] = useState<Source>("world");
   const [sort, setSort] = useState<Sort>("rating");
   const [query, setQuery] = useState("");
   const [limit, setLimit] = useState(PAGE);
   const [bid, setBid] = useState<Player | null>(null);
   const [sell, setSell] = useState<Player | null>(null);
   const [busy, setBusy] = useState("");
-  const [roomId, setRoomId] = useState<string | null>(null);
-  const [mlist, setMlist] = useState<MListing[]>([]);
-  const [sellMgr, setSellMgr] = useState<Player | null>(null);
+  const [mlist, setMlist] = useState<ManagerListing[]>([]);
   const [notice, setNotice] = useState("");
+  const [good, setGood] = useState("");
   const [confirm, setConfirm] = useState("");
-  const [newsMine, setNewsMine] = useState(false);
+  const [logMine, setLogMine] = useState(false);
   const [members, setMembers] = useState<RoomMember[]>([]);
   const [offers, setOffers] = useState<ManagerOffer[]>([]);
-  const [offerFor, setOfferFor] = useState<Player | null>(null);
+  const [log, setLog] = useState<LogRow[]>([]);
+  const [offerFor, setOfferFor] = useState<{ player: Player; asking?: number } | null>(null);
   const [counterId, setCounterId] = useState("");
   const [counterVal, setCounterVal] = useState("");
-  const [ledger, setLedger] = useState<RoomDeal[]>([]);
-  const [talkView, setTalkView] = useState<"all" | "received" | "sent" | "active">("all");
+  const [openClub, setOpenClub] = useState<string | null>(null);
 
-  const loadManagerListings = useCallback(async (uid: string) => {
-    try {
-      const { data: c } = await supabase.from("manager_contracts").select("room_id").eq("user_id", uid).maybeSingle();
-      const rid = (c?.room_id as string | null) ?? null;
-      setRoomId(rid);
-      if (!rid) return setMlist([]);
-      const { data } = await supabase.from("manager_listings").select("*").eq("room_id", rid).eq("status", "open");
-      setMlist((data ?? []) as MListing[]);
-    } catch {
-      setMlist([]);
-    }
-  }, []);
   const uid = ctx?.userId;
-  useEffect(() => {
-    if (uid) loadManagerListings(uid);
-  }, [uid, loadManagerListings]);
+  const roomId = ctx?.roomId ?? null;
 
-  const loadTalks = useCallback(async (u: string) => {
+  const refreshShared = useCallback(async (u: string, rid: string | null) => {
     setOffers(await loadOffers(supabase, u));
+    if (!rid) { setMlist([]); setLog([]); return; }
+    const [l, g] = await Promise.all([loadListings(supabase, rid), loadLog(supabase, rid)]);
+    setMlist(l);
+    setLog(g);
   }, []);
   useEffect(() => {
     if (!uid) return;
-    void loadTalks(uid);
-    const t = setInterval(() => void loadTalks(uid), 30_000);
+    void refreshShared(uid, roomId);
+    const t = setInterval(() => void refreshShared(uid, roomId), 15_000);
     return () => clearInterval(t);
-  }, [uid, loadTalks]);
+  }, [uid, roomId, refreshShared]);
   useEffect(() => {
     if (!roomId) return setMembers([]);
     myRoom(supabase, roomId).then((r) => setMembers(r?.members ?? [])).catch(() => setMembers([]));
   }, [roomId]);
-
-  // the league's shared transfer record, and live updates: offers, listings and deals appear for everyone at once
-  const refreshRoom = useCallback(async () => {
-    if (!uid || !roomId) return;
-    setLedger(await loadLedger(supabase, roomId));
-    await Promise.all([loadManagerListings(uid), loadTalks(uid)]);
-  }, [uid, roomId, loadManagerListings, loadTalks]);
-  useEffect(() => {
-    if (!uid || !roomId) {
-      setLedger([]);
-      return;
-    }
-    void refreshRoom();
-    return watchRoom(supabase, roomId, (table) => {
-      void refreshRoom();
-      if (table === "room_transfers") void reload();
-    });
-  }, [uid, roomId, refreshRoom, reload]);
 
   // the world market is a different selection every two days
   const [now, setNow] = useState(0); // set after mount: Date.now() during the first render breaks static prerendering
@@ -146,63 +112,47 @@ export default function TransfersPage() {
   /** clubs another person manages: they answer offers themselves */
   const humans = useMemo(() => new Map<string, RoomMember>(members.filter((m) => m.user_id !== ctx?.userId).map((m) => [m.club_id, m] as [string, RoomMember])), [members, ctx?.userId]);
   const myName = members.find((m) => m.user_id === ctx?.userId)?.name || "A manager";
-  const live = useMemo(() => offers.filter((o) => ctx && (o.buyer_club === ctx.clubId || o.seller_club === ctx.clubId)), [offers, ctx]);
-  const toAnswer = live.filter((o) => ctx && ((o.status === "open" && o.seller_id === ctx.userId) || (o.status === "countered" && o.buyer_id === ctx.userId))).length;
+  const toAnswer = offers.filter((o) => ctx && ((o.status === "open" && o.seller_id === ctx.userId) || (o.status === "countered" && o.buyer_id === ctx.userId))).length;
+  const listingOf = useMemo(() => new Map(mlist.map((l) => [l.player_id, l])), [mlist]);
 
   const onSale = useMemo(() => {
     if (!ctx || !squads) return { list: [] as Player[], isNew: new Set<string>(), leaving: new Set<string>() };
     const stock = new Map((squads[MARKET] ?? []).map((p) => [p.id, p]));
-    const entries = (now ? visibleMarket(roomId ?? ctx.userId, now) : []).filter((e) => stock.has(e.player.id));
+    const entries = (now ? visibleMarket(ctx.userId, now) : []).filter((e) => stock.has(e.player.id));
     return {
       list: entries.map((e) => stock.get(e.player.id)!),
       isNew: new Set(entries.filter((e) => e.isNew).map((e) => e.player.id)),
       leaving: new Set(entries.filter((e) => e.leaving).map((e) => e.player.id)),
     };
-  }, [ctx, squads, now, roomId]);
+  }, [ctx, squads, now]);
 
   const targets = useMemo(() => {
     if (!ctx || !squads) return [];
     let all: Player[];
-    if (source === "managers") {
-      all = mlist.filter((l) => l.seller_id !== ctx.userId).map((l) => findPlayer(squads, l.player_id)).filter(Boolean) as Player[];
-    } else if (source === "league") {
-      all = clubsOfLeague(leagueId).filter((c) => c.id !== ctx.clubId).flatMap((c) => squads[c.id] ?? []);
-    } else {
-      all = onSale.list;
-    }
+    if (view === "sale") all = mlist.map((l) => findPlayer(squads, l.player_id)).filter(Boolean) as Player[];
+    else all = onSale.list;
     const q = query.trim().toLowerCase();
     return all
       .filter((p) => (pos === "ALL" ? true : p.position === pos))
-      .filter((p) => (q ? p.name.toLowerCase().includes(q) || (source === "league" && clubName(p.club).toLowerCase().includes(q)) : true))
+      .filter((p) => (q ? p.name.toLowerCase().includes(q) || clubName(p.club).toLowerCase().includes(q) : true))
       .sort((a, b) => (sort === "rating" ? b.rating - a.rating : sort === "value" ? marketValue(b) - marketValue(a) : a.age - b.age));
-  }, [ctx, squads, pos, source, sort, query, mlist, onSale, leagueId]);
+  }, [ctx, squads, pos, view, sort, query, mlist, onSale]);
 
-  /** every transfer of the league: the other clubs' and the manager's own, newest first */
-  const news = useMemo(() => {
+  /** every transfer of the league, newest first: the managers' shared record, plus the computer clubs' trades */
+  const rows = useMemo(() => {
     if (!ctx) return [];
-    // in a shared league every deal is in ONE record the whole league sees; alone, it is the manager's own deals
-    const shared: (Deal & { mine: boolean })[] = ledger.map((l) => ({
-      id: l.id,
-      user_id: l.buyer_id ?? l.seller_id ?? "",
-      season: l.season,
-      player_id: l.player_id,
-      from_club: l.from_club,
-      to_club: l.to_club,
-      fee: l.fee,
-      kind: l.to_club === ctx.clubId ? "buy" : "sell",
-      matchday: l.matchday,
-      created_at: l.created_at,
-      mine: l.from_club === ctx.clubId || l.to_club === ctx.clubId,
-    }));
-    const all: (Deal & { mine: boolean })[] = [
-      ...ctx.state.aiDeals.map((d) => ({ ...d, mine: false })),
-      ...(roomId ? shared : ctx.state.deals.map((d) => ({ ...d, mine: true }))),
-    ];
-    const dayOf = (d: Deal) => (d.matchday === 0 ? 99 : d.matchday);
-    return all
-      .filter((d) => (newsMine ? d.mine : true))
-      .sort((a, b) => b.season.localeCompare(a.season) || dayOf(b) - dayOf(a) || b.created_at.localeCompare(a.created_at));
-  }, [ctx, newsMine, ledger, roomId]);
+    type Row = { id: string; player_id: string; from: string; to: string; fee: number; season: string; matchday: number; at: string; mine: boolean; ai: boolean };
+    const shared: Row[] = log.map((r) => ({ id: r.id, player_id: r.player_id, from: r.from_club, to: r.to_club, fee: r.fee, season: r.season, matchday: r.matchday, at: r.created_at, mine: r.from_club === ctx.clubId || r.to_club === ctx.clubId, ai: false }));
+    const seen = new Set(shared.map((r) => `${r.player_id}|${r.at.slice(0, 16)}`));
+    const own: Row[] = roomId
+      ? []
+      : ctx.state.deals.map((d) => ({ id: d.id, player_id: d.player_id, from: d.from_club, to: d.to_club, fee: d.fee, season: d.season, matchday: d.matchday, at: d.created_at, mine: true, ai: false }));
+    const ai: Row[] = ctx.state.aiDeals.filter((d) => !seen.has(`${d.player_id}|${String(d.created_at).slice(0, 16)}`)).map((d) => ({ id: d.id, player_id: d.player_id, from: d.from_club, to: d.to_club, fee: d.fee, season: d.season, matchday: d.matchday, at: d.created_at, mine: false, ai: true }));
+    const dayOf = (r: Row) => (r.matchday === 0 ? 99 : r.matchday);
+    return [...shared, ...own, ...ai]
+      .filter((r) => (logMine ? r.mine : true))
+      .sort((a, b) => b.season.localeCompare(a.season) || dayOf(b) - dayOf(a) || b.at.localeCompare(a.at));
+  }, [ctx, log, logMine, roomId]);
 
   if (loading) {
     return (
@@ -226,175 +176,118 @@ export default function TransfersPage() {
   const myClub = clubs.find((c) => c.id === ctx.clubId);
   const blocked = canBuy({ ban: signingBan(ctx.state.bank), balance: ctx.spendM, fee: 0, squadSize: mine.length, windowOpen: window.open });
   const otherClubs = clubsOfLeague(leagueId).filter((c) => c.id !== ctx.clubId);
+  const dctx: DealCtx = { roomId, userId: ctx.userId, clubId: ctx.clubId, leagueId: ctx.leagueId, season: ctx.season, matchday: ctx.matchday, spendM: ctx.spendM, squadSize: mine.length };
+  const free = 35 - mine.length;
 
-  async function sign(player: Player, fee: number) {
-    await recordDeal(supabase, {
-      league_id: ctx!.leagueId,
-      user_id: ctx!.userId,
-      season: ctx!.season,
-      player_id: player.id,
-      from_club: player.club,
-      to_club: ctx!.clubId,
-      fee,
-      kind: "buy",
-      matchday: ctx!.matchday ?? 0,
-    });
-    await reload();
-  }
-
-  async function buyFromManager(player: Player) {
-    const l = mlist.find((x) => x.player_id === player.id);
-    if (!l) return;
-    const why = canBuy({ ban: signingBan(ctx!.state.bank), balance: ctx!.spendM, fee: l.asking, squadSize: mine.length, windowOpen: window.open });
-    if (why) return setNotice(why);
-    setBusy(player.id);
+  /** runs one deal, shows the database's own answer, and refreshes everything from the database */
+  async function run(key: string, work: () => Promise<string | void>) {
+    setBusy(key);
     setNotice("");
+    setGood("");
     try {
-      // where he started in the game: the world market, or the club the seller got him from
-      const fromClub = (baseSquads[l.seller_club] ?? []).some((x) => x.id === player.id) || !(baseSquads[MARKET] ?? marketPlayers).some((x) => x.id === player.id) ? l.seller_club : MARKET;
-      const { error: e } = await supabase.rpc("buy_manager_listing", {
-        p_listing: l.id,
-        p_buyer_club: ctx!.clubId,
-        p_from_club: fromClub,
-        p_season: ctx!.season,
-        p_matchday: ctx!.matchday ?? 0,
-      });
-      if (e) throw e;
+      const done = await work();
       await reload();
-      await loadManagerListings(ctx!.userId);
+      await refreshShared(ctx!.userId, roomId);
+      if (done) setGood(done);
     } catch (err) {
       console.error(err);
-      setNotice(explain(err, "That deal did not go through. The player may already be sold."));
+      setNotice(dealError(err));
+      await refreshShared(ctx!.userId, roomId);
     } finally {
       setBusy("");
+      setConfirm("");
     }
   }
 
-  async function listToManagers(player: Player, asking: number) {
-    if (!roomId) throw new Error("no room");
-    await listPlayer(supabase, { roomId, playerId: player.id, asking });
-    await refreshRoom();
+  async function sign(player: Player, fee: number) {
+    await signFromClub(supabase, dctx, player, fee);
+    await reload();
+    await refreshShared(ctx!.userId, roomId);
   }
 
-  async function withdrawManager(id: string) {
-    setBusy(id);
-    try {
-      await withdrawRoomListing(supabase, id);
-    } catch (err) {
-      setNotice(explain(err, "Could not withdraw the listing."));
-    }
-    await refreshRoom();
-    setBusy("");
-  }
-
-  async function list(player: Player, asking: number) {
-    const { error: e } = await supabase.from("transfer_listings").insert({
-      league_id: ctx!.leagueId,
-      user_id: ctx!.userId,
-      season: ctx!.season,
-      player_id: player.id,
-      asking,
-      listed_matchday: ctx!.matchday ?? 0,
+  function buyListed(l: ManagerListing) {
+    const p = findPlayer(squads!, l.player_id);
+    const why = canBuy({ ban: signingBan(ctx!.state.bank), balance: ctx!.spendM, fee: l.asking, squadSize: mine.length, windowOpen: window.open });
+    if (why) return setNotice(why);
+    if (confirm !== l.id) return setConfirm(l.id);
+    void run(l.id, async () => {
+      await buyNow(supabase, dctx, l);
+      const seller = humans.get(l.seller_club);
+      if (seller) await tellAbout(supabase, seller.user_id, ctx!.userId, myName, ctx!.season, `${myName} bought ${p?.name ?? "your player"} for ${money(l.asking)}.`);
+      return `${p?.name ?? "The player"} is yours. ${money(l.asking)} paid.`;
     });
+  }
+
+  async function listForSale(player: Player, asking: number) {
+    if (roomId) {
+      await listPlayer(supabase, roomId, player.id, asking);
+      await refreshShared(ctx!.userId, roomId);
+      return;
+    }
+    const { error: e } = await supabase.from("transfer_listings").insert({ league_id: ctx!.leagueId, user_id: ctx!.userId, season: ctx!.season, player_id: player.id, asking, listed_matchday: ctx!.matchday ?? 0 });
     if (e) throw e;
     await reload();
   }
 
-  async function withdraw(id: string) {
-    setBusy(id);
-    await supabase.from("transfer_listings").update({ status: "withdrawn" }).eq("id", id);
-    await reload();
-    setBusy("");
+  function withdraw(player: Player) {
+    const m = listingOf.get(player.id);
+    const l = ctx!.state.listings.find((x) => x.player_id === player.id);
+    void run(player.id, async () => {
+      if (m && m.seller_id === ctx!.userId) await withdrawListing(supabase, m.id);
+      else if (l) { const { error: e } = await supabase.from("transfer_listings").update({ status: "withdrawn" }).eq("id", l.id); if (e) throw e; }
+    });
   }
 
-  async function accept(playerId: string, club: string, amount: number) {
+  function acceptComputerOffer(playerId: string, club: string, amount: number) {
     const listing = ctx!.state.listings.find((l) => l.player_id === playerId);
     const player = mine.find((p) => p.id === playerId);
     if (!listing || !player || canSell(mine, player)) return;
-    setBusy(playerId);
-    try {
-      await recordDeal(supabase, {
-        league_id: ctx!.leagueId,
-        user_id: ctx!.userId,
-        season: ctx!.season,
-        player_id: playerId,
-        from_club: ctx!.clubId,
-        to_club: club,
-        fee: amount,
-        kind: "sell",
-        matchday: ctx!.matchday ?? 0,
-      });
+    void run(playerId, async () => {
+      await recordDeal(supabase, { league_id: ctx!.leagueId, user_id: ctx!.userId, season: ctx!.season, player_id: playerId, from_club: ctx!.clubId, to_club: club, fee: amount, kind: "sell", matchday: ctx!.matchday ?? 0 });
       await supabase.from("transfer_listings").update({ status: "sold" }).eq("id", listing.id);
-      await reload();
-    } finally {
-      setBusy("");
-    }
+      return `${player.name} sold for ${money(amount)}.`;
+    });
   }
 
   /** sell at once for a lower price: the way to get money before a signing */
-  async function quickSell(player: Player) {
-    if (confirm !== player.id) {
-      setConfirm(player.id);
-      return;
-    }
+  function quickSell(player: Player) {
+    if (confirm !== player.id) return setConfirm(player.id);
     const why = canSell(mine, player);
     if (why) return setNotice(why);
-    setConfirm("");
-    setBusy(player.id);
-    setNotice("");
-    try {
-      const buyers = otherClubs.filter((c) => (squads![c.id] ?? []).length < 33 && !humans.has(c.id));
-      const buyer = buyers[(player.rating + player.age) % Math.max(1, buyers.length)] ?? otherClubs.find((c) => !humans.has(c.id)) ?? otherClubs[0];
-      const listing = ctx!.state.listings.find((l) => l.player_id === player.id);
-      await recordDeal(supabase, {
-        league_id: ctx!.leagueId,
-        user_id: ctx!.userId,
-        season: ctx!.season,
-        player_id: player.id,
-        from_club: ctx!.clubId,
-        to_club: buyer.id,
-        fee: Math.round(marketValue(player) * QUICK * 10) / 10,
-        kind: "sell",
-        matchday: ctx!.matchday ?? 0,
-      });
-      if (listing) await supabase.from("transfer_listings").update({ status: "sold" }).eq("id", listing.id);
-      await reload();
-    } catch (err) {
-      console.error(err);
-      setNotice(explain(err, "The sale did not go through. Try again."));
-    } finally {
-      setBusy("");
-    }
+    if (!window.open) return setNotice("The transfer window is closed.");
+    const buyers = otherClubs.filter((c) => (squads![c.id] ?? []).length < 33 && !humans.has(c.id));
+    const buyer = buyers[(player.rating + player.age) % Math.max(1, buyers.length)] ?? otherClubs.find((c) => !humans.has(c.id)) ?? otherClubs[0];
+    const fee = Math.round(marketValue(player) * QUICK * 10) / 10;
+    void run(player.id, async () => {
+      await recordDeal(supabase, { league_id: ctx!.leagueId, user_id: ctx!.userId, season: ctx!.season, player_id: player.id, from_club: ctx!.clubId, to_club: buyer.id, fee, kind: "sell", matchday: ctx!.matchday ?? 0 });
+      const own = ctx!.state.listings.find((l) => l.player_id === player.id);
+      if (own) await supabase.from("transfer_listings").update({ status: "sold" }).eq("id", own.id);
+      const mgr = listingOf.get(player.id);
+      if (mgr && mgr.seller_id === ctx!.userId) await withdrawListing(supabase, mgr.id).catch(() => undefined);
+      return `${player.name} sold for ${money(fee)}.`;
+    });
   }
 
   async function sendOffer(player: Player, amount: number) {
     const m = humans.get(player.club);
-    if (!m || !roomId) throw new Error("no manager");
-    await sendRoomOffer(supabase, { roomId, sellerClub: player.club, playerId: player.id, amount, season: ctx!.season });
-    await tellAbout(supabase, m.user_id, ctx!.userId, myName, ctx!.season, `${myName} offers ${money(amount)} for ${player.name}. Answer in Transfers, Talks.`);
-    await loadTalks(ctx!.userId);
+    if (!m) throw new Error("That club is run by the computer: use a normal offer.");
+    await makeOffer(supabase, dctx, player.id, amount);
+    await tellAbout(supabase, m.user_id, ctx!.userId, myName, ctx!.season, `${myName} offers ${money(amount)} for ${player.name}. Answer in Transfers, Negotiations.`);
+    await refreshShared(ctx!.userId, roomId);
   }
 
-  async function answer(o: ManagerOffer, to: "rejected" | "withdrawn" | "countered", counter?: number) {
-    setBusy(o.id);
-    setNotice("");
-    try {
-      await answerOffer(supabase, { offerId: o.id, action: to === "rejected" ? "reject" : to === "countered" ? "counter" : "withdraw", counter });
-      const p = findPlayer(squads!, o.player_id);
-      const other = o.seller_id === ctx!.userId ? o.buyer_id : o.seller_id;
-      const what = to === "countered" ? `${myName} wants ${money(counter ?? 0)} for ${p?.name ?? "the player"}.` : to === "rejected" ? `${myName} refused your offer for ${p?.name ?? "the player"}.` : `${myName} withdrew the offer for ${p?.name ?? "the player"}.`;
+  function answer(o: ManagerOffer, action: "reject" | "counter" | "withdraw", counter?: number) {
+    const p = findPlayer(squads!, o.player_id);
+    const other = o.seller_id === ctx!.userId ? o.buyer_id : o.seller_id;
+    void run(o.id, async () => {
+      await answerOffer(supabase, o.id, action, counter);
+      const what = action === "counter" ? `${myName} wants ${money(counter ?? 0)} for ${p?.name ?? "the player"}.` : action === "reject" ? `${myName} refused the offer for ${p?.name ?? "the player"}.` : `${myName} withdrew the offer for ${p?.name ?? "the player"}.`;
       await tellAbout(supabase, other, ctx!.userId, myName, ctx!.season, what);
       setCounterId("");
-      await loadTalks(ctx!.userId);
-    } catch (err) {
-      console.error(err);
-      setNotice(explain(err, "That did not go through. Try again."));
-    } finally {
-      setBusy("");
-    }
+    });
   }
 
-  async function acceptOffer(o: ManagerOffer) {
+  function acceptNegotiation(o: ManagerOffer) {
     const selling = o.seller_id === ctx!.userId;
     const price = selling ? o.amount : (o.counter ?? o.amount);
     const p = findPlayer(squads!, o.player_id);
@@ -403,35 +296,38 @@ export default function TransfersPage() {
       ? (mine.some((x) => x.id === p.id) ? canSell(mine, p) : "He is no longer in your squad.")
       : canBuy({ ban: signingBan(ctx!.state.bank), balance: ctx!.spendM, fee: price, squadSize: mine.length, windowOpen: window.open });
     if (why) return setNotice(why);
-    setBusy(o.id);
-    setNotice("");
-    try {
-      const { error: e } = await supabase.rpc("accept_manager_offer", { p_offer: o.id, p_season: ctx!.season, p_matchday: ctx!.matchday ?? 0 });
-      if (e) throw e;
+    void run(o.id, async () => {
+      await dbAccept(supabase, dctx, o.id, o.room_id, o.player_id, o.buyer_club);
       await tellAbout(supabase, selling ? o.buyer_id : o.seller_id, ctx!.userId, myName, ctx!.season, `${myName} accepted ${money(price)} for ${p.name}. The deal is done.`);
-      await reload();
-      await loadTalks(ctx!.userId);
-    } catch (err) {
-      console.error(err);
-      setNotice(explain(err, "The deal did not go through. The offer may have been withdrawn."));
-    } finally {
-      setBusy("");
-    }
+      return `Deal done: ${p.name} for ${money(price)}.`;
+    });
   }
 
   const tabs: [Tab, string][] = [
-    ["buy", "Transfer Market"],
-    ["sell", `My Players${ctx.state.offers.length ? ` (${ctx.state.offers.length})` : ""}`],
-    ...(roomId ? ([["talks", `Negotiations${toAnswer ? ` (${toAnswer})` : ""}`]] as [Tab, string][]) : []),
+    ["market", `Transfer Market${mlist.filter((l) => l.seller_id !== ctx.userId).length ? ` (${mlist.filter((l) => l.seller_id !== ctx.userId).length})` : ""}`],
+    ["talks", `Negotiations${toAnswer ? ` (${toAnswer})` : ""}`],
     ["clubs", "Clubs"],
-    ["news", "Transfer Windows"],
+    ["windows", "Transfer Windows"],
   ];
-  const sources: [Source, string][] = [
+  const views: [MView, string][] = [
+    ["sale", `For sale (${mlist.length})`],
     ["world", "World market"],
-    ["league", "League clubs"],
-    ...(roomId ? ([["managers", `Managers (${mlist.filter((l) => l.seller_id !== ctx.userId).length})`]] as [Source, string][]) : []),
+    ["mine", "My players"],
   ];
-  const free = 35 - mine.length;
+  const posChips = (
+    <div className="tx-chips" role="group" aria-label="Position">
+      {(["ALL", "GK", "DF", "MF", "FW"] as Pos[]).map((x) => (
+        <button key={x} type="button" className={pos === x ? "is-on" : ""} onClick={() => { setPos(x); setLimit(PAGE); }}>{x === "ALL" ? "All" : x}</button>
+      ))}
+    </div>
+  );
+
+  /** one player of the list: rating, name, and what to do with him */
+  const rateCls = (p: Player) => `tx-rate ${p.rating >= 85 ? "is-elite" : p.rating >= 78 ? "is-high" : ""}`;
+
+  const clubPlayers = openClub ? (squads[openClub] ?? []).slice().sort((a, b) => b.rating - a.rating) : [];
+  const openMeta = openClub ? clubs.find((c) => c.id === openClub) : undefined;
+  const openHuman = openClub ? humans.get(openClub) : undefined;
 
   return (
     <main className="tr tx">
@@ -458,242 +354,323 @@ export default function TransfersPage() {
 
         <nav className="tx-tabs" role="tablist" aria-label="Transfer sections">
           {tabs.map(([key, label]) => (
-            <button key={key} type="button" role="tab" aria-selected={tab === key} className={tab === key ? "is-on" : ""} onClick={() => { setTab(key); setNotice(""); setConfirm(""); }}>
+            <button key={key} type="button" role="tab" aria-selected={tab === key} className={tab === key ? "is-on" : ""} onClick={() => { setTab(key); setNotice(""); setGood(""); setConfirm(""); setLimit(PAGE); }}>
               {label}
             </button>
           ))}
         </nav>
 
         {notice && <p className="tx-note is-warn" role="alert">{notice}</p>}
+        {good && <p className="tx-note is-good" role="status">{good}</p>}
 
-        {tab === "buy" && (
-          <section className="tx-pane" aria-label="Buy players">
+        {tab === "market" && (
+          <section className="tx-pane" aria-label="Transfer market">
             <div className="tx-bar">
-              <label className="tx-search">
-                <Icon name="search" size={16} />
-                <input value={query} onChange={(e) => { setQuery(e.target.value); setLimit(PAGE); }} placeholder="Search" aria-label="Search a player" />
-              </label>
-              <div className="tx-chips" role="group" aria-label="Where from">
-                {sources.map(([k, l]) => (
-                  <button key={k} type="button" className={source === k ? "is-on" : ""} onClick={() => { setSource(k); setLimit(PAGE); }}>{l}</button>
+              <div className="tx-chips" role="group" aria-label="Market">
+                {views.map(([k, l]) => (
+                  (k !== "sale" || roomId) && <button key={k} type="button" className={view === k ? "is-on" : ""} onClick={() => { setView(k); setLimit(PAGE); setConfirm(""); }}>{l}</button>
                 ))}
               </div>
-              <div className="tx-chips" role="group" aria-label="Position">
-                {(["ALL", "GK", "DF", "MF", "FW"] as Pos[]).map((p) => (
-                  <button key={p} type="button" className={pos === p ? "is-on" : ""} onClick={() => { setPos(p); setLimit(PAGE); }}>{p === "ALL" ? "All" : p}</button>
-                ))}
-              </div>
-              <div className="tx-chips" role="group" aria-label="Sort">
-                {([["rating", "Best"], ["value", "Value"], ["age", "Young"]] as [Sort, string][]).map(([k, l]) => (
-                  <button key={k} type="button" className={sort === k ? "is-on" : ""} onClick={() => setSort(k)}>{l}</button>
-                ))}
-              </div>
+              {view !== "mine" && (
+                <>
+                  <label className="tx-search">
+                    <Icon name="search" size={16} />
+                    <input value={query} onChange={(e) => { setQuery(e.target.value); setLimit(PAGE); }} placeholder="Search players" aria-label="Search a player" />
+                  </label>
+                  {posChips}
+                  <div className="tx-chips" role="group" aria-label="Sort">
+                    {([["rating", "Best"], ["value", "Value"], ["age", "Young"]] as [Sort, string][]).map(([k, l]) => (
+                      <button key={k} type="button" className={sort === k ? "is-on" : ""} onClick={() => setSort(k)}>{l}</button>
+                    ))}
+                  </div>
+                </>
+              )}
             </div>
 
-            <p className="tx-hint">
-              {source === "world"
-                ? <>New selection in <b>{untilRefresh(nextRefresh(now) - now)}</b>. A player you sign leaves the market for everyone.</>
-                : source === "league"
-                  ? <>Any club can be asked, but a good player costs more. Clubs run by a friend answer themselves: tap Negotiate.</>
-                  : <>Players other managers of your league put up for sale.</>}
-              {ctx.balanceM < 5 && <> Your balance is low: sell a player first.</>}
-            </p>
+            {view === "sale" && (
+              <>
+                <p className="tx-hint">Players the managers of your league have put up for sale. <b>Buy now</b> pays the asking price and the player is yours at once. <b>Make offer</b> sends a different price to his manager: you will answer each other in Negotiations.</p>
+                <ul className="tx-list">
+                  {targets.slice(0, limit).map((p) => {
+                    const l = listingOf.get(p.id)!;
+                    const own = l.seller_id === ctx.userId;
+                    const seller = humans.get(l.seller_club);
+                    return (
+                      <li key={l.id} className="tx-row is-market">
+                        <b className={rateCls(p)}>{p.rating}</b>
+                        <span className="tx-name">
+                          <strong>{p.name}<em className="tr-tag is-new">For sale</em></strong>
+                          <small>{p.position} · {p.age} · {clubName(l.seller_club)}{seller ? ` · ${seller.name}` : own ? " · you" : ""} · value {money(marketValue(p))}</small>
+                        </span>
+                        <span className="tx-price"><small>Asking</small><b>{money(l.asking)}</b></span>
+                        <span className="tx-acts">
+                          {own ? (
+                            <button type="button" className="tx-btn is-ghost" disabled={busy === p.id} onClick={() => withdraw(p)}>Withdraw</button>
+                          ) : (
+                            <>
+                              <button type="button" className="tx-btn is-ghost" disabled={!window.open || busy === l.id} onClick={() => setOfferFor({ player: p, asking: l.asking })}>Make offer</button>
+                              <button type="button" className={`tx-btn ${confirm === l.id ? "is-sure" : ""}`} disabled={busy === l.id || !window.open} onClick={() => buyListed(l)}>
+                                {busy === l.id ? "Buying..." : confirm === l.id ? `Confirm ${money(l.asking)}` : "Buy now"}
+                              </button>
+                            </>
+                          )}
+                        </span>
+                      </li>
+                    );
+                  })}
+                  {targets.length === 0 && <li className="tx-empty">{mlist.length ? "No listed player matches your filters." : "Nobody has listed a player yet. List one of yours in My players, or open a club in Clubs and send an offer."}</li>}
+                </ul>
+              </>
+            )}
 
-            <ul className="tx-list">
-              {targets.slice(0, limit).map((p) => {
-                const club = clubs.find((c) => c.id === p.club);
-                const ml = mlist.find((l) => l.player_id === p.id && l.seller_id !== ctx.userId);
-                return (
-                  <li key={p.id} className="tx-row">
-                    <b className={`tx-rate ${p.rating >= 85 ? "is-elite" : p.rating >= 78 ? "is-high" : ""}`}>{p.rating}</b>
-                    <span className="tx-name">
-                      <strong>{p.name}{source === "world" && onSale.isNew.has(p.id) && <em className="tr-tag is-new">New</em>}{source === "world" && onSale.leaving.has(p.id) && <em className="tr-tag is-leaving">Leaving soon</em>}</strong>
-                      <small>{p.position} · {p.age} · {club ? club.name : sellerLabel(p)}{humans.get(p.club) ? ` · ${humans.get(p.club)?.name ?? "manager"}` : ""}</small>
-                    </span>
-                    <span className="tx-val">{originOf(p.id) === "Free" ? "Free agent" : money(marketValue(p))}</span>
-                    {ml ? (
-                      <span className="tx-acts">
-                        <button type="button" className="tx-btn" disabled={busy === p.id || !window.open} onClick={() => buyFromManager(p)}>Buy now {money(ml.asking)}</button>
-                        {humans.has(p.club) && <button type="button" className="tx-btn is-ghost" disabled={!window.open} onClick={() => setOfferFor(p)}>Make offer</button>}
-                      </span>
-                    ) : humans.has(p.club) ? (
-                      <button type="button" className="tx-btn" disabled={!window.open} onClick={() => setOfferFor(p)}>Negotiate</button>
-                    ) : (
-                      <button type="button" className="tx-btn" disabled={!window.open} onClick={() => setBid(p)}>Offer</button>
-                    )}
-                  </li>
-                );
-              })}
-              {targets.length === 0 && <li className="tx-empty">No player matches. Try another position or clear the search.</li>}
-            </ul>
-            {targets.length > limit && (
+            {view === "world" && (
+              <>
+                <p className="tx-hint">
+                  Free agents and players from abroad. New selection in <b>{untilRefresh(nextRefresh(now) - now)}</b>. A player you sign leaves the market for everyone.
+                  {ctx.balanceM < 5 && <> Your balance is low: sell a player first.</>}
+                </p>
+                <ul className="tx-list">
+                  {targets.slice(0, limit).map((p) => {
+                    const club = clubs.find((c) => c.id === p.club);
+                    return (
+                      <li key={p.id} className="tx-row">
+                        <b className={rateCls(p)}>{p.rating}</b>
+                        <span className="tx-name">
+                          <strong>{p.name}{onSale.isNew.has(p.id) && <em className="tr-tag is-new">New</em>}{onSale.leaving.has(p.id) && <em className="tr-tag is-leaving">Leaving soon</em>}</strong>
+                          <small>{p.position} · {p.age} · {club ? club.name : sellerLabel(p)}</small>
+                        </span>
+                        <span className="tx-val">{originOf(p.id) === "Free" ? "Free agent" : money(marketValue(p))}</span>
+                        <button type="button" className="tx-btn" disabled={!window.open} onClick={() => setBid(p)}>Offer</button>
+                      </li>
+                    );
+                  })}
+                  {targets.length === 0 && <li className="tx-empty">No player matches. Try another position or clear the search.</li>}
+                </ul>
+              </>
+            )}
+
+            {view === "mine" && (
+              <>
+                <p className="tx-hint">
+                  <b>List</b> sets your asking price: {roomId ? "every manager of the league sees it, can buy at that price at once, or send you an offer" : "a club that meets your price pays it the same day"}. <b>Sell now</b> pays {Math.round(QUICK * 100)}% of the value at once. A listed player stays in your squad until a deal is done.
+                  {!window.open && <> The window is closed, so players can only be listed.</>}
+                </p>
+                {ctx.state.offers.length > 0 && (
+                  <div className="tx-offers">
+                    {ctx.state.offers.map((o) => {
+                      const p = mine.find((x) => x.id === o.player_id);
+                      if (!p) return null;
+                      return (
+                        <div key={`${o.player_id}-${o.matchday}`} className="tx-offer">
+                          <span><strong>{clubName(o.club)}</strong> offer {money(o.amount)} for <strong>{p.name}</strong></span>
+                          <button type="button" className="tx-btn" disabled={busy === p.id || !!canSell(mine, p)} onClick={() => acceptComputerOffer(p.id, o.club, o.amount)}>Accept</button>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+                <ul className="tx-list">
+                  {mine.slice().sort((a, b) => b.rating - a.rating).map((p) => {
+                    const own = ctx.state.listings.find((l) => l.player_id === p.id);
+                    const mgr = listingOf.get(p.id);
+                    const asking = mgr && mgr.seller_id === ctx.userId ? mgr.asking : own?.asking;
+                    const quick = Math.round(marketValue(p) * QUICK * 10) / 10;
+                    return (
+                      <li key={p.id} className="tx-row is-sell">
+                        <b className={rateCls(p)}>{p.rating}</b>
+                        <span className="tx-name">
+                          <strong>{p.name}{asking !== undefined && <em className="tr-tag is-leaving">Listed</em>}</strong>
+                          <small>{p.position} · {p.age}{asking !== undefined ? ` · asking ${money(asking)}` : ""}</small>
+                        </span>
+                        <span className="tx-val">{money(marketValue(p))}</span>
+                        <span className="tx-acts">
+                          {asking !== undefined ? (
+                            <button type="button" className="tx-btn is-ghost" disabled={busy === p.id} onClick={() => withdraw(p)}>Withdraw</button>
+                          ) : (
+                            <button type="button" className="tx-btn is-ghost" onClick={() => setSell(p)}>List</button>
+                          )}
+                          <button type="button" className={`tx-btn ${confirm === p.id ? "is-sure" : ""}`} disabled={busy === p.id || !window.open} onClick={() => quickSell(p)}>
+                            {confirm === p.id ? `Confirm ${money(quick)}` : `Sell now ${money(quick)}`}
+                          </button>
+                        </span>
+                      </li>
+                    );
+                  })}
+                </ul>
+              </>
+            )}
+            {view !== "mine" && targets.length > limit && (
               <button type="button" className="tx-more" onClick={() => setLimit((l) => l + PAGE)}>Show more ({targets.length - limit})</button>
             )}
           </section>
         )}
 
-        {tab === "sell" && (
-          <section className="tx-pane" aria-label="Sell players">
-            <p className="tx-hint">
-              <b>Sell now</b> pays {Math.round(QUICK * 100)}% of the value at once. <b>List</b> asks for more: a club that meets your price pays it the same day, otherwise he goes today at a fair price.
-              {!window.open && <> The window is closed, so players can only be listed.</>}
-            </p>
-
-            {ctx.state.offers.length > 0 && (
-              <div className="tx-offers">
-                {ctx.state.offers.map((o) => {
-                  const p = mine.find((x) => x.id === o.player_id);
-                  if (!p) return null;
-                  return (
-                    <div key={`${o.player_id}-${o.matchday}`} className="tx-offer">
-                      <span><strong>{clubName(o.club)}</strong> offer {money(o.amount)} for <strong>{p.name}</strong></span>
-                      <button type="button" className="tx-btn" disabled={busy === p.id || !!canSell(mine, p)} onClick={() => accept(p.id, o.club, o.amount)}>Accept</button>
-                    </div>
-                  );
-                })}
-              </div>
-            )}
-
-            <ul className="tx-list">
-              {mine.slice().sort((a, b) => b.rating - a.rating).map((p) => {
-                const listing = ctx.state.listings.find((l) => l.player_id === p.id);
-                const mgr = mlist.find((l) => l.seller_id === ctx.userId && l.player_id === p.id);
-                const quick = Math.round(marketValue(p) * QUICK * 10) / 10;
+        {tab === "talks" && (
+          <section className="tx-pane" aria-label="Negotiations">
+            {!roomId ? (
+              <p className="tx-empty">Negotiations are between the managers of a shared league. Create a league or join one with a code from Rooms, and the offers you send and receive appear here.</p>
+            ) : (
+              (() => {
+                const mineOffers = offers.filter((o) => o.buyer_id === ctx.userId || o.seller_id === ctx.userId);
+                const turn = (o: ManagerOffer) => (o.status === "open" && o.seller_id === ctx.userId) || (o.status === "countered" && o.buyer_id === ctx.userId);
+                const groups: [string, string, ManagerOffer[]][] = [
+                  ["Waiting for your answer", "Accept, refuse or send a counter offer.", mineOffers.filter(turn)],
+                  ["Waiting for the other manager", "You will be told as soon as he answers.", mineOffers.filter((o) => (o.status === "open" || o.status === "countered") && !turn(o))],
+                  ["Finished", "Deals done and offers that ended.", mineOffers.filter((o) => o.status !== "open" && o.status !== "countered").slice(0, 20)],
+                ];
                 return (
-                  <li key={p.id} className="tx-row is-sell">
-                    <b className={`tx-rate ${p.rating >= 85 ? "is-elite" : p.rating >= 78 ? "is-high" : ""}`}>{p.rating}</b>
-                    <span className="tx-name">
-                      <strong>{p.name}</strong>
-                      <small>{p.position} · {p.age}{listing ? ` · listed ${money(listing.asking)}` : mgr ? ` · listed to managers ${money(mgr.asking)}` : ""}</small>
-                    </span>
-                    <span className="tx-val">{money(marketValue(p))}</span>
-                    <span className="tx-acts">
-                      {listing ? (
-                        <button type="button" className="tx-btn is-ghost" disabled={busy === listing.id} onClick={() => withdraw(listing.id)}>Withdraw</button>
-                      ) : mgr ? (
-                        <button type="button" className="tx-btn is-ghost" disabled={busy === mgr.id} onClick={() => withdrawManager(mgr.id)}>Withdraw</button>
-                      ) : (
-                        <>
-                          <button type="button" className="tx-btn is-ghost" onClick={() => setSell(p)}>List</button>
-                          {roomId && <button type="button" className="tx-btn is-ghost" onClick={() => setSellMgr(p)}>Managers</button>}
-                        </>
-                      )}
-                      <button type="button" className={`tx-btn ${confirm === p.id ? "is-sure" : ""}`} disabled={busy === p.id || !window.open} onClick={() => quickSell(p)}>
-                        {confirm === p.id ? `Confirm ${money(quick)}` : `Sell now ${money(quick)}`}
-                      </button>
-                    </span>
-                  </li>
+                  <>
+                    <p className="tx-hint">Offers you sent, offers you received, and the talks in progress. The player stays with his club until a deal is done.</p>
+                    {groups.map(([title, sub, list]) => (
+                      <div key={title} className="tx-group">
+                        <h2>{title} <span>{list.length}</span></h2>
+                        <small>{sub}</small>
+                        <ul className="tx-list">
+                          {list.map((o) => {
+                            const p = findPlayer(squads, o.player_id);
+                            const selling = o.seller_id === ctx.userId;
+                            const otherClub = selling ? o.buyer_club : o.seller_club;
+                            const who = humans.get(otherClub)?.name || clubName(otherClub);
+                            const closed = o.status === "accepted" || o.status === "rejected" || o.status === "withdrawn";
+                            const mt = turn(o);
+                            return (
+                              <li key={o.id} className={`tx-row is-talk ${closed ? "is-closed" : ""}`}>
+                                <b className="tx-rate">{p?.rating ?? "-"}</b>
+                                <span className="tx-name">
+                                  <strong>{p?.name ?? "Player"}<em className={`tr-tag ${selling ? "is-leaving" : "is-new"}`}>{selling ? "Selling" : "Buying"}</em></strong>
+                                  <small>
+                                    {who} · offer {money(o.amount)}{o.counter ? ` · counter ${money(o.counter)}` : ""} ·{" "}
+                                    {o.status === "open" ? (selling ? "he is waiting for you" : "waiting for him")
+                                      : o.status === "countered" ? (selling ? "waiting for his answer" : "he wants " + money(o.counter ?? 0))
+                                      : o.status === "accepted" ? `deal done at ${money(o.counter ?? o.amount)}` : o.status === "rejected" ? "refused" : "withdrawn"}
+                                  </small>
+                                </span>
+                                <span className="tx-price"><small>{o.status === "countered" ? "Counter" : "Offer"}</small><b>{money(o.status === "countered" ? (o.counter ?? o.amount) : o.amount)}</b></span>
+                                <span className="tx-acts">
+                                  {mt && counterId !== o.id && (
+                                    <>
+                                      <button type="button" className="tx-btn" disabled={busy === o.id || !window.open} onClick={() => acceptNegotiation(o)}>Accept</button>
+                                      {selling && <button type="button" className="tx-btn is-ghost" onClick={() => { setCounterId(o.id); setCounterVal(String(Math.round(o.amount * 1.2 * 10) / 10)); }}>Counter</button>}
+                                      <button type="button" className="tx-btn is-ghost" disabled={busy === o.id} onClick={() => answer(o, "reject")}>Reject</button>
+                                    </>
+                                  )}
+                                  {mt && counterId === o.id && (
+                                    <>
+                                      <span className="tx-counter">€<input inputMode="decimal" value={counterVal} onChange={(e) => setCounterVal(e.target.value.replace(/[^0-9.]/g, ""))} aria-label="Your price in millions" />M</span>
+                                      <button type="button" className="tx-btn" disabled={busy === o.id || !(Number(counterVal) > 0)} onClick={() => answer(o, "counter", Math.round(Number(counterVal) * 10) / 10)}>Send</button>
+                                      <button type="button" className="tx-btn is-ghost" onClick={() => setCounterId("")}>Cancel</button>
+                                    </>
+                                  )}
+                                  {!mt && !closed && !selling && (
+                                    <button type="button" className="tx-btn is-ghost" disabled={busy === o.id} onClick={() => answer(o, "withdraw")}>Withdraw</button>
+                                  )}
+                                </span>
+                              </li>
+                            );
+                          })}
+                          {list.length === 0 && <li className="tx-empty is-small">Nothing here.</li>}
+                        </ul>
+                      </div>
+                    ))}
+                  </>
                 );
-              })}
-            </ul>
+              })()
+            )}
           </section>
         )}
 
-        {tab === "talks" && (
-          <section className="tx-pane" aria-label="Talks with managers">
-            <p className="tx-hint">Offers between you and the other managers of your league. Whoever gets an offer can accept it, refuse it, or ask for another price. The player stays with his club until a deal is done.</p>
-            <div className="tx-chips" role="group" aria-label="Show">
-              {([["all", "All"], ["received", "Received"], ["sent", "Sent"], ["active", "Active"]] as ["all" | "received" | "sent" | "active", string][]).map(([k, l]) => (
-                <button key={k} type="button" className={talkView === k ? "is-on" : ""} onClick={() => setTalkView(k)}>{l}</button>
+        {tab === "clubs" && !openClub && (
+          <section className="tx-pane" aria-label="Clubs">
+            <p className="tx-hint">Open a club to see its players. To sign one, send an offer to the club that owns him.</p>
+            <div className="tx-clubs">
+              {otherClubs.map((c) => (
+                <button key={c.id} type="button" className="tx-club" onClick={() => { setOpenClub(c.id); setNotice(""); setGood(""); }}>
+                  <img src={c.logo} alt="" />
+                  <span>
+                    <strong>{c.name}</strong>
+                    <small>{humans.get(c.id) ? `Manager: ${humans.get(c.id)!.name}` : tierLabel(c.id)} · rating {teamRating(squads[c.id] ?? [])}</small>
+                  </span>
+                </button>
               ))}
             </div>
+          </section>
+        )}
+
+        {tab === "clubs" && openClub && openMeta && (
+          <section className="tx-pane" aria-label={openMeta.name}>
+            <div className="tx-clubhead">
+              <button type="button" className="tx-btn is-ghost" onClick={() => setOpenClub(null)}><Icon name="arrow-left" size={14} /> Clubs</button>
+              <img src={openMeta.logo} alt="" />
+              <span>
+                <strong>{openMeta.name}</strong>
+                <small>{openHuman ? `Manager: ${openHuman.name}. He answers your offers himself.` : "Run by the computer. The club decides the price."} · {clubPlayers.length} players</small>
+              </span>
+            </div>
             <ul className="tx-list">
-              {live.filter((o) => talkView === "all" ? true : talkView === "received" ? o.seller_id === ctx.userId : talkView === "sent" ? o.buyer_id === ctx.userId : o.status === "open" || o.status === "countered").map((o) => {
-                const p = findPlayer(squads, o.player_id);
-                const selling = o.seller_id === ctx.userId;
-                const m = humans.get(selling ? o.buyer_club : o.seller_club);
-                const who = m?.name || clubName(selling ? o.buyer_club : o.seller_club);
-                const closed = o.status === "accepted" || o.status === "rejected" || o.status === "withdrawn";
-                const line = o.status === "open"
-                  ? selling ? `${who} offers ${money(o.amount)}` : `Waiting for ${who} · you offered ${money(o.amount)}`
-                  : o.status === "countered"
-                    ? selling ? `Waiting for ${who} · you ask ${money(o.counter ?? 0)}` : `${who} asks ${money(o.counter ?? 0)} (you offered ${money(o.amount)})`
-                    : o.status === "accepted" ? `Deal done at ${money(o.counter ?? o.amount)}` : o.status === "rejected" ? "Refused" : "Withdrawn";
-                const myTurn = (o.status === "open" && selling) || (o.status === "countered" && !selling);
+              {clubPlayers.map((p) => {
+                const l = listingOf.get(p.id);
+                const last = clubPlayers.filter((x) => x.position === p.position).length - 1 < MIN_BY_POSITION[p.position];
                 return (
-                  <li key={o.id} className={`tx-row is-talk ${closed ? "is-closed" : ""}`}>
-                    <b className="tx-rate">{p?.rating ?? "-"}</b>
+                  <li key={p.id} className="tx-row is-market">
+                    <b className={rateCls(p)}>{p.rating}</b>
                     <span className="tx-name">
-                      <strong>{p?.name ?? "Player"}<em className={`tr-tag ${selling ? "is-leaving" : "is-new"}`}>{selling ? "Selling" : "Buying"}</em></strong>
-                      <small>{line}</small>
+                      <strong>{p.name}{l && <em className="tr-tag is-new">For sale</em>}</strong>
+                      <small>{p.position} · {p.age} · {p.nationality || "-"}</small>
                     </span>
+                    <span className="tx-price"><small>{l ? "Asking" : "Value"}</small><b>{money(l ? l.asking : marketValue(p))}</b></span>
                     <span className="tx-acts">
-                      {myTurn && counterId !== o.id && (
+                      {openHuman ? (
                         <>
-                          <button type="button" className="tx-btn" disabled={busy === o.id} onClick={() => acceptOffer(o)}>Accept</button>
-                          {selling && <button type="button" className="tx-btn is-ghost" onClick={() => { setCounterId(o.id); setCounterVal(String(Math.round(o.amount * 1.2 * 10) / 10)); }}>Ask more</button>}
-                          <button type="button" className="tx-btn is-ghost" disabled={busy === o.id} onClick={() => answer(o, selling ? "rejected" : "withdrawn")}>{selling ? "Refuse" : "Walk away"}</button>
+                          <button type="button" className="tx-btn is-ghost" disabled={!window.open} onClick={() => setOfferFor({ player: p, asking: l?.asking })}>Make offer</button>
+                          {l && <button type="button" className={`tx-btn ${confirm === l.id ? "is-sure" : ""}`} disabled={busy === l.id || !window.open} onClick={() => buyListed(l)}>{confirm === l.id ? `Confirm ${money(l.asking)}` : "Buy now"}</button>}
                         </>
-                      )}
-                      {myTurn && counterId === o.id && (
-                        <>
-                          <span className="tx-counter">€<input inputMode="decimal" value={counterVal} onChange={(e) => setCounterVal(e.target.value.replace(/[^0-9.]/g, ""))} aria-label="Your price in millions" />M</span>
-                          <button type="button" className="tx-btn" disabled={busy === o.id || !(Number(counterVal) > 0)} onClick={() => answer(o, "countered", Math.round(Number(counterVal) * 10) / 10)}>Send</button>
-                          <button type="button" className="tx-btn is-ghost" onClick={() => setCounterId("")}>Cancel</button>
-                        </>
-                      )}
-                      {!myTurn && !closed && !selling && (
-                        <button type="button" className="tx-btn is-ghost" disabled={busy === o.id} onClick={() => answer(o, "withdrawn")}>Withdraw</button>
+                      ) : (
+                        <button type="button" className="tx-btn" disabled={!window.open || last} title={last ? `${openMeta.name} cannot sell their last ${p.position} players.` : undefined} onClick={() => setBid(p)}>Make offer</button>
                       )}
                     </span>
                   </li>
                 );
               })}
-              {live.length === 0 && <li className="tx-empty">No talks yet. In Buy, choose League clubs and tap Negotiate on a player of a club run by a friend.</li>}
             </ul>
           </section>
         )}
 
-        {tab === "clubs" && (
-          <section className="tx-clubs" aria-label="Clubs">
-            {otherClubs.map((c) => (
-              <Link key={c.id} href={`/game/club/${c.id}`} className="tx-club">
-                <img src={c.logo} alt="" />
-                <span>
-                  <strong>{c.name}</strong>
-                  <small>{getTier(c.id) === "elite" ? "Big club" : getTier(c.id) === "mid" ? "Mid-table" : "Smaller club"} · rating {teamRating(squads[c.id] ?? [])}</small>
-                </span>
-              </Link>
-            ))}
-          </section>
-        )}
-
-        {tab === "news" && (
-          <section className="tx-pane" aria-label="League transfers">
+        {tab === "windows" && (
+          <section className="tx-pane" aria-label="Transfer windows">
             <div className="tx-bar">
               <div className="tx-chips" role="group" aria-label="Show">
-                <button type="button" className={!newsMine ? "is-on" : ""} onClick={() => { setNewsMine(false); setLimit(PAGE); }}>All clubs</button>
-                <button type="button" className={newsMine ? "is-on" : ""} onClick={() => { setNewsMine(true); setLimit(PAGE); }}>My deals</button>
+                <button type="button" className={!logMine ? "is-on" : ""} onClick={() => { setLogMine(false); setLimit(PAGE); }}>All clubs</button>
+                <button type="button" className={logMine ? "is-on" : ""} onClick={() => { setLogMine(true); setLimit(PAGE); }}>My deals</button>
               </div>
             </div>
+            <p className="tx-hint">Every transfer in your league: the player, who sold him, who bought him, the fee and the date. All managers of the league see the same record.</p>
             <ul className="tx-list">
-              {news.slice(0, limit).map((d) => {
+              {rows.slice(0, limit).map((d) => {
                 const p = findPlayer(squads, d.player_id);
-                const from = clubs.find((c) => c.id === d.from_club);
-                const to = clubs.find((c) => c.id === d.to_club);
-                const mineDeal = d.mine;
+                const from = clubs.find((c) => c.id === d.from);
+                const to = clubs.find((c) => c.id === d.to);
                 return (
-                  <li key={d.id} className={`tx-row is-news ${mineDeal ? "is-mine" : ""}`}>
+                  <li key={d.id} className={`tx-row is-news ${d.mine ? "is-mine" : ""}`}>
                     <b className="tx-rate">{p?.rating ?? "-"}</b>
                     <span className="tx-name">
-                      <strong>{p?.name ?? "Player"}{mineDeal && <em className="tr-tag is-new">{d.kind === "buy" ? "Signed" : "Sold"}</em>}</strong>
-                      <small>{d.matchday === 0 ? "Off-season" : `Matchday ${d.matchday}`} · {d.season.replace("-20", "/")}{d.created_at ? ` · ${new Date(d.created_at).toLocaleDateString()}` : ""}</small>
+                      <strong>{p?.name ?? "Player"}{d.mine && <em className="tr-tag is-new">{d.to === ctx.clubId ? "Signed" : "Sold"}</em>}</strong>
+                      <small>{dateOf(d.at)}{dateOf(d.at) ? " · " : ""}{d.matchday === 0 ? "Off-season" : `Matchday ${d.matchday}`} · {d.season.replace("-20", "/")}</small>
                     </span>
                     <span className="tx-move">
                       {from ? <img src={from.logo} alt="" /> : <i aria-hidden="true" />}
-                      <small>{clubName(d.from_club)}</small>
+                      <small>{clubName(d.from)}</small>
                       <Icon name="arrow-right" size={14} />
                       {to ? <img src={to.logo} alt="" /> : <i aria-hidden="true" />}
-                      <small>{clubName(d.to_club)}</small>
+                      <small>{clubName(d.to)}</small>
                     </span>
                     <span className="tx-val">{money(d.fee)}</span>
                   </li>
                 );
               })}
-              {news.length === 0 && <li className="tx-empty">No transfers yet. The clubs start trading when the window opens.</li>}
+              {rows.length === 0 && <li className="tx-empty">No transfers yet. They appear here as soon as the first deal is done.</li>}
             </ul>
-            {news.length > limit && (
-              <button type="button" className="tx-more" onClick={() => setLimit((l) => l + PAGE)}>Show more ({news.length - limit})</button>
+            {rows.length > limit && (
+              <button type="button" className="tx-more" onClick={() => setLimit((l) => l + PAGE)}>Show more ({rows.length - limit})</button>
             )}
           </section>
         )}
@@ -714,19 +691,17 @@ export default function TransfersPage() {
       )}
       {offerFor && (
         <OfferModal
-          player={offerFor}
-          manager={humans.get(offerFor.club)?.name || clubName(offerFor.club)}
+          player={offerFor.player}
+          manager={humans.get(offerFor.player.club)?.name || clubName(offerFor.player.club)}
           balanceM={ctx.spendM}
           blocked={blocked}
+          asking={offerFor.asking}
           onClose={() => setOfferFor(null)}
-          onSend={(amount) => sendOffer(offerFor, amount)}
+          onSend={(amount) => sendOffer(offerFor.player, amount)}
         />
       )}
-      {sellMgr && (
-        <SellModal player={sellMgr} warning={canSell(mine, sellMgr)} onClose={() => setSellMgr(null)} onList={(price) => listToManagers(sellMgr, price)} />
-      )}
       {sell && (
-        <SellModal player={sell} warning={canSell(mine, sell)} onClose={() => setSell(null)} onList={(price) => list(sell, price)} />
+        <SellModal player={sell} warning={canSell(mine, sell)} onClose={() => setSell(null)} onList={(price) => listForSale(sell, price)} />
       )}
     </main>
   );

@@ -212,3 +212,32 @@
 
 .tx-frozen { display: block; margin: 2px 0 4px; color: var(--card-red); font-size: 12px; font-weight: 700; text-decoration: none; }
 .tx-frozen:hover { text-decoration: underline; }
+
+/* transfer market v2: asking price, two-button rows, negotiation groups, club view */
+.tx-note.is-good { border-color: var(--pitch); color: var(--chalk); }
+.tx-row.is-market { grid-template-columns: 44px minmax(0, 1fr) 96px auto; }
+.tx-row.is-talk { grid-template-columns: 44px minmax(0, 1fr) 96px auto; }
+.tx-price { display: grid; justify-items: end; line-height: 1.1; }
+.tx-price small { color: var(--chalk-3); font-size: 11px; }
+.tx-price b { color: var(--brass-hi); font-family: var(--font-display); font-size: 18px; font-weight: 800; }
+.tx-group { display: grid; gap: 4px; }
+.tx-group h2 { margin: 10px 0 0; font-family: var(--font-display); font-size: 19px; letter-spacing: 0.03em; color: var(--chalk); }
+.tx-group h2 span { margin-left: 6px; padding: 1px 8px; background: var(--ink-3); color: var(--brass-hi); font-size: 13px; }
+.tx-group > small { color: var(--chalk-3); font-size: 12px; }
+.tx-empty.is-small { padding: 12px; font-size: 13px; }
+.tx-club { text-align: left; cursor: pointer; }
+.tx-clubhead { display: flex; align-items: center; gap: 12px; }
+.tx-clubhead img { width: 40px; height: 40px; object-fit: contain; }
+.tx-clubhead span { display: grid; min-width: 0; }
+.tx-clubhead small { color: var(--chalk-3); font-size: 12px; }
+.tx-clubhead .tx-btn { display: inline-flex; align-items: center; gap: 6px; }
+@media (max-width: 720px) {
+  .tx-row.is-market, .tx-row.is-talk { grid-template-columns: 40px minmax(0, 1fr) auto; }
+  .tx-row.is-market .tx-price, .tx-row.is-talk .tx-price { grid-column: 2; justify-items: start; grid-auto-flow: column; gap: 6px; align-items: baseline; }
+  .tx-row.is-market .tx-acts, .tx-row.is-talk .tx-acts { grid-column: 1 / -1; justify-content: stretch; flex-wrap: wrap; }
+  .tx-row.is-market .tx-acts .tx-btn, .tx-row.is-talk .tx-acts .tx-btn { flex: 1; }
+}
+.tx-tabs { overflow-x: auto; scrollbar-width: none; }
+.tx-tabs::-webkit-scrollbar { display: none; }
+.tx-tabs button { white-space: nowrap; flex: none; }
+@media (max-width: 720px), (max-height: 500px) { .tx-tabs button { padding: 0 14px; font-size: 15px; } }

@@ -32,7 +32,7 @@ export type SimContext = {
   fitness?: Record<string, number>;
 };
 
-export const MAX_BONUS = 30;
+export const MAX_BONUS = 14;
 const SCALE = 4;
 
 export type DayCtx = { key: string; season: string; matchday: number; /** fitness of the players, 45-100 */ fit?: Record<string, number> };

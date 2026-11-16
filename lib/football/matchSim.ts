@@ -40,16 +40,6 @@ export type SimulationResult = {
   events: MatchEvent[];
 };
 
-/**
- * How much the rating gap decides a match.
- * Expected goals of a side are multiplied by e^(EDGE * gap), the other side by e^(-EDGE * gap).
- * Higher = the stronger team wins more often. Lower = more surprises.
- * (0.065: a team 10 points better wins about 80% of the time, 3 points better about 58%.)
- */
-export const EDGE = 0.065;
-/** rating points the home side gets for playing at home */
-export const HOME_ADVANTAGE = 1.5;
-
 // starting strength of each club (not player ratings)
 const clubRatings: Record<string, number> = {
   "man-city": 92,
@@ -150,15 +140,14 @@ export function simulateFixture(key: FixtureKey): SimulationResult {
   const pool = key.squads ?? baseSquads;
   const homeBonus = key.homeBonus ?? injuryBonus(key.homeClub, pool[key.homeClub] ?? [], key.leagueKey, key.season, key.matchday);
   const awayBonus = key.awayBonus ?? injuryBonus(key.awayClub, pool[key.awayClub] ?? [], key.leagueKey, key.season, key.matchday);
-  const homeRating = getRating(key.homeClub) + HOME_ADVANTAGE + homeBonus; // home advantage
+  const homeRating = getRating(key.homeClub) + 3 + homeBonus; // home advantage
   const awayRating = getRating(key.awayClub) + awayBonus;
-  // the rating gap (squad strength, training and tactics are all inside the bonuses)
-  const gap = homeRating - awayRating;
+  const difference = (homeRating - awayRating) / 20;
 
   const hs = key.homeStyle ? GOAL_SHAPE[key.homeStyle] : null;
   const as = key.awayStyle ? GOAL_SHAPE[key.awayStyle] : null;
-  const homeExpected = Math.max(0.3, Math.min(3.8, 1.3 * Math.exp(EDGE * gap) * (hs?.scores ?? 1) * (as?.concedes ?? 1)));
-  const awayExpected = Math.max(0.25, Math.min(3.8, 1.1 * Math.exp(-EDGE * gap) * (as?.scores ?? 1) * (hs?.concedes ?? 1)));
+  const homeExpected = Math.max(0.4, Math.min(3.4, (1.35 + difference) * (hs?.scores ?? 1) * (as?.concedes ?? 1)));
+  const awayExpected = Math.max(0.3, Math.min(3.0, (1.15 - difference) * (as?.scores ?? 1) * (hs?.concedes ?? 1)));
 
   const rolledHome = goalsFrom(homeExpected, rng());
   const rolledAway = goalsFrom(awayExpected, rng());
