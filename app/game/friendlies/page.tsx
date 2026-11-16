@@ -7,7 +7,7 @@ import { allClubs as clubs, clubsOfLeague } from "@/lib/football/leagueClubs";
 import { getTier } from "@/lib/football/finance";
 import { activeSeason, seasonLabel } from "@/lib/football/season";
 import { simulateFixture, type SimulationResult } from "@/lib/football/matchSim";
-import { friendlyIncome, loadFriendlies, sendFriendNotice, type Friendly } from "@/lib/football/friendlies";
+import { FRIENDLIES_PER_ROUND, friendlyIncome, loadFriendlies, sendFriendNotice, type Friendly } from "@/lib/football/friendlies";
 import { myRoom } from "@/lib/football/rooms";
 import { loadSim, withTimeout } from "@/lib/football/strength";
 import GsmMark from "@/components/GsmMark";
@@ -95,12 +95,17 @@ export default function FriendliesPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [router]);
 
-  const used = slot !== null && history.some((f) => f.after_matchday === slot);
+  const inRound = slot === null ? [] : history.filter((f) => f.after_matchday === slot);
+  const count = inRound.length;
+  const used = slot !== null && count >= FRIENDLIES_PER_ROUND;
+  /** a club already played in this round is not offered again */
+  const metClubs = new Set(inRound.flatMap((f) => [f.home_club, f.away_club]));
   const earned = history.reduce((sum, f) => sum + Number(f.income), 0);
   const list = useMemo(
-    () => (opponents.map((id) => clubs.find((c) => c.id === id)).filter(Boolean) as NonNullable<ReturnType<typeof clubs.find>>[])
+    () => (opponents.filter((id) => !metClubs.has(id)).map((id) => clubs.find((c) => c.id === id)).filter(Boolean) as NonNullable<ReturnType<typeof clubs.find>>[])
       .sort((a, b) => Number(!!friends[b.id]) - Number(!!friends[a.id])),
-    [opponents, friends]
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [opponents, friends, history, slot]
   );
 
   async function play() {
@@ -118,7 +123,7 @@ export default function FriendliesPage() {
       const result = simulateFixture({
         leagueKey: `friendly|${userId}`,
         season,
-        matchday: 100 + slot,
+        matchday: 100 + slot + count * 1000,
         homeClub,
         awayClub,
         homeBonus: sim.bonus[homeClub],
@@ -145,6 +150,7 @@ export default function FriendliesPage() {
         void sendFriendNotice(supabase, { to: pal.user_id, from: userId, fromName: myName, season, home: homeClub, away: awayClub, hs: result.home_score, as: result.away_score });
       }
       setPlayed({ home: homeClub, away: awayClub, result, income });
+      setTarget("");
     } catch (err) {
       console.error("Friendly error:", err);
       setError("Could not play the friendly. Make sure supabase/009 and 016_friendlies_scope_notices.sql have been run.");
@@ -177,7 +183,7 @@ export default function FriendliesPage() {
         <header className="fr-head">
           <p>Season {seasonLabel(season)}</p>
           <h1><span className="gx-slant">Friendlies</span></h1>
-          <small>One warm-up match before each league matchday. A little gate money, and your players get match practice. The table is not affected.</small>
+          <small>Up to three warm-up matches before each league matchday, each against a different club. A little gate money for every one, and your players get match practice. The table is not affected.</small>
         </header>
 
         <section className="fr-stage gx-cut" aria-label="Next friendly">
@@ -190,10 +196,10 @@ export default function FriendliesPage() {
             {slot === null ? (
               <span className="fr-done">The season is over. Friendlies come back with the new one.</span>
             ) : used ? (
-              <span className="fr-done">Played this week. The next one opens after matchday {slot}.</span>
+              <span className="fr-done">All three played this round. More open after matchday {slot}.</span>
             ) : (
               <button type="button" className="gx-btn" disabled={!target || busy} onClick={play}>
-                {busy ? "Warming up..." : target ? `Play friendly +${friendlyIncome(target).toFixed(2)}M` : "Choose an opponent"}
+                {busy ? "Warming up..." : target ? `Play friendly ${count + 1} of ${FRIENDLIES_PER_ROUND} +${friendlyIncome(target).toFixed(2)}M` : `Choose an opponent · ${count} of ${FRIENDLIES_PER_ROUND} played`}
               </button>
             )}
             {error && <span className="fr-error" role="alert">{error}</span>}
@@ -235,7 +241,7 @@ export default function FriendliesPage() {
           ) : (
             <ul>
               {[...history].sort((a, b) => b.after_matchday - a.after_matchday).map((f) => (
-                <li key={f.after_matchday}>
+                <li key={`${f.after_matchday}-${f.home_club}-${f.away_club}`}>
                   <small>Before matchday {f.after_matchday + 1}</small>
                   <span>{name(f.home_club)} <b>{f.home_score}-{f.away_score}</b> {name(f.away_club)}{f.opp_manager ? <em className="fr-with"> · vs {f.opp_manager}</em> : null}</span>
                   <em>+{Number(f.income).toFixed(2)}M</em>
