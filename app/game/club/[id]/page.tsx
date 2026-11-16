@@ -11,7 +11,9 @@ import { marketValue, teamRating, type Player, type Position } from "@/lib/footb
 import { askingPrice, canBuy, MIN_BY_POSITION, recordDeal, windowStatus } from "@/lib/football/transfers";
 import { useTransfers } from "@/lib/football/useTransfers";
 import { myRoom } from "@/lib/football/rooms";
-import { BidModal, money } from "@/components/TransferModals";
+import { BidModal, OfferModal, money } from "@/components/TransferModals";
+import { sendOffer as sendRoomOffer } from "@/lib/football/roomTransfers";
+import { tellAbout } from "@/lib/football/offers";
 import GsmMark from "@/components/GsmMark";
 import GameHud from "@/components/GameHud";
 import "../../transfers/transfers.css";
@@ -33,7 +35,12 @@ export default function ClubPage() {
   const { ctx, loading, error, reload } = useTransfers();
   const [bid, setBid] = useState<Player | null>(null);
 
+  // a club run by a friend answers offers itself: those go through the Talks page
   const [managed, setManaged] = useState<string | null>(null);
+  const [roomId, setRoomId] = useState<string | null>(null);
+  const [managerId, setManagerId] = useState<string | null>(null);
+  const [myName, setMyName] = useState("A manager");
+  const [offerFor, setOfferFor] = useState<Player | null>(null);
   const uid = ctx?.userId;
   useEffect(() => {
     if (!uid) return;
@@ -43,6 +50,9 @@ export default function ClubPage() {
         const room = await myRoom(supabase, (c?.room_id as string | null) ?? null);
         const m = room?.members.find((x) => x.club_id === clubId && x.user_id !== uid);
         setManaged(m ? (m.name || "a friend") : null);
+        setRoomId((c?.room_id as string | null) ?? null);
+        setManagerId(m?.user_id ?? null);
+        setMyName(room?.members.find((x) => x.user_id === uid)?.name || "A manager");
       } catch {
         setManaged(null);
       }
@@ -77,6 +87,7 @@ export default function ClubPage() {
   const blocked = canBuy({ ban: signingBan(ctx.state.bank), balance: ctx.spendM, fee: 0, squadSize: mine.length, windowOpen: window.open });
   const tier = getTier(club.id);
   const sorted = squad.slice().sort((a, b) => b.rating - a.rating);
+  const stars = sorted.slice(0, 3);
 
   async function sign(player: Player, fee: number) {
     await recordDeal(supabase, {
@@ -121,12 +132,27 @@ export default function ClubPage() {
         ) : (
           <p className="cl-note">
             {managed
-              ? <>{club.name} are managed by <b>{managed}</b>. Make your offers in <Link href="/game/transfers">Transfers</Link>, League clubs, Negotiate: he answers himself.</>
+              ? <>{club.name} are managed by <b>{managed}</b>. Tap <b>Offer</b> next to a player to send him a formal offer: he can accept, refuse or ask for another price in <Link href="/game/transfers">Negotiations</Link>. The player stays at his club until the deal is done.</>
               : window.open
               ? <>Tap <b>Offer</b> next to any player to bid for him. {club.name} decide the price, so a low bid can be turned down.</>
               : <>The transfer window is closed, so no offers can be made right now.</>}
             {" "}You can also browse the <Link href="/game/transfers">transfer market</Link>.
           </p>
+        )}
+
+        {false && (
+          <section className="tr-stars" aria-label="Best players">
+            {stars.map((p, i) => (
+              <button key={p.id} type="button" className="tr-star gx-cut" style={{ animationDelay: `${i * 90}ms` }} onClick={() => setBid(p)}>
+                <em className="tr-shine" aria-hidden="true" />
+                <b>{p.rating}</b>
+                <strong>{p.name}</strong>
+                <small>{p.position} · {p.age}</small>
+                <span>Value about {money(marketValue(p))}</span>
+                <i aria-hidden="true">Make an offer</i>
+              </button>
+            ))}
+          </section>
         )}
 
         {groups.map((g) => {
@@ -145,7 +171,9 @@ export default function ClubPage() {
                         <small>{p.position} · {p.age} · {p.nationality || "-"}</small>
                       </span>
                       <span className="tr-val">{money(marketValue(p))}</span>
-                      {own || managed ? <span /> : (
+                      {own ? <span /> : managed ? (
+                        <button type="button" className="tr-offer" disabled={!window.open} onClick={() => setOfferFor(p)}>Offer</button>
+                      ) : (
                         <button
                           type="button"
                           className="tr-offer"
@@ -173,7 +201,21 @@ export default function ClubPage() {
           balanceM={ctx.spendM}
           blocked={blocked}
           onClose={() => setBid(null)}
-          onSign={(fee: number) => sign(bid, fee)}
+          onSign={(fee) => sign(bid, fee)}
+        />
+      )}
+      {offerFor && (
+        <OfferModal
+          player={offerFor}
+          manager={managed ?? club.name}
+          balanceM={ctx.spendM}
+          blocked={blocked}
+          onClose={() => setOfferFor(null)}
+          onSend={async (amount) => {
+            if (!roomId || !managerId) throw new Error("no manager");
+            await sendRoomOffer(supabase, { roomId, sellerClub: clubId, playerId: offerFor.id, amount, season: ctx.season });
+            await tellAbout(supabase, managerId, ctx.userId, myName, ctx.season, `${myName} offers ${money(amount)} for ${offerFor.name}. Answer in Transfers, Negotiations.`);
+          }}
         />
       )}
     </main>
