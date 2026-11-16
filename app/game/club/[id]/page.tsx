@@ -33,7 +33,6 @@ export default function ClubPage() {
   const { ctx, loading, error, reload } = useTransfers();
   const [bid, setBid] = useState<Player | null>(null);
 
-  // a club run by a friend answers offers itself: those go through the Talks page
   const [managed, setManaged] = useState<string | null>(null);
   const uid = ctx?.userId;
   useEffect(() => {
@@ -78,7 +77,6 @@ export default function ClubPage() {
   const blocked = canBuy({ ban: signingBan(ctx.state.bank), balance: ctx.spendM, fee: 0, squadSize: mine.length, windowOpen: window.open });
   const tier = getTier(club.id);
   const sorted = squad.slice().sort((a, b) => b.rating - a.rating);
-  const stars = sorted.slice(0, 3);
 
   async function sign(player: Player, fee: number) {
     await recordDeal(supabase, {
@@ -131,21 +129,6 @@ export default function ClubPage() {
           </p>
         )}
 
-        {false && (
-          <section className="tr-stars" aria-label="Best players">
-            {stars.map((p, i) => (
-              <button key={p.id} type="button" className="tr-star gx-cut" style={{ animationDelay: `${i * 90}ms` }} onClick={() => setBid(p)}>
-                <em className="tr-shine" aria-hidden="true" />
-                <b>{p.rating}</b>
-                <strong>{p.name}</strong>
-                <small>{p.position} · {p.age}</small>
-                <span>Value about {money(marketValue(p))}</span>
-                <i aria-hidden="true">Make an offer</i>
-              </button>
-            ))}
-          </section>
-        )}
-
         {groups.map((g) => {
           const list = sorted.filter((p) => p.position === g.key);
           if (!list.length) return null;
@@ -190,7 +173,7 @@ export default function ClubPage() {
           balanceM={ctx.spendM}
           blocked={blocked}
           onClose={() => setBid(null)}
-          onSign={(fee) => sign(bid, fee)}
+          onSign={(fee: number) => sign(bid, fee)}
         />
       )}
     </main>
