@@ -4,7 +4,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import { levelOf, loadUnlocked, xpOf, trainingBoost, capBoost } from "@/lib/football/badges";
-import { finishesAt, gainsAt, phase, progressOf, seasonCap, sessionGain, SLOTS, TRAIN_HOURS, TRAIN_MS } from "@/lib/football/development";
+import { finishesAt, gainsAt, MAX_RATING, phase, progressOf, seasonCap, sessionGain, SLOTS, TRAIN_HOURS, TRAIN_MS } from "@/lib/football/development";
 import { alertAt } from "@/lib/notify";
 import { useTransfers } from "@/lib/football/useTransfers";
 import type { Player, Position } from "@/lib/football/squads";
@@ -92,6 +92,10 @@ export default function TrainingPage() {
   function toggle(p: Player) {
     if (locked) return;
     setProblem("");
+    if (p.rating >= MAX_RATING && !picked.includes(p.id)) {
+      setProblem(`${p.name} is already at the maximum rating (${MAX_RATING}).`);
+      return;
+    }
     setPicked((cur) => {
       if (cur.includes(p.id)) return cur.filter((id) => id !== p.id);
       if (cur.length >= SLOTS) {
@@ -145,7 +149,7 @@ export default function TrainingPage() {
           <div>
             <p>Training ground</p>
             <h1><span className="gx-slant">Training</span></h1>
-            <small>Coach level {level}: training works {Math.round((boost - 1) * 100)}% better (earn levels with achievements). Train up to three players per session. A session takes 8 hours; then you can start the next one. Young players improve fast, older players only a little. Each new season the young grow and the veterans slow down.</small>
+            <small>Coach level {level}: training works {Math.round((boost - 1) * 100)}% better (earn levels with achievements). Train up to three players per session. A session takes 8 hours; then you can start the next one. Young players gain +1 rating in one session, players between 25 and 29 need two sessions, and players over 30 need about two and a half. Ratings can reach {MAX_RATING}.</small>
           </div>
           <div className="tn-slots" aria-label="Current session">
             {Array.from({ length: SLOTS }).map((_, i) => {
@@ -184,7 +188,8 @@ export default function TrainingPage() {
             const capNow = cap(p.age);
             const prog = progressOf(finished[p.id] ?? 0);
             const wait = Math.min(1 - prog, pendingGain[p.id] ?? 0);
-            const atCap = spent >= capNow - 0.005;
+            const atMax = p.rating >= MAX_RATING;
+            const atCap = atMax || spent >= capNow - 0.005;
             const ph = phase(p.age);
             return (
               <li key={p.id} style={{ animationDelay: `${Math.min(i, 20) * 18}ms` }}>
@@ -200,7 +205,7 @@ export default function TrainingPage() {
                     {wait > 0 && <em className="is-wait" style={{ width: `${wait * 100}%` }} />}
                   </span>
                   <span className="tn-next">
-                    {atCap ? "Season limit reached" : wait > 0 ? `${Math.round(prog * 100)}% → ${Math.round((prog + wait) * 100)}% to ${p.rating + 1}` : `${Math.round(prog * 100)}% to ${p.rating + 1}`}
+                    {atMax ? "Maximum rating" : atCap ? "Season limit reached" : wait > 0 ? `${Math.round(prog * 100)}% → ${Math.round((prog + wait) * 100)}% to ${p.rating + 1}` : `${Math.round(prog * 100)}% to ${p.rating + 1}`}
                   </span>
                 </button>
               </li>

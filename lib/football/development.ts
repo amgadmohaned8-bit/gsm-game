@@ -17,7 +17,7 @@ export const SLOTS = 3;
 /** a session of up to three players takes this long to finish; the gains count once it is done */
 export const TRAIN_HOURS = 8;
 export const TRAIN_MS = TRAIN_HOURS * 3600_000;
-export const MAX_RATING = 96;
+export const MAX_RATING = 99;
 
 export type TrainingRow = { season: string; matchday: number; player_id: string; gain: number; created_at?: string; league_id?: string | null };
 
@@ -62,21 +62,21 @@ export function phase(age: number): "rising" | "prime" | "declining" {
   return age <= 23 ? "rising" : age <= 29 ? "prime" : "declining";
 }
 
-/** Rating gained by one training session. */
+/**
+ * Rating gained by one training session.
+ * Age 24 and under: 1 session = +1 rating.
+ * Age 25 to 29: 2 sessions = +1 rating.
+ * Age 30 and over: 2.5 sessions = +1 rating.
+ */
 export function sessionGain(age: number) {
-  if (age <= 21) return 0.5;
-  if (age <= 24) return 0.34;
-  if (age <= 28) return 0.2;
-  if (age <= 31) return 0.12;
-  return 0.06;
+  if (age <= 24) return 1;
+  if (age <= 29) return 0.5;
+  return 0.4;
 }
 
-/** Most a player can gain from training in one season. */
-export function seasonCap(age: number) {
-  if (age <= 21) return 6;
-  if (age <= 24) return 4;
-  if (age <= 28) return 2.5;
-  return 1;
+/** Most a player can gain from training in one season. High on purpose: the real limit is rating 99. */
+export function seasonCap(_age: number) {
+  return 40;
 }
 
 /** How far a player is towards his next rating point (0 to 1), from his training total. */
