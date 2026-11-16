@@ -64,19 +64,25 @@ export function phase(age: number): "rising" | "prime" | "declining" {
 
 /** Rating gained by one training session. */
 export function sessionGain(age: number) {
-  if (age <= 21) return 0.3;
-  if (age <= 24) return 0.18;
-  if (age <= 28) return 0.08;
-  if (age <= 31) return 0.04;
-  return 0.02;
+  if (age <= 21) return 0.5;
+  if (age <= 24) return 0.34;
+  if (age <= 28) return 0.2;
+  if (age <= 31) return 0.12;
+  return 0.06;
 }
 
 /** Most a player can gain from training in one season. */
 export function seasonCap(age: number) {
-  if (age <= 21) return 4;
-  if (age <= 24) return 2.5;
-  if (age <= 28) return 1.2;
-  return 0.5;
+  if (age <= 21) return 6;
+  if (age <= 24) return 4;
+  if (age <= 28) return 2.5;
+  return 1;
+}
+
+/** How far a player is towards his next rating point (0 to 1), from his training total. */
+export function progressOf(total: number) {
+  const t = Math.max(0, total) + 1e-6;
+  return Math.min(0.999, t - Math.floor(t));
 }
 
 /** Total training gain per player, counting rows up to that matchday of that season. */
@@ -110,7 +116,8 @@ export function evolve(p: Player, season: string, gain = 0): Player {
     const noise = (unit(`${p.id}|${FIRST_YEAR + y}|dev`) - 0.5) * 2; // -1 .. 1
     rating += Math.round(yearly(age) + noise * 1.1);
   }
-  rating = Math.max(45, Math.min(MAX_RATING, Math.round(rating + gain)));
+  // a point is added only when the training adds up to a whole one (the green bar fills)
+  rating = Math.max(45, Math.min(MAX_RATING, Math.floor(rating + gain + 1e-6)));
   if (rating === p.rating && years === 0) return p;
   return { ...p, age: p.age + years, rating };
 }

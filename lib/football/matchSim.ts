@@ -92,14 +92,22 @@ function createRng(seed: number) {
   };
 }
 
+/**
+ * Goals of one side. They follow a Poisson curve whose mean is the expected
+ * goals, so a stronger side really scores more and concedes less. (The old
+ * table only used the expectation for the chance of a blank.)
+ */
 function goalsFrom(expected: number, roll: number): number {
-  const adjusted = Math.max(0.25, Math.min(expected, 3.2));
-
-  if (roll < 0.3 / adjusted) return 0;
-  if (roll < 0.68) return 1;
-  if (roll < 0.91) return 2;
-  if (roll < 0.98) return 3;
-  return 4;
+  const mean = Math.max(0.25, Math.min(expected, 3.8));
+  let p = Math.exp(-mean);
+  let cum = p;
+  let k = 0;
+  while (roll > cum && k < 7) {
+    k += 1;
+    p *= mean / k;
+    cum += p;
+  }
+  return k;
 }
 
 /** Changes to one match: squad strength on top of the club rating, or a score that is already decided. */

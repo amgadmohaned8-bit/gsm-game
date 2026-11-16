@@ -34,3 +34,12 @@
 .tn-gain { color: var(--chalk-2); font-size: 12px; }
 .tn-bar { display: block; height: 4px; margin-top: 4px; background: rgba(255,255,255,.1); overflow: hidden; } .tn-bar em { display: block; height: 100%; background: linear-gradient(90deg, var(--pitch), var(--brass)); }
 @media (prefers-reduced-motion: reduce) { .tn-grid li, .tn-slot { animation: none; } }
+
+/* green progress to the next rating point */
+.tn-prog { position: relative; display: flex; height: 8px; margin-top: 8px; background: rgba(255,255,255,.1); overflow: hidden; border-radius: 99px; }
+.tn-prog em { display: block; height: 100%; }
+.tn-prog .is-done { background: linear-gradient(90deg, #1fb866, #5dffa0); box-shadow: 0 0 10px rgba(93,255,160,.45); transition: width .8s var(--ease-out); }
+.tn-prog .is-wait { background: repeating-linear-gradient(115deg, rgba(93,255,160,.55) 0 6px, rgba(93,255,160,.25) 6px 12px); animation: tn-pulse 1.4s ease-in-out infinite; }
+.tn-next { color: #7fe6a5; font-size: 12px; font-weight: 700; }
+@keyframes tn-pulse { 50% { opacity: .55; } }
+@media (prefers-reduced-motion: reduce) { .tn-prog .is-done { transition: none; } .tn-prog .is-wait { animation: none; } }

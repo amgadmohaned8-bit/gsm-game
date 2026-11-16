@@ -4,7 +4,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import { levelOf, loadUnlocked, xpOf, trainingBoost, capBoost } from "@/lib/football/badges";
-import { finishesAt, phase, seasonCap, sessionGain, SLOTS, TRAIN_HOURS, TRAIN_MS } from "@/lib/football/development";
+import { finishesAt, gainsAt, phase, progressOf, seasonCap, sessionGain, SLOTS, TRAIN_HOURS, TRAIN_MS } from "@/lib/football/development";
 import { alertAt } from "@/lib/notify";
 import { useTransfers } from "@/lib/football/useTransfers";
 import type { Player, Position } from "@/lib/football/squads";
@@ -63,6 +63,14 @@ export default function TrainingPage() {
     for (const t of training) if (t.season === ctx.season) out[t.player_id] = (out[t.player_id] ?? 0) + Number(t.gain);
     return out;
   }, [ctx, training]);
+
+  /** finished training per player (the green bar) and what the running session will add */
+  const finished = useMemo(() => (ctx ? gainsAt(training, ctx.season, ctx.matchday ?? 99, squad) : {}), [ctx, training, squad]);
+  const pendingGain = useMemo(() => {
+    const out: Record<string, number> = {};
+    doneToday.forEach((t) => { out[t.player_id] = (out[t.player_id] ?? 0) + Number(t.gain); });
+    return out;
+  }, [doneToday]);
 
   const rows = useMemo(() => {
     const list = filter === "ALL" ? squad : filter === "YOUNG" ? squad.filter((p) => p.age <= 23) : squad.filter((p) => p.position === filter);
@@ -158,7 +166,7 @@ export default function TrainingPage() {
         {problem && <p className="tn-problem" role="alert">{problem}</p>}
         {result && (
           <p className="tn-result" role="status">
-            Session started: {result.map((r) => `${r.name} +${r.gain.toFixed(2)}`).join(", ")}. It finishes in {TRAIN_HOURS} hours, and we will notify you. Small gains add up: a player&apos;s rating moves up one point when they add up.
+            Session started: {result.map((r) => `${r.name} +${r.gain.toFixed(2)}`).join(", ")}. It finishes in {TRAIN_HOURS} hours, and we will notify you. The green bar under each player fills a little with every session. When it is full, his rating goes up by one.
           </p>
         )}
 
@@ -174,6 +182,9 @@ export default function TrainingPage() {
             const trained = doneToday.some((t) => t.player_id === p.id);
             const spent = seasonGain[p.id] ?? 0;
             const capNow = cap(p.age);
+            const prog = progressOf(finished[p.id] ?? 0);
+            const wait = Math.min(1 - prog, pendingGain[p.id] ?? 0);
+            const atCap = spent >= capNow - 0.005;
             const ph = phase(p.age);
             return (
               <li key={p.id} style={{ animationDelay: `${Math.min(i, 20) * 18}ms` }}>
@@ -184,7 +195,13 @@ export default function TrainingPage() {
                   <small>{p.age} yrs</small>
                   <span className="tn-phase">{ph === "rising" ? "↑ Rising" : ph === "prime" ? "● Prime" : "↓ Declining"}</span>
                   <span className="tn-gain">+{(sessionGain(p.age) * boost).toFixed(2)} / session</span>
-                  <span className="tn-bar" aria-label={`Trained ${spent.toFixed(1)} of ${capNow.toFixed(1)} this season`}><em style={{ width: `${Math.min(100, (spent / capNow) * 100)}%` }} /></span>
+                  <span className="tn-prog" role="img" aria-label={`${Math.round(prog * 100)} percent of the way to rating ${p.rating + 1}`}>
+                    <em className="is-done" style={{ width: `${prog * 100}%` }} />
+                    {wait > 0 && <em className="is-wait" style={{ width: `${wait * 100}%` }} />}
+                  </span>
+                  <span className="tn-next">
+                    {atCap ? "Season limit reached" : wait > 0 ? `${Math.round(prog * 100)}% → ${Math.round((prog + wait) * 100)}% to ${p.rating + 1}` : `${Math.round(prog * 100)}% to ${p.rating + 1}`}
+                  </span>
                 </button>
               </li>
             );
