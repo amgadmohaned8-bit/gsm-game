@@ -97,9 +97,9 @@ export const tierProfiles: Record<ClubTier, TierProfile> = {
 /** Extra money a club starts the game with, on top of its tier (euros). Man United: 45M tier + 305M = 350M. */
 export const openingExtra: Record<string, number> = {
   "man-united": 305_000_000,
-  "arsenal": 200_000_000,
+  "arsenal": 300_000_000,
    "hull-city" : 792_000_000,
-   "liverpool" : 270_000_000,
+   "liverpool" : 370_000_000,
 };
 
 export function getTier(clubId: string | null | undefined): ClubTier {
