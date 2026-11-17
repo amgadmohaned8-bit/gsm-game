@@ -194,12 +194,12 @@ export default function SquadPage() {
               <div key={line.key} className="sq-line">
                 {line.list.map(({ slot, idx, p }) => p && (
                   <button key={p.id} type="button"
-                    className={`sq-dot t-${tone(p.rating)} ${photoOf(p) ? "has-face" : ""} ${picked === p.id ? "is-picked" : ""} ${p.position !== slots[idx] ? "is-off" : ""}`}
+                    className={`sq-dot t-${tone(p.rating)} has-face ${picked === p.id ? "is-picked" : ""} ${p.position !== slots[idx] ? "is-off" : ""}`}
                     onClick={() => tapPlayer(p)}
                     aria-pressed={picked === p.id}
                     aria-label={`${p.name}, ${p.position}${p.position !== slot ? ` playing as ${slot}` : ""}, rating ${p.rating}, fitness ${fit(p.id)} percent`}>
-                    <PlayerFace player={p} />
-                    {photoOf(p) ? <u className="sq-glass" aria-hidden="true">{p.rating}</u> : <b>{p.rating}</b>}
+                    {photoOf(p) ? <PlayerFace player={p} /> : <s className="sq-ph" aria-hidden="true" />}
+                    <u className="sq-glass" aria-hidden="true">{p.rating}</u>
                     <i>{p.position !== slot ? `${p.position}>${slot}` : p.position}</i>
                     <span>{p.name}</span>
                     <Fit value={fit(p.id)} />
@@ -234,9 +234,9 @@ export default function SquadPage() {
               <ul className="sq-benchgrid">
                 {subs.map((p) => (
                   <li key={p.id}>
-                    <button type="button" className={`sq-card t-${tone(p.rating)} ${photoOf(p) ? "has-face" : ""} ${picked === p.id ? "is-picked" : ""}`} onClick={() => tapPlayer(p)} aria-pressed={picked === p.id}>
-                      <PlayerFace player={p} />
-                      {photoOf(p) ? <u className="sq-glass" aria-hidden="true">{p.rating}</u> : <b>{p.rating}</b>}
+                    <button type="button" className={`sq-card t-${tone(p.rating)} has-face ${picked === p.id ? "is-picked" : ""}`} onClick={() => tapPlayer(p)} aria-pressed={picked === p.id}>
+                      {photoOf(p) ? <PlayerFace player={p} /> : <s className="sq-ph" aria-hidden="true" />}
+                      <u className="sq-glass" aria-hidden="true">{p.rating}</u>
                       <i>{p.position}</i>
                       <strong>{p.name}</strong>
                       <small>{p.age} yrs{p.nationality ? ` · ${p.nationality}` : ""}</small>

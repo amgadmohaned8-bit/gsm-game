@@ -140,3 +140,10 @@
   -webkit-backdrop-filter: blur(8px) saturate(1.4); backdrop-filter: blur(8px) saturate(1.4); text-shadow: 0 1px 3px rgba(0, 0, 0, 0.7); }
 .sq-dot.t-elite .sq-glass, .sq-card.t-elite .sq-glass { color: var(--brass-hi); border-color: rgba(244, 208, 128, 0.7); }
 .sq-card.has-face .sq-glass { top: 8px; left: 8px; font-size: 20px; padding: 3px 9px; }
+
+/* no picture yet: the same card, with a shirt silhouette where the picture goes */
+.sq-ph { text-decoration: none; position: absolute; inset: 0 0 38px 0; background:
+  url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><circle cx='50' cy='36' r='15' fill='white' fill-opacity='.10'/><path d='M18 92c0-20 14-30 32-30s32 10 32 30z' fill='white' fill-opacity='.10'/></svg>") center bottom / 78% no-repeat,
+  linear-gradient(180deg, rgba(255, 255, 255, 0.05), transparent); }
+.sq-card.has-face .sq-ph { position: static; display: block; height: 150px; }
+@media (max-width: 560px) { .sq-card.has-face .sq-ph { height: 128px; } }
