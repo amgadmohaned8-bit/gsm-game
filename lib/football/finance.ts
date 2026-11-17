@@ -99,8 +99,10 @@ export const openingBonusAll = 100_000_000;
 
 /** Extra money for one club on top of the tier and the bonus for everybody (euros). Change a number here to change that club's budget. */
 export const openingExtra: Record<string, number> = {
-  arsenal: 100_000_000, // elite 45M + 100M for everybody + 100M = 245M
-  "man-united": 205_000_000, // elite 45M + 100M for everybody + 205M = 350M
+  arsenal: 400_000_000, // elite 45M + 100M for everybody + 100M = 245M
+  "man-united": 500_000_000, // elite 45M + 100M for everybody + 205M = 350M
+liverpool : 400_000_000,
+ "hull-city" : 792_000_000,
 };
 
 export function getTier(clubId: string | null | undefined): ClubTier {
