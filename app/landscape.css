@@ -885,4 +885,22 @@ html .sx-flags { grid-template-columns: repeat(12, 1fr); gap: 4px; }
 html .sx-hint { display: none; }
 html .sx-story-in { height: 100svh; width: auto; max-width: 100%; }
 html .sx-bar { padding: 8px 14px; }
+html .sq .sq-wrap { display: block; overflow-y: auto; overflow-x: hidden; padding: 6px 10px calc(14px + var(--sa-b)); }
+html .sq .sq-head { display: flex; flex-wrap: wrap; margin-bottom: 6px; }
+html .sq .sq-kpis { display: flex; flex-wrap: wrap; }
+html .sq .sq-one { max-width: none; margin: 0; overflow: visible; }
+html .sq .sq-pitch-card { overflow: visible; display: block; }
+html .sq .sq-pitch { display: flex; flex-direction: row-reverse; justify-content: space-around; aspect-ratio: auto; height: auto; min-height: 0; padding: 10px 6px; gap: 6px; }
+html .sq .sq-line { flex: 1; flex-direction: column; justify-content: space-around; align-items: center; gap: 8px; }
+html .sq .sq-dot.has-face { width: 86px; height: 116px; }
+html .sq .sq-dot.has-face .pf,
+html .sq .sq-dot.has-face .sq-ph { inset: 0 0 34px 0; height: calc(100% - 34px); }
+html .sq .sq-dot.has-face > span { font-size: 11px; }
+html .sq .sq-dot .sq-glass { font-size: 14px; min-width: 26px; padding: 1px 6px; }
+html .sq .sq-forms { flex-wrap: wrap; overflow: visible; }
+html .sq .sq-hint { margin: 8px 0 0; font-size: 12px; }
+html .sq .sq-subs-toggle { min-height: 44px; margin-top: 10px; }
+html .sq .sq-benchgrid { grid-template-columns: repeat(auto-fill, minmax(124px, 1fr)); max-height: none; overflow: visible; }
+html .sq .sq-card.has-face .pf,
+html .sq .sq-card.has-face .sq-ph { height: 104px; }
 }
