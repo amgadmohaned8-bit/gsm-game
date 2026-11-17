@@ -104,3 +104,10 @@
 .sq-fit { position: relative; height: 12px; margin-top: 4px; background: rgba(255, 255, 255, 0.14); }
 .sq-fit i { position: absolute; inset: 0 auto 0 0; }
 .sq-fit small { position: relative; z-index: 1; display: block; text-align: center; font: 800 9px/12px var(--font-text); color: #fff; text-shadow: 0 1px 2px #000; min-height: 0; }
+
+/* player pictures */
+.sq-dot .pf { position: absolute; left: 50%; bottom: 20px; z-index: 0; width: 88%; height: 64%; transform: translateX(-50%); object-fit: contain; object-position: center bottom; pointer-events: none; }
+.sq-dot > b, .sq-dot > span, .sq-dot > i, .sq-dot > .sq-fit { position: relative; z-index: 1; }
+.sq-dot > i { position: absolute; }
+.sq-dot > b, .sq-dot > span { text-shadow: 0 1px 4px #000, 0 0 8px rgba(0, 0, 0, 0.8); }
+.sq-card .pf { position: absolute; right: 8px; bottom: 34px; width: 52px; height: 52px; object-fit: contain; object-position: center bottom; pointer-events: none; }

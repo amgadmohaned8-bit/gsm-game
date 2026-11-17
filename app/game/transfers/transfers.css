@@ -241,3 +241,9 @@
 .tx-tabs::-webkit-scrollbar { display: none; }
 .tx-tabs button { white-space: nowrap; flex: none; }
 @media (max-width: 720px), (max-height: 500px) { .tx-tabs button { padding: 0 14px; font-size: 15px; } }
+
+/* player pictures in the lists */
+.tx-rate { position: relative; overflow: hidden; }
+.tx-rate .tx-face { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: center top; }
+.tx-rate i { position: relative; font-style: normal; }
+.tx-rate:has(.tx-face) i { position: absolute; left: 0; bottom: 0; padding: 0 4px; font-size: 12px; line-height: 16px; background: rgba(4, 6, 10, 0.82); }

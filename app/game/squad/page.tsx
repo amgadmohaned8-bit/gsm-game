@@ -17,6 +17,7 @@ import { formatMoney } from "@/lib/football/finance";
 import { bonusFor, slotPositions } from "@/lib/football/strength";
 import { loadFitness, TIRED_BELOW } from "@/lib/football/fitness";
 import { useTransfers } from "@/lib/football/useTransfers";
+import PlayerFace from "@/components/PlayerFace";
 import GsmMark from "@/components/GsmMark";
 import GameHud from "@/components/GameHud";
 import "./squad.css";
@@ -196,6 +197,7 @@ export default function SquadPage() {
                     onClick={() => tapPlayer(p)}
                     aria-pressed={picked === p.id}
                     aria-label={`${p.name}, ${p.position}${p.position !== slot ? ` playing as ${slot}` : ""}, rating ${p.rating}, fitness ${fit(p.id)} percent`}>
+                    <PlayerFace player={p} />
                     <b>{p.rating}</b>
                     <i>{p.position !== slot ? `${p.position}>${slot}` : p.position}</i>
                     <span>{p.name}</span>
@@ -232,6 +234,7 @@ export default function SquadPage() {
                 {subs.map((p) => (
                   <li key={p.id}>
                     <button type="button" className={`sq-card t-${tone(p.rating)} ${picked === p.id ? "is-picked" : ""}`} onClick={() => tapPlayer(p)} aria-pressed={picked === p.id}>
+                      <PlayerFace player={p} />
                       <b>{p.rating}</b>
                       <i>{p.position}</i>
                       <strong>{p.name}</strong>

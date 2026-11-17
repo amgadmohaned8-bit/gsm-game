@@ -27,6 +27,7 @@ import {
   acceptOffer as dbAccept, answerOffer, buyNow, dealError, listPlayer, loadListings, loadLog, makeOffer, signFromClub, withdrawListing,
   type DealCtx, type LogRow, type ManagerListing,
 } from "@/lib/football/dealing";
+import PlayerFace from "@/components/PlayerFace";
 import GsmMark from "@/components/GsmMark";
 import GameHud from "@/components/GameHud";
 import Icon from "@/components/Icon";
@@ -397,7 +398,7 @@ export default function TransfersPage() {
                     const seller = humans.get(l.seller_club);
                     return (
                       <li key={l.id} className="tx-row is-market">
-                        <b className={rateCls(p)}>{p.rating}</b>
+                        <b className={rateCls(p)}><PlayerFace player={p} className="tx-face" /><i>{p.rating}</i></b>
                         <span className="tx-name">
                           <strong>{p.name}<em className="tr-tag is-new">For sale</em></strong>
                           <small>{p.position} · {p.age} · {clubName(l.seller_club)}{seller ? ` · ${seller.name}` : own ? " · you" : ""} · value {money(marketValue(p))}</small>
@@ -434,7 +435,7 @@ export default function TransfersPage() {
                     const club = clubs.find((c) => c.id === p.club);
                     return (
                       <li key={p.id} className="tx-row">
-                        <b className={rateCls(p)}>{p.rating}</b>
+                        <b className={rateCls(p)}><PlayerFace player={p} className="tx-face" /><i>{p.rating}</i></b>
                         <span className="tx-name">
                           <strong>{p.name}{onSale.isNew.has(p.id) && <em className="tr-tag is-new">New</em>}{onSale.leaving.has(p.id) && <em className="tr-tag is-leaving">Leaving soon</em>}</strong>
                           <small>{p.position} · {p.age} · {club ? club.name : sellerLabel(p)}</small>
@@ -477,7 +478,7 @@ export default function TransfersPage() {
                     const quick = Math.round(marketValue(p) * QUICK * 10) / 10;
                     return (
                       <li key={p.id} className="tx-row is-sell">
-                        <b className={rateCls(p)}>{p.rating}</b>
+                        <b className={rateCls(p)}><PlayerFace player={p} className="tx-face" /><i>{p.rating}</i></b>
                         <span className="tx-name">
                           <strong>{p.name}{asking !== undefined && <em className="tr-tag is-leaving">Listed</em>}</strong>
                           <small>{p.position} · {p.age}{asking !== undefined ? ` · asking ${money(asking)}` : ""}</small>
@@ -612,7 +613,7 @@ export default function TransfersPage() {
                 const last = clubPlayers.filter((x) => x.position === p.position).length - 1 < MIN_BY_POSITION[p.position];
                 return (
                   <li key={p.id} className="tx-row is-market">
-                    <b className={rateCls(p)}>{p.rating}</b>
+                    <b className={rateCls(p)}><PlayerFace player={p} className="tx-face" /><i>{p.rating}</i></b>
                     <span className="tx-name">
                       <strong>{p.name}{l && <em className="tr-tag is-new">For sale</em>}</strong>
                       <small>{p.position} · {p.age} · {p.nationality || "-"}</small>
