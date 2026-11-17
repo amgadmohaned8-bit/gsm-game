@@ -75,3 +75,32 @@
   .sq-dot b { font-size: 18px; }
   .sq-dot span { font-size: 10px; }
 }
+
+/* one column: the pitch, then the substitutes under it */
+.sq-one { max-width: 860px; margin: 0 auto; }
+.sq-one .sq-pitch { aspect-ratio: 3 / 3.2; }
+.sq-dot { grid-template-rows: auto 1fr auto auto; }
+.sq-dot.is-off { border-top-color: var(--card-red, #e5484d); }
+.sq-dot.is-off i { color: #ff8a8a; }
+.sq-fit { display: block; width: 100%; height: 4px; margin-top: 3px; background: rgba(255, 255, 255, 0.14); overflow: hidden; }
+.sq-fit i { position: static; display: block; height: 100%; background: #46d17a; font: inherit; }
+.sq-fit.is-mid i { background: #f0b429; }
+.sq-fit.is-low i { background: #ff5d5d; }
+.sq-subs-toggle { display: flex; align-items: center; gap: 12px; width: 100%; min-height: 52px; margin-top: 14px; padding: 0 16px; border: 1px solid var(--line-2); background: var(--ink-2); text-align: left; transition: border-color 0.2s, background 0.2s; }
+.sq-subs-toggle:hover, .sq-subs-toggle.is-open { border-color: var(--brass); background: var(--ink-3); }
+.sq-subs-toggle strong { font-family: var(--font-display); font-size: 22px; letter-spacing: 0.04em; color: var(--brass-hi); }
+.sq-subs-toggle span { flex: 1; color: var(--chalk-3); font-size: 14px; }
+.sq-subs-toggle i { width: 10px; height: 10px; border-right: 2px solid var(--brass); border-bottom: 2px solid var(--brass); transform: rotate(45deg); transition: transform 0.2s; margin-bottom: 4px; }
+.sq-subs-toggle.is-open i { transform: rotate(-135deg); margin-bottom: -4px; }
+.sq-subs { margin-top: 12px; }
+.sq-benchgrid { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(132px, 1fr)); gap: 8px; max-height: 520px; overflow-y: auto; }
+.sq-benchgrid .sq-card { animation: none; }
+.sq-card.is-picked { outline: 2px solid var(--brass-hi); outline-offset: 2px; }
+.sq-card .sq-fit { margin-top: 6px; }
+.sq-card em { font: 700 11px var(--font-text); font-style: normal; color: #6fdc8c; }
+.sq-card em.is-mid { color: #f0b429; } .sq-card em.is-low { color: #ff7a7a; }
+.sq-benchgrid .sq-foot { grid-column: 1 / -1; }
+@media (max-width: 480px) { .sq-benchgrid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+.sq-fit { position: relative; height: 12px; margin-top: 4px; background: rgba(255, 255, 255, 0.14); }
+.sq-fit i { position: absolute; inset: 0 auto 0 0; }
+.sq-fit small { position: relative; z-index: 1; display: block; text-align: center; font: 800 9px/12px var(--font-text); color: #fff; text-shadow: 0 1px 2px #000; min-height: 0; }
