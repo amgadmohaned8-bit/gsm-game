@@ -111,3 +111,32 @@
 .sq-dot > i { position: absolute; }
 .sq-dot > b, .sq-dot > span { text-shadow: 0 1px 4px #000, 0 0 8px rgba(0, 0, 0, 0.8); }
 .sq-card .pf { position: absolute; right: 8px; bottom: 34px; width: 52px; height: 52px; object-fit: contain; object-position: center bottom; pointer-events: none; }
+
+/* a player with a picture: a big card, the picture is the card */
+.sq-dot.has-face { width: clamp(88px, 23%, 132px); height: clamp(118px, 30vw, 172px); padding: 0 0 5px; grid-template-rows: 1fr auto auto; overflow: hidden; }
+.sq-dot.has-face .pf { inset: 0 0 38px 0; left: 0; bottom: auto; top: 0; width: 100%; height: calc(100% - 38px); transform: none; object-fit: cover; object-position: center top; }
+.sq-dot.has-face > span { grid-row: 2; width: 100%; padding: 3px 4px 0; text-align: center; font-size: 12px; background: linear-gradient(180deg, transparent, rgba(4, 6, 10, 0.9) 40%); }
+.sq-dot.has-face > .sq-fit { grid-row: 3; width: calc(100% - 8px); }
+.sq-dot.has-face > i { top: 5px; right: 5px; padding: 1px 5px; background: rgba(4, 6, 10, 0.78); border: 1px solid rgba(255, 255, 255, 0.2); color: var(--chalk); }
+.sq-dot.has-face:hover { transform: translateY(-4px); }
+.sq-card.has-face { padding: 0 0 10px; overflow: hidden; }
+.sq-card.has-face .pf { position: static; display: block; width: 100%; height: 150px; object-fit: cover; object-position: center top; background: rgba(255, 255, 255, 0.04); }
+.sq-card.has-face > strong, .sq-card.has-face > small, .sq-card.has-face > .sq-fit, .sq-card.has-face > em { margin-left: 12px; margin-right: 12px; }
+.sq-card.has-face > strong { margin-top: 8px; font-size: 16px; }
+.sq-card.has-face > i { top: 8px; right: 8px; padding: 1px 6px; background: rgba(4, 6, 10, 0.78); border: 1px solid rgba(255, 255, 255, 0.2); color: var(--chalk); }
+.sq-benchgrid { grid-template-columns: repeat(auto-fill, minmax(168px, 1fr)); gap: 10px; max-height: 640px; }
+.sq-one .sq-pitch { aspect-ratio: 3 / 3.6; }
+@media (max-width: 560px) {
+  .sq-one .sq-pitch { aspect-ratio: 3 / 4.6; padding: 12px 4px; gap: 6px; }
+  .sq-dot.has-face { width: clamp(78px, 27%, 104px); height: clamp(108px, 34vw, 140px); }
+  .sq-card.has-face .pf { height: 128px; }
+}
+
+/* the rating on a card with a picture: a small glass badge in the top corner */
+.sq-glass { position: absolute; top: 5px; left: 5px; z-index: 2; min-width: 30px; padding: 2px 7px; text-align: center; text-decoration: none; font: 900 17px/1.15 var(--font-display); color: #fff;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.34), rgba(255, 255, 255, 0.08));
+  border: 1px solid rgba(255, 255, 255, 0.45); border-radius: 9px;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.5);
+  -webkit-backdrop-filter: blur(8px) saturate(1.4); backdrop-filter: blur(8px) saturate(1.4); text-shadow: 0 1px 3px rgba(0, 0, 0, 0.7); }
+.sq-dot.t-elite .sq-glass, .sq-card.t-elite .sq-glass { color: var(--brass-hi); border-color: rgba(244, 208, 128, 0.7); }
+.sq-card.has-face .sq-glass { top: 8px; left: 8px; font-size: 20px; padding: 3px 9px; }
