@@ -43,7 +43,7 @@ export default function TeamSheet({
   const starters = ids.map((id) => byId.get(id)).filter(Boolean) as Player[];
   const shape = { GK: 1, ...formations[formation] };
   const rating = starters.length ? Math.round(starters.reduce((s, p) => s + p.rating, 0) / starters.length) : 0;
-  const effect = bonusFor(starters, clubId, fitness);
+  const effect = bonusFor(starters, clubId, fitness, formation);
   const fit = (id: string) => fitness?.[id] ?? 100;
   const tiredCount = starters.filter((p) => fit(p.id) < TIRED_BELOW).length;
 

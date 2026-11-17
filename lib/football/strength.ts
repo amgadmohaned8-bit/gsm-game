@@ -11,7 +11,7 @@
  */
 
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { bestEleven, squadOf, formations, type FormationName, type Player } from "@/lib/football/squads";
+import { bestEleven, squadOf, formations, type FormationName, type Player, type Position } from "@/lib/football/squads";
 import { availableSquad } from "@/lib/football/availability";
 import { loadFitness, tired } from "@/lib/football/fitness";
 import { readTactic, tacticBonus, type StyleId } from "@/lib/football/tactics";
@@ -66,15 +66,28 @@ export function currentLineup(userId: string, clubId: string, squad: Player[], d
 /** Rating points for this club, from today's squad and lineup compared with the club's starting squad. */
 export function strengthBonus(userId: string, clubId: string, squad: Player[], day?: DayCtx): number {
   const { starters: eleven, formation } = currentLineup(userId, clubId, squad, day);
-  return Math.round((bonusFor(eleven, clubId, day?.fit) + tacticBonus(readTactic(userId, clubId), eleven, formation)) * 10) / 10;
+  return Math.round((bonusFor(eleven, clubId, day?.fit, formation) + tacticBonus(readTactic(userId, clubId), eleven, formation)) * 10) / 10;
 }
 
-/** Rating points for playing this eleven instead of the club's starting eleven. */
-export function bonusFor(eleven: Player[], clubId: string, fit?: Record<string, number>): number {
+/** The position of each slot of a formation, in lineup order: goalkeeper, defenders, midfielders, forwards. */
+export function slotPositions(formation: FormationName): Position[] {
+  const f = formations[formation];
+  return ["GK", ...Array<Position>(f.DF).fill("DF"), ...Array<Position>(f.MF).fill("MF"), ...Array<Position>(f.FW).fill("FW")];
+}
+
+/** What a player loses by playing in a slot that is not his position (a goalkeeper or an outfield player in goal loses a lot). */
+export function offPositionLoss(natural: Position, slot: Position): number {
+  if (natural === slot) return 0;
+  return natural === "GK" || slot === "GK" ? 25 : 8;
+}
+
+/** Rating points for playing this eleven instead of the club's starting eleven. With the formation, players out of position count for less. */
+export function bonusFor(eleven: Player[], clubId: string, fit?: Record<string, number>, formation?: FormationName): number {
   const start = bestEleven(squadOf(clubId), "4-3-3");
   if (!eleven.length || !start.length) return 0;
   const base = start.reduce((sum, p) => sum + p.rating, 0) / start.length;
-  const now = eleven.reduce((sum, p) => sum + tired(p, fit).rating, 0) / eleven.length;
+  const slots = formation && eleven.length === 11 ? slotPositions(formation) : null;
+  const now = eleven.reduce((sum, p, i) => sum + tired(p, fit).rating - (slots ? offPositionLoss(p.position, slots[i]) : 0), 0) / eleven.length;
   const raw = (now - base) * SCALE;
   return Math.max(-MAX_BONUS, Math.min(MAX_BONUS, Math.round(raw * 10) / 10));
 }
