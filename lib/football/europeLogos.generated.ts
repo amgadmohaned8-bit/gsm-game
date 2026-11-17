@@ -6,8 +6,11 @@ export const EUROPE_LOGOS: Record<string, string> = {
  "ajax": "ajax-logo-footylogos.png",
  "anderlecht": "anderlecht-logo-footylogos.png",
  "arsenal": "arsenal-logo-footylogos.png",
+ "as-monaco": "as-monaco-logo-footylogos.png",
  "as-roma": "as-roma-logo-footylogos.png",
  "aston-villa": "aston-villa-logo-footylogos.png",
+ "atalanta": "atalanta-logo-footylogos.png",
+ "athletic-club": "athletic-club-logo-footylogos.png",
  "atletico-madrid": "atletico-madrid-logo-footylogos.png",
  "az-alkmaar": "az-alkmaar-logo-footylogos.png",
  "barcelona": "barcelona-logo-footylogos.png",
@@ -21,6 +24,7 @@ export const EUROPE_LOGOS: Record<string, string> = {
  "club-brugge": "club-brugge-logo-footylogos.png",
  "como-1907": "como-1907-logo-footylogos.png",
  "crystal-palace": "crystal-palace-logo-footylogos.png",
+ "eintracht-frankfurt": "eintracht-frankfurt-logo-footylogos.png",
  "fc-ararat-armenia": "fc-ararat-armenia-logo-footylogos.png",
  "fenerbahce": "fenerbahce-logo-footylogos.png",
  "ferencvaros": "ferencvaros-logo-footylogos.png",
@@ -73,5 +77,6 @@ export const EUROPE_LOGOS: Record<string, string> = {
  "union-saint-gilloise": "union-saint-gilloise-logo-footylogos.png",
  "vfb-stuttgart": "vfb-stuttgart-logo-footylogos.png",
  "viktoria-plzen": "viktoria-plzen-logo-footylogos.png",
+ "villarreal": "villarreal-logo-footylogos.png",
  "vitoria-guimaraes": "vitoria-guimaraes-logo-footylogos.png"
 };
