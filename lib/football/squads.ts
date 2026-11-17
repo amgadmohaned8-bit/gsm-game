@@ -30,28 +30,28 @@ export type Player = {
 
 const raw: Record<string, string> = {
   arsenal: `
-1 Raya GK ES 31 85
-13 Kepa GK ES 32 76
+1 Raya GK ES 31 88
+13 Kepa GK ES 32 78
 30 Meslier GK FR 26 74
-2 Saliba DF FR 25 89
+2 Saliba DF FR 25 88
 3 Mosquera DF ES 22 78
 4 White DF ENG 29 82
 5 Hincapié DF EC 24 80
-6 Gabriel DF BR 28 87
-12 Timber DF NL 25 83
-15 Konsa DF ENG 29 78
+6 Gabriel DF BR 28 89
+12 Timber DF NL 25 84
+15 Konsa DF ENG 29 84
 33 Calafiori DF IT 24 84
 49 Lewis-Skelly DF ENG 20 78
 89 Salmon DF ENG 17 62
-8 Ødegaard MF NO 27 87
-10 Eze MF ENG 28 82
+8 Ødegaard MF NO 27 86
+10 Eze MF ENG 28 84
 20 Madueke MF ENG 24 80
 23 Merino MF ES 30 81
 36 Zubimendi MF ES 27 84
-39 Guimarães MF BR 28 80
-41 Rice MF ENG 27 89
-7 Saka FW ENG 25 89
-14 Gyökeres FW SE 28 87
+39 Guimarães MF BR 28 86
+41 Rice MF ENG 27 88
+7 Saka FW ENG 25 87
+14 Gyökeres FW SE 28 86
 17 Tzolis FW GR 24 74
 29 Havertz FW DE 27 82
 43 Annous FW ENG 18 62
@@ -426,7 +426,7 @@ const raw: Record<string, string> = {
 67 Koumas FW ENG 21 66
 - Lambie FW ENG 18 62`,
   "man-city": `
-1 Donnarumma GK IT 27 88
+1 Donnarumma GK IT 27 89
 13 Bettinelli GK ENG 34 66
 28 Rulli GK AR 34 76
 3 Dias DF PT 29 85
