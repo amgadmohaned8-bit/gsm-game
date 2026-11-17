@@ -35,12 +35,19 @@ export const CUPS: League[] = [
   { id: "caf-confederation-cup", name: "CAF Confederation Cup", country: "Africa", logo: "/league-logos/caf-confederation-cup.png", color: "#e5cf2a", color2: "#1d6b3a", available: true, clubs: 16, rounds: 9, blurb: "The second continental cup, for the clubs just behind the champions.", facts: [["3rd & 4th", "of Egypt qualify"], ["Groups", "then knockouts"]] },
 ];
 
-export const isCup = (id: string | null | undefined) => CUPS.some((c) => c.id === id);
+/** The European cups. You reach them by qualifying from the Premier League, so they are not in the league picker. */
+export const EURO_CUPS: League[] = [
+  { id: "ucl", name: "UEFA Champions League", country: "Europe", logo: "/club-logos/europe/ucl.png", color: "#1d4ed8", color2: "#0b1b4d", available: true, clubs: 36, rounds: 17, blurb: "Europe's biggest club prize. 36 clubs in one table, then the knockouts.", facts: [["Top 4", "of England qualify"], ["League phase", "then knockouts"]] },
+  { id: "uel", name: "UEFA Europa League", country: "Europe", logo: "/club-logos/europe/uel.png", color: "#f97316", color2: "#3b1d00", available: true, clubs: 36, rounds: 17, blurb: "The second European cup. Same format, 36 clubs in one table.", facts: [["5th & 6th", "of England qualify"], ["League phase", "then knockouts"]] },
+];
+
+export const isCup = (id: string | null | undefined) => CUPS.some((c) => c.id === id) || EURO_CUPS.some((c) => c.id === id);
 
 export const leagueOf = (rawId: string | null | undefined): League => leagueOfBase(baseLeague(rawId), rawId);
 const leagueOfBase = (id: string | null | undefined, rawId: string | null | undefined): League =>
   LEAGUES.find((l) => l.id === id) ??
-  CUPS.find((c) => c.id === id) ?? {
+  CUPS.find((c) => c.id === id) ??
+  EURO_CUPS.find((c) => c.id === id) ?? {
     id: rawId ?? "unknown",
     name: (id ?? "League").replace(/-/g, " ").replace(/\b\w/g, (c) => c.toUpperCase()),
     country: "",

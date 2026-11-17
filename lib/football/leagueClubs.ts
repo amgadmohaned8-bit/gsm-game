@@ -12,6 +12,7 @@
 import { clubs as premierClubs } from "@/lib/football/clubs";
 import { egyptClubs } from "@/lib/football/egypt";
 import { africanClubs } from "@/lib/football/africa";
+import { europeanClubs } from "@/lib/football/europeClubs";
 import { baseLeague } from "@/lib/football/leagueIds";
 
 export type LeagueClub = { id: string; name: string; city: string; stadium: string; logo: string };
@@ -22,7 +23,7 @@ const LEAGUE_CLUBS: Record<string, LeagueClub[]> = {
 };
 
 // the African cup clubs belong to no league: they are only here so names and logos can be looked up
-export const allClubs: LeagueClub[] = [...Object.values(LEAGUE_CLUBS).flat(), ...africanClubs];
+export const allClubs: LeagueClub[] = [...Object.values(LEAGUE_CLUBS).flat(), ...africanClubs, ...europeanClubs];
 
 const owner = new Map<string, string>();
 for (const [league, list] of Object.entries(LEAGUE_CLUBS)) for (const c of list) owner.set(c.id, league);

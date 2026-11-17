@@ -1,0 +1,218 @@
+[
+  {
+    "slug": "ac-milan",
+    "name": "AC Milan",
+    "filename": "ac-milan-logo-footylogos.png",
+    "sha256": "a5bb312ceff03d303078f4e6996f916f9fb52d0ffe72044451e4c10f2c588b3f"
+  },
+  {
+    "slug": "ac-omonia-nicosia",
+    "name": "AC Omonia Nicosia",
+    "filename": "ac-omonia-nicosia-logo-footylogos.png",
+    "sha256": "b7bed090a897785156fe50d03f68bfe1ba620ca5f8ac1b1a42042c73c132b781"
+  },
+  {
+    "slug": "afc-bournemouth",
+    "name": "AFC Bournemouth",
+    "filename": "afc-bournemouth-logo-footylogos.png",
+    "sha256": "71e456a448ab7203d3ff43166b6d30afaf692f93eaf0397bfce28a4afc69307e"
+  },
+  {
+    "slug": "az-alkmaar",
+    "name": "AZ Alkmaar",
+    "filename": "az-alkmaar-logo-footylogos.png",
+    "sha256": "85c0c391eaaff78eab627314f956d7a585f646b20bcab0a083db084d7861e417"
+  },
+  {
+    "slug": "bayer-leverkusen",
+    "name": "Bayer Leverkusen",
+    "filename": "bayer-leverkusen-logo-footylogos.png",
+    "sha256": "cd355e4dd5209f9d31efbff8925f3ce56002500acee7e9f1e05f99b762f40beb"
+  },
+  {
+    "slug": "besiktas",
+    "name": "Beşiktaş",
+    "filename": "besiktas-logo-footylogos.png",
+    "sha256": "b5794714948dfd8433faa14583a856fcad68f386579434273fe99045e7205d29"
+  },
+  {
+    "slug": "celta-vigo",
+    "name": "Celta Vigo",
+    "filename": "celta-vigo-logo-footylogos.png",
+    "sha256": "fb4f9aea19362b59285e48882954c729ab27d66cc6fc5d63c5f6655dce5c2417"
+  },
+  {
+    "slug": "celtic",
+    "name": "Celtic",
+    "filename": "celtic-logo-footylogos.png",
+    "sha256": "be33a7dc24e958d235a4ac61ea38ec53d80c7282caa5ce9c04678410f434114a"
+  },
+  {
+    "slug": "crystal-palace",
+    "name": "Crystal Palace",
+    "filename": "crystal-palace-logo-footylogos.png",
+    "sha256": "c76fd0c2626766bcad939b59c4a9352bb11d8fcaab92bd6683cf340c817991b0"
+  },
+  {
+    "slug": "fc-ararat-armenia",
+    "name": "FC Ararat-Armenia",
+    "filename": "fc-ararat-armenia-logo-footylogos.png",
+    "sha256": "2412d89925e18d7ccc15ab25f3ee8dd3cb9826dbc50756fe14ece2f5176774ea"
+  },
+  {
+    "slug": "ferencvaros-tc",
+    "name": "Ferencvaros TC",
+    "filename": "ferencvaros-tc-logo-footylogos.png",
+    "sha256": "124e806ac2c3a7dddfac439ad3f8879851bc8102ec9a424e84839859a279da13"
+  },
+  {
+    "slug": "gnk-dinamo-zagreb",
+    "name": "GNK Dinamo Zagreb",
+    "filename": "gnk-dinamo-zagreb-logo-footylogos.png",
+    "sha256": "3a9cff387e431b87746a916d9e77b8cb66b9d445985575d7ea9f7a99b0bad9cb"
+  },
+  {
+    "slug": "hapoel-beer-sheva",
+    "name": "Hapoel Beer Sheva (הפועל באר שבע)",
+    "filename": "hapoel-beer-sheva-logo-footylogos.png",
+    "sha256": "6bcee962f065800059c6ba8162bb3de65a37cf008365d46f189a3d77fc86e507"
+  },
+  {
+    "slug": "jagiellonia-bialystok",
+    "name": "Jagiellonia Bialystok",
+    "filename": "jagiellonia-bialystok-logo-footylogos.png",
+    "sha256": "8115d691a62274701d1771b02c3ad91cc4f2637f1ab91d5da1a2f470abb95322"
+  },
+  {
+    "slug": "juventus",
+    "name": "Juventus",
+    "filename": "juventus-logo-footylogos.png",
+    "sha256": "de1d91a51aeb93f0e863b07078fefa4f640555218d724a075dea44db52d83cb6"
+  },
+  {
+    "slug": "lech-poznan",
+    "name": "Lech Poznan",
+    "filename": "lech-poznan-logo-footylogos.png",
+    "sha256": "c7ca5177603d10b27e62c5c3ddf02fa7c354b357f2ecbee662d8946fa0357397"
+  },
+  {
+    "slug": "levski-sofia",
+    "name": "Levski Sofia (Левски София)",
+    "filename": "levski-sofia-logo-footylogos.png",
+    "sha256": "d114611498a8cb182e70603557fff490078f646aa878602351c5fbd75993ece9"
+  },
+  {
+    "slug": "lillestrom-sk",
+    "name": "Lillestrøm SK",
+    "filename": "lillestrom-sk-logo-footylogos.png",
+    "sha256": "665892ee4f0c8834f5d904db23775d736f91bcbdcc2b0a7e06698082e9f70e4f"
+  },
+  {
+    "slug": "nec-nijmegen",
+    "name": "NEC Nijmegen",
+    "filename": "nec-nijmegen-logo-footylogos.png",
+    "sha256": "0dde6a52ff393fe7caa9ef88e7c5c562708c1376a631908955567c6a4b3f58a2"
+  },
+  {
+    "slug": "nk-celje",
+    "name": "NK Celje",
+    "filename": "nk-celje-logo-footylogos.png",
+    "sha256": "bc84cf71407cf52f290bb302df978f531f80ae8040cbb1c2fbc5c5daa98c929b"
+  },
+  {
+    "slug": "ofi-crete",
+    "name": "OFI Crete (Όμιλος Φιλάθλων Ηρακλείου)",
+    "filename": "ofi-crete-logo-footylogos.png",
+    "sha256": "150d6859d2fbeabf583ec24a2d03f28ac2c427718f83be1e58b7c8dc04d57040"
+  },
+  {
+    "slug": "olympiacos",
+    "name": "Olympiacos (Ολυμπιακός)",
+    "filename": "olympiacos-logo-footylogos.png",
+    "sha256": "45ef11f243a480e600ffb74cacf5dd58127e4dd4a9d8011648a23239abbc1ed5"
+  },
+  {
+    "slug": "olympique-de-marseille-om",
+    "name": "Olympique de Marseille (OM)",
+    "filename": "olympique-de-marseille-om-logo-footylogos.png",
+    "sha256": "3640bf0759cb6ac29e6086ec7b2fea61d6a38b51b6eefce6062855bc8a3f079d"
+  },
+  {
+    "slug": "olympique-lyonnais",
+    "name": "Olympique Lyonnais (Lyon)",
+    "filename": "olympique-lyonnais-logo-footylogos.png",
+    "sha256": "0f7f5f1b18d340cd8099d402c7070716f9c9d2b52fca0b5fe439aad283014f21"
+  },
+  {
+    "slug": "real-sociedad",
+    "name": "Real Sociedad",
+    "filename": "real-sociedad-logo-footylogos.png",
+    "sha256": "a54ba9549f2f04c8265729b5c701e0a1871c8735f38b40ceb2fb859c5b08e285"
+  },
+  {
+    "slug": "red-bull-salzburg",
+    "name": "Red Bull Salzburg",
+    "filename": "red-bull-salzburg-logo-footylogos.png",
+    "sha256": "c2602ada53838e74a2d7365fcae3b6c8f84bc01a4e9b6a9473382b147f6d3aa0"
+  },
+  {
+    "slug": "rsc-anderlecht",
+    "name": "RSC Anderlecht",
+    "filename": "rsc-anderlecht-logo-footylogos.png",
+    "sha256": "88ea0054a59764f4f133ae28fb7d7821c0299c70aff808529bf8b513c23446ce"
+  },
+  {
+    "slug": "scu-torreense",
+    "name": "S.C.U. Torreense",
+    "filename": "scu-torreense-logo-footylogos.png",
+    "sha256": "e510017fd915ac39b47d6f83af52647f93f9beedb07af8cfb6d7d8507ca870e7"
+  },
+  {
+    "slug": "sk-sturm-graz",
+    "name": "SK Sturm Graz",
+    "filename": "sk-sturm-graz-logo-footylogos.png",
+    "sha256": "f35aa9811fd9e523f4b3867086a54f98f31dc1792a4208f02ad747d958888d38"
+  },
+  {
+    "slug": "sl-benfica",
+    "name": "SL Benfica",
+    "filename": "sl-benfica-logo-footylogos.png",
+    "sha256": "8775b8c1cb9f129090e3e27e5ff1bb54e8682d32ff8a7a96dc1809123286721a"
+  },
+  {
+    "slug": "sparta-praha",
+    "name": "Sparta Praha",
+    "filename": "sparta-praha-logo-footylogos.png",
+    "sha256": "7b7938f7e0c84d7f2afdb3fc221c51423c5cb7d964fc4f207ff82fe0efac3eb9"
+  },
+  {
+    "slug": "stade-rennais",
+    "name": "Stade Rennais (Rennes)",
+    "filename": "stade-rennais-logo-footylogos.png",
+    "sha256": "a3fddb545549ecfb9c8084d9c3cfe3835d96a4ea91c4db5d0e5e2201e74f54f7"
+  },
+  {
+    "slug": "sunderland",
+    "name": "Sunderland",
+    "filename": "sunderland-logo-footylogos.png",
+    "sha256": "5ab80eab391be777d71e6be57332fb3d0a1677ea11fe88317adc6b8635e7949b"
+  },
+  {
+    "slug": "tsg-hoffenheim",
+    "name": "TSG Hoffenheim",
+    "filename": "tsg-hoffenheim-logo-footylogos.png",
+    "sha256": "16f6da4ca1a6be7019c2d95909bdd27acd0ce088b766e14484b02c3d055487ca"
+  },
+  {
+    "slug": "union-saint-gilloise",
+    "name": "Union Saint-Gilloise",
+    "filename": "union-saint-gilloise-logo-footylogos.png",
+    "sha256": "27bd9a80896d0fad1f886ac5206f14bb0f0818fbef0e0a542d3a86b421b4c740"
+  },
+  {
+    "slug": "viktoria-plzen",
+    "name": "Viktoria Plzeň",
+    "filename": "viktoria-plzen-logo-footylogos.png",
+    "sha256": "cf664608b5608605db1f612ce363001bf75aeaa3a8cd6b1df507ad2b33c3cf65"
+  }
+]

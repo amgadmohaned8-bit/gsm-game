@@ -10,7 +10,7 @@
  */
 
 import { baseLeague } from "@/lib/football/leagueIds";
-import { CUPS, isCup, leagueOf } from "@/lib/football/leaguesCatalog";
+import { CUPS, EURO_CUPS, isCup, leagueOf } from "@/lib/football/leaguesCatalog";
 
 export type Kind = {
   title: string;
@@ -35,6 +35,8 @@ export const LEAGUE_KINDS: Record<string, string[]> = {
   "egyptian-premier-league": ["league", "league_cup", "objective"],
   "caf-champions-league": ["continental_cup"],
   "caf-confederation-cup": ["continental_cup"],
+  ucl: ["continental_cup"],
+  uel: ["continental_cup"],
   "la-liga": ["league", "league_cup", "objective"],
   "serie-a": ["league", "league_cup", "objective"],
   bundesliga: ["league", "league_cup", "objective"],
@@ -44,6 +46,8 @@ export const LEAGUE_KINDS: Record<string, string[]> = {
 export const LEAGUE_OVERRIDES: Record<string, Record<string, { image?: string; title?: string }>> = {
   "caf-champions-league": { continental_cup: { image: "/trophies/caf-champions-league.png", title: "CAF Champions League" } },
   "caf-confederation-cup": { continental_cup: { image: "/trophies/caf-confederation-cup.png", title: "CAF Confederation Cup" } },
+  ucl: { continental_cup: { image: "/trophies/uefa-champions-league.png", title: "UEFA Champions League" } },
+  uel: { continental_cup: { image: "/trophies/uefa-europa-league.png", title: "UEFA Europa League" } },
   "egyptian-premier-league": {
     league: { image: "/trophies/egyptian-premier-league.png", title: "Egyptian League champion" },
     league_cup: { image: "/trophies/egypt-cup.png", title: "Egypt Cup" },
@@ -81,7 +85,7 @@ export function buildCabinet(allWins: Win[], rawLeagueIds: string[]): { leagueId
   const wins = allWins.map((w) => ({ ...w, league_id: baseLeague(w.league_id) }));
   const leagueIds = rawLeagueIds.map((l) => baseLeague(l));
   // every continental cup always has its own cabinet, after the leagues
-  const ids = [...new Set([...leagueIds, ...wins.map((w) => w.league_id)])].filter((id) => !isCup(id)).concat(CUPS.map((c) => c.id));
+  const ids = [...new Set([...leagueIds, ...wins.map((w) => w.league_id)])].filter((id) => !isCup(id)).concat(CUPS.map((c) => c.id), EURO_CUPS.map((c) => c.id));
   return ids.map((leagueId) => {
     const cup = isCup(leagueId);
     const kinds = new Set([...(LEAGUE_KINDS[leagueId] ?? ["league", "league_cup", "objective"]), ...wins.filter((w) => w.league_id === leagueId).map((w) => w.kind)]);

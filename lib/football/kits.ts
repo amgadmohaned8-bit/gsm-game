@@ -1,6 +1,7 @@
 /** Shirt colours used on the match pitch. Egyptian and African clubs keep theirs in their own files. */
 import { egyptClubs } from "@/lib/football/egypt";
 import { africanClubs } from "@/lib/football/africa";
+import { europeColors } from "@/lib/football/europeClubs";
 
 const PL: Record<string, [string, string]> = {
   "man-city": ["#6cabdd", "#ffffff"], arsenal: ["#ef0107", "#ffffff"], liverpool: ["#c8102e", "#f6eb61"], chelsea: ["#034694", "#ffffff"],
@@ -20,6 +21,7 @@ export function kitOf(id: string): [string, string] {
   const a = africanClubs.find((c) => c.id === id);
   const ac = (a as { colors?: [string, string] } | undefined)?.colors;
   if (ac) return ac;
+  if (europeColors[id]) return europeColors[id];
   const h = hash(id) % 360;
   return [`hsl(${h} 70% 50%)`, "#ffffff"];
 }

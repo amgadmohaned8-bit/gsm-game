@@ -14,6 +14,8 @@ const MOTIF: Record<string, "stars" | "pyramids" | "stripes" | "lights"> = {
   "caf-confederation-cup": "stripes",
   "egyptian-premier-league": "pyramids",
   "premier-league": "lights",
+  ucl: "stars",
+  uel: "stripes",
 };
 
 const WELCOME: Record<string, string> = {
@@ -21,6 +23,8 @@ const WELCOME: Record<string, string> = {
   "caf-confederation-cup": "Africa's second stage",
   "egyptian-premier-league": "Cairo derbies. Title races.",
   "premier-league": "No easy weekends",
+  ucl: "The best night in football",
+  uel: "Europe's second stage",
 };
 
 export default function CompBackdrop({ comp, intro = true }: { comp: string | null | undefined; intro?: boolean }) {

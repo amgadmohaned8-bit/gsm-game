@@ -26,6 +26,7 @@ import type { Quote } from "@/lib/football/press";
 import { syncCareers } from "@/lib/football/careers";
 import { isCafCup } from "@/lib/football/africa";
 import { qualifyFromLeague } from "@/lib/football/continental";
+import { qualifyFromEngland } from "@/lib/football/europe";
 
 type TrophyCounts = { league: number; league_cup: number; objective: number };
 import { summarizeSeason, recordSeasonTrophies, type SeasonSummary } from "@/lib/football/achievements";
@@ -148,6 +149,7 @@ export default function DashboardPage() {
   const [pressOpen, setPressOpen] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [hasCont, setHasCont] = useState(false);
+  const [hasEuro, setHasEuro] = useState(false);
   const [table, setTable] = useState<Row[]>([]);
   const [form, setForm] = useState<("W" | "D" | "L")[]>([]);
   const closeRef = useRef<HTMLButtonElement>(null);
@@ -312,8 +314,19 @@ export default function DashboardPage() {
             /* run supabase/014_continental.sql */
           }
         }
+        // finishing 1st-6th in England opens the Champions League or the Europa League in the next season
+        let euro = false;
+        if (baseLeague(data.selected_league) === "premier-league") {
+          try {
+            const list = await qualifyFromEngland(supabase, authData.user.id, data.selected_club, data.selected_league);
+            euro = list.length > 0;
+          } catch {
+            /* run supabase/026_europe.sql */
+          }
+        }
         if (!cancelled) {
           setHasCont(qualified);
+          setHasEuro(euro);
           setRoomId((data as { room_id?: string | null }).room_id ?? null);
           setManager(data as Manager);
           setClub(selectedClub);
@@ -557,8 +570,11 @@ export default function DashboardPage() {
           <button type="button" ref={closeRef} onClick={() => setMenuOpen(false)} aria-label="Close menu"><Icon name="close" size={22} /></button>
         </header>
         <nav>
-          {[{ icon: "home" as IconName, label: "My teams", note: "Your four teams in one place", active: false, href: "/game/myteams" }, ...(hasCont
-            ? [...navigation.slice(0, navigation.findIndex((n) => n.label === "League Cup") + 1), { icon: "star" as IconName, label: "CAF Cup", note: "Champions League and Confederation Cup", active: false, href: "/game/continental" }, ...navigation.slice(navigation.findIndex((n) => n.label === "League Cup") + 1)]
+          {[{ icon: "home" as IconName, label: "My teams", note: "Your four teams in one place", active: false, href: "/game/myteams" }, ...((hasCont || hasEuro)
+            ? [...navigation.slice(0, navigation.findIndex((n) => n.label === "League Cup") + 1),
+                ...(hasCont ? [{ icon: "star" as IconName, label: "CAF Cup", note: "Champions League and Confederation Cup", active: false, href: "/game/continental" }] : []),
+                ...(hasEuro ? [{ icon: "star" as IconName, label: "Europe", note: "Champions League and Europa League", active: false, href: "/game/europe" }] : []),
+                ...navigation.slice(navigation.findIndex((n) => n.label === "League Cup") + 1)]
             : navigation
           )].map((item) => {
             const open = Boolean(item.href || (item.action === "press" ? nextMatch : item.action));

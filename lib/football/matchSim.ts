@@ -11,6 +11,7 @@ import { GOAL_SHAPE, type StyleId } from "@/lib/football/tactics";
 import { allClubs as clubs } from "@/lib/football/leagueClubs";
 import { egyptRatings } from "@/lib/football/egypt";
 import { africaRatings } from "@/lib/football/africa";
+import { europeRatings } from "@/lib/football/europeClubs";
 import { pickScorers, type Squads } from "@/lib/football/goals";
 import { squads as baseSquads } from "@/lib/football/squads";
 import { availableSquad, injuryBonus } from "@/lib/football/availability";
@@ -65,7 +66,7 @@ const clubRatings: Record<string, number> = {
 };
 
 export function getRating(clubId: string) {
-  return clubRatings[clubId] ?? egyptRatings[clubId] ?? africaRatings[clubId] ?? 72;
+  return clubRatings[clubId] ?? egyptRatings[clubId] ?? africaRatings[clubId] ?? europeRatings[clubId] ?? 72;
 }
 
 // ---- seeded random numbers ----
