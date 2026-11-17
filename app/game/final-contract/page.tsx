@@ -5,6 +5,8 @@ import { baseLeague } from "@/lib/football/leagueIds";
 import { resetCareerData } from "@/lib/football/careerReset";
 import { egyptClubs } from "@/lib/football/egypt";
 import { africanClubs, isCafCup } from "@/lib/football/africa";
+import { europeanClubs } from "@/lib/football/europeClubs";
+import { defaultEnglish, isEuroComp, saveEuroSetup } from "@/lib/football/europe";
 import { saveContSetup } from "@/lib/football/continental";
 import { activeSeason } from "@/lib/football/season";
 import { useEffect, useState } from "react";
@@ -114,7 +116,7 @@ const premierClubs: Record<string, Club> = {
   },
 };
 
-const clubs: Record<string, Club> = { ...premierClubs, ...Object.fromEntries(egyptClubs.map((c) => [c.id, c])), ...Object.fromEntries(africanClubs.map((c) => [c.id, c])) };
+const clubs: Record<string, Club> = { ...premierClubs, ...Object.fromEntries(egyptClubs.map((c) => [c.id, c])), ...Object.fromEntries(africanClubs.map((c) => [c.id, c])), ...Object.fromEntries(europeanClubs.map((c) => [c.id, c])) };
 
 const experienceTitles: Record<string, string> = {
   C: "Beginner Coach",
@@ -127,6 +129,8 @@ const leagueTitles: Record<string, string> = {
   "egyptian-premier-league": "Egyptian Premier League",
   "caf-champions-league": "CAF Champions League",
   "caf-confederation-cup": "CAF Confederation Cup",
+  ucl: "UEFA Champions League",
+  uel: "UEFA Europa League",
   "la-liga": "La Liga",
   "serie-a": "Serie A",
   bundesliga: "Bundesliga",
@@ -266,6 +270,15 @@ export default function FinalContractPage() {
         await saveContSetup(supabase, authData.user.id, { comp_id: league, season, club_id: club.id, egypt, source: "standalone" });
         setConfirmed(true);
         router.push("/game/continental");
+        return;
+      }
+
+      if (isEuroComp(league)) {
+        // a stand-alone European career: the cup itself
+        const season = await activeSeason(supabase, authData.user.id, league);
+        await saveEuroSetup(supabase, authData.user.id, { comp_id: league, season, club_id: club.id, english: defaultEnglish(league), source: "standalone" });
+        setConfirmed(true);
+        router.push("/game/europe");
         return;
       }
 

@@ -26,7 +26,7 @@ import type { Quote } from "@/lib/football/press";
 import { syncCareers } from "@/lib/football/careers";
 import { isCafCup } from "@/lib/football/africa";
 import { qualifyFromLeague } from "@/lib/football/continental";
-import { qualifyFromEngland } from "@/lib/football/europe";
+import { qualifyFromEngland, isEuroComp } from "@/lib/football/europe";
 
 type TrophyCounts = { league: number; league_cup: number; objective: number };
 import { summarizeSeason, recordSeasonTrophies, type SeasonSummary } from "@/lib/football/achievements";
@@ -211,6 +211,12 @@ export default function DashboardPage() {
         // a stand-alone CAF cup career lives on its own page
         if (isCafCup(data.selected_league)) {
           router.replace("/game/continental");
+          return;
+        }
+
+        // a stand-alone European cup career lives on its own page
+        if (isEuroComp(data.selected_league)) {
+          router.replace("/game/europe");
           return;
         }
 

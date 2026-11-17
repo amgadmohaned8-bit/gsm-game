@@ -20,6 +20,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { allClubs } from "@/lib/football/leagueClubs";
 import { UCL_CLUBS, UEL_CLUBS } from "@/lib/football/europeClubs";
+import { clubs as premierClubs } from "@/lib/football/clubs";
 import { getRating, simulateFixture, type SimulationResult } from "@/lib/football/matchSim";
 import { nextSeason } from "@/lib/football/season";
 import { calculateStandings, type Match } from "@/lib/football/table";
@@ -30,6 +31,12 @@ export const EURO_COMPS: EuroComp[] = [
   { id: "ucl", name: "UEFA Champions League", short: "Champions League", english: [1, 2, 3, 4], foreign: UCL_CLUBS.map((c) => c.id) },
   { id: "uel", name: "UEFA Europa League", short: "Europa League", english: [5, 6], foreign: UEL_CLUBS.map((c) => c.id) },
 ];
+
+/** A stand-alone European career: the English places go to the best rated Premier League clubs (the top 4, or the next 2 for the Europa League). */
+export function defaultEnglish(compId: string): string[] {
+  const sorted = premierClubs.map((c) => c.id).sort((a, b) => getRating(b) - getRating(a) || a.localeCompare(b));
+  return compId === "ucl" ? sorted.slice(0, 4) : sorted.slice(4, 6);
+}
 
 export const euroComp = (id: string) => EURO_COMPS.find((c) => c.id === id);
 export const isEuroComp = (id: string | null | undefined) => !!id && EURO_COMPS.some((c) => c.id === id);
@@ -76,7 +83,7 @@ export type EuroMatch = {
   status: "scheduled" | "completed";
 };
 
-export type EuroSetup = { comp_id: string; season: string; club_id: string; english: string[]; source: "league" };
+export type EuroSetup = { comp_id: string; season: string; club_id: string; english: string[]; source: "league" | "standalone" };
 export type EuroResult = SimulationResult & { pens_home: number | null; pens_away: number | null; winner: string | null };
 export type PlayedEuroRound = { mine: { match: EuroMatch; result: EuroResult } | null; others: { match: EuroMatch; result: EuroResult }[] };
 export type EuroRow = { clubId: string; played: number; won: number; drawn: number; lost: number; gf: number; ga: number; gd: number; points: number };
@@ -319,7 +326,7 @@ export async function fetchEuro(client: SupabaseClient, userId: string, compId: 
     .order("round_no", { ascending: true })
     .order("slot", { ascending: true });
   if (error) throw error;
-  return (data ?? []) as EuroMatch[];
+  return ((data ?? []) as EuroMatch[]).sort((x, y) => x.round_no - y.round_no || x.slot - y.slot);
 }
 
 async function insertRound(client: SupabaseClient, userId: string, compId: string, season: string, roundNo: number, pairs: [string, string][]) {

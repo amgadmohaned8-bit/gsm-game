@@ -7,6 +7,7 @@ import { allClubs as clubs } from "@/lib/football/leagueClubs";
 import { seasonLabel } from "@/lib/football/season";
 import { leagueOf } from "@/lib/football/leaguesCatalog";
 import { isCafCup } from "@/lib/football/africa";
+import { fetchEuroSetups, isEuroComp } from "@/lib/football/europe";
 import { EGYPT_LEAGUE, fetchContSetup, qualifyFromLeague } from "@/lib/football/continental";
 import { careerStats, stashCareer, switchCareer, syncCareers, type Career } from "@/lib/football/careers";
 import GsmMark from "@/components/GsmMark";
@@ -42,6 +43,15 @@ export default function MyTeamsPage() {
 
         const list: Slot[] = [];
         for (const c of careers) {
+          if (isEuroComp(c.league_id)) {
+            let status = "European cup";
+            try {
+              const s = (await fetchEuroSetups(supabase, user.id)).find((x) => x.comp_id === c.league_id);
+              if (s) status = `Season ${seasonLabel(s.season)}`;
+            } catch { /* table missing: still show the slot */ }
+            list.push({ key: c.league_id, comp: c.league_id, club: c.club_id, kind: "cup", status, career: c });
+            continue;
+          }
           if (isCafCup(c.league_id)) {
             let status = "Continental cup";
             try {
@@ -87,7 +97,7 @@ export default function MyTeamsPage() {
     try {
       const active = manager.selected_league === s.career.league_id && manager.selected_club === s.career.club_id;
       if (!active) await switchCareer(supabase, uid, manager, s.career);
-      router.push(s.kind === "league" ? "/game/dashboard" : "/game/continental");
+      router.push(s.kind === "league" ? "/game/dashboard" : isEuroComp(s.comp) ? "/game/europe" : "/game/continental");
     } catch {
       setError("Could not open that team. Try again.");
       setBusy("");

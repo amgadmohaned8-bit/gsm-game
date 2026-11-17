@@ -8,7 +8,7 @@ import Icon from "@/components/Icon";
 import { JoinModal } from "@/components/RoomModals";
 import { forgetCode, normalizeCode, pendingCode, rememberCode } from "@/lib/football/rooms";
 import { CAF_CUPS } from "@/lib/football/africa";
-import { CUPS, LEAGUES } from "@/lib/football/leaguesCatalog";
+import { CUPS, EURO_CUPS, LEAGUES } from "@/lib/football/leaguesCatalog";
 import { supabase } from "@/lib/supabase";
 import { loadCareers } from "@/lib/football/careers";
 import { baseLeague, freeSlot, MAX_CAREERS } from "@/lib/football/leagueIds";
@@ -17,7 +17,7 @@ import "./leagues.css";
 export default function LeaguesPage() {
   const router = useRouter();
   const [mode, setMode] = useState<"leagues" | "cups">("leagues");
-  const leagues = mode === "cups" ? CUPS : LEAGUES;
+  const leagues = mode === "cups" ? [...CUPS, ...EURO_CUPS] : LEAGUES;
 
   const [centerIndex, setCenterIndex] = useState(0);
   const [loading, setLoading] = useState(false);

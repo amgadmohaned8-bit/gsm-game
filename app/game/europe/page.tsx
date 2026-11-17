@@ -4,7 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import { allClubs as clubs } from "@/lib/football/leagueClubs";
-import { seasonLabel } from "@/lib/football/season";
+import { seasonLabel, nextSeason } from "@/lib/football/season";
 import { baseLeague } from "@/lib/football/leagueIds";
 import { squadOf } from "@/lib/football/squads";
 import { euroLogo } from "@/lib/football/europeClubs";
@@ -17,6 +17,8 @@ import {
   euroRoundLabel,
   euroStatus,
   fetchEuroSetups,
+  isEuroComp,
+  saveEuroSetup,
   playEuroRound,
   qualifyFromEngland,
   recordEuroWin,
@@ -70,9 +72,13 @@ export default function EuropePage() {
         if (!user) { router.replace("/"); return; }
         const { data: contract } = await supabase.from("manager_contracts").select("manager_name, selected_club, selected_league, room_id").eq("user_id", user.id).maybeSingle();
         if (!contract?.selected_club) { router.replace("/game/leagues"); return; }
-        if (baseLeague(contract.selected_league) !== "premier-league") { router.replace("/game/dashboard"); return; }
+        const own = isEuroComp(contract.selected_league);
+        if (!own && baseLeague(contract.selected_league) !== "premier-league") { router.replace("/game/dashboard"); return; }
 
-        const list = await qualifyFromEngland(supabase, user.id, contract.selected_club, contract.selected_league);
+        // your own European career, or the place you earned from the Premier League
+        const list = own
+          ? (await fetchEuroSetups(supabase, user.id)).filter((x) => x.comp_id === contract.selected_league && x.club_id === contract.selected_club)
+          : await qualifyFromEngland(supabase, user.id, contract.selected_club, contract.selected_league);
         const found = list[0] ?? null;
         if (cancelled) return;
         setUserId(user.id);
@@ -80,7 +86,7 @@ export default function EuropePage() {
         setSetup(found);
         if (found) {
           await settle(user.id, found);
-          setProgress(await euroLeagueProgress(supabase, user.id, contract.selected_league, found.season, found.club_id));
+          if (!own) setProgress(await euroLeagueProgress(supabase, user.id, contract.selected_league, found.season, found.club_id));
         }
       } catch (err) {
         console.error("Europe load error:", err);
@@ -98,7 +104,8 @@ export default function EuropePage() {
   const status = useMemo(() => (setup ? euroStatus(rows, myClub, entrants) : null), [rows, myClub, entrants, setup]);
   const next = status?.next ?? null;
   const unlockAt = next ? EURO_UNLOCK[next.round_no] : 0;
-  const ready = !!next && progress >= unlockAt;
+  const standalone = setup?.source === "standalone";
+  const ready = !!next && (standalone || progress >= unlockAt);
   const finished = !!status?.final;
   const mySquad = useMemo(() => [...squadOf(myClub)].sort((a, b) => b.rating - a.rating), [myClub]);
 
@@ -123,6 +130,23 @@ export default function EuropePage() {
     }
   }
 
+  async function nextYear() {
+    if (!setup || saving) return;
+    setSaving(true);
+    try {
+      const fresh: EuroSetup = { ...setup, season: nextSeason(setup.season) };
+      await saveEuroSetup(supabase, userId, fresh);
+      setSetup(fresh);
+      setRows([]);
+      await settle(userId, fresh);
+    } catch (err) {
+      console.error(err);
+      setError("Could not start the next season.");
+    } finally {
+      setSaving(false);
+    }
+  }
+
   if (loading) {
     return (
       <main className="fx-loading">
@@ -132,7 +156,7 @@ export default function EuropePage() {
     );
   }
 
-  const back = () => router.push("/game/dashboard");
+  const back = () => router.push(standalone ? "/game/myteams" : "/game/dashboard");
 
   if (!setup || !comp || !status || !manager) {
     return (
@@ -168,7 +192,7 @@ export default function EuropePage() {
               <span className="gx-slant">League</span>
             </h1>
             <p>
-              36 clubs in one table, 8 matches each against 8 different opponents. The top 8 go straight to the round of 16, 9th to 24th play off over two legs, and the rest are out. It runs alongside your Premier League season: each round opens after a number of league matches.
+              36 clubs in one table, 8 matches each against 8 different opponents. The top 8 go straight to the round of 16, 9th to 24th play off over two legs, and the rest are out. {standalone ? " Your own career: play every round when you are ready." : " It runs alongside your Premier League season: each round opens after a number of league matches."}
             </p>
           </div>
 
@@ -218,6 +242,11 @@ export default function EuropePage() {
                   <h2>Waiting</h2>
                   <p>{status.position && status.position <= 8 && status.phaseDone ? `You finished ${status.position}${status.position === 1 ? "st" : status.position === 2 ? "nd" : status.position === 3 ? "rd" : "th"} and skip the play-off. Your round of 16 tie appears when the play-off is finished.` : "Your next tie appears when the round before it is finished."}</p>
                 </>
+              )}
+              {finished && standalone && (
+                <button type="button" className="gx-btn fx-start is-ready" disabled={saving} onClick={nextYear}>
+                  {saving ? "Starting..." : `Play ${seasonLabel(nextSeason(setup.season))}`}
+                </button>
               )}
               {error && <p className="fx-error" role="alert">{error}</p>}
             </article>

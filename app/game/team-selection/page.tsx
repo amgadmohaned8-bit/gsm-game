@@ -9,6 +9,8 @@ import type { CSSProperties } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { isCup, leagueOf } from "@/lib/football/leaguesCatalog";
 import { CAF_CUPS, africanClubs, africaColors } from "@/lib/football/africa";
+import { UCL_CLUBS, UEL_CLUBS, europeColors } from "@/lib/football/europeClubs";
+import { defaultEnglish, euroComp } from "@/lib/football/europe";
 import GameHud from "@/components/GameHud";
 import Icon from "@/components/Icon";
 import "./clubs.css";
@@ -68,13 +70,14 @@ const premierClubs: Club[] = [
   { id: "tottenham", name: "Tottenham Hotspur", city: "London", stadium: "Tottenham Hotspur Stadium", logo: "/club-logos/tottenham.png" },
 ];
 
-const clubColors: Record<string, string> = { ...premierColors, ...egyptColors, ...africaColors };
+const clubColors: Record<string, string> = { ...premierColors, ...egyptColors, ...africaColors, ...Object.fromEntries(Object.entries(europeColors).map(([k, v]) => [k, v[0]])) };
 
 export default function TeamSelectionPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const league = searchParams.get("league") || "premier-league";
   const cupDef = CAF_CUPS.find((c) => c.id === league);
+  const euroDef = euroComp(league);
   // in a CAF cup the manager first picks the Egyptian clubs; the club list is then those two plus the African clubs
   const [egypt, setEgypt] = useState<string[] | null>(cupDef ? null : []);
   const [usedClubs, setUsedClubs] = useState<string[]>([]);
@@ -84,6 +87,12 @@ export default function TeamSelectionPage() {
     });
   }, [league]);
   const clubs: Club[] = useMemo(() => {
+    if (euroDef) {
+      // a European cup: the English clubs that take part, then the foreign clubs
+      const eng = defaultEnglish(euroDef.id).map((id) => premierClubs.find((c) => c.id === id)).filter(Boolean) as Club[];
+      const foreign = (euroDef.id === "ucl" ? UCL_CLUBS : UEL_CLUBS).map((c) => ({ id: c.id, name: c.name, city: c.city, stadium: c.stadium, logo: c.logo }));
+      return [...eng, ...foreign];
+    }
     if (cupDef) {
       const africa = africanClubs.filter((a) => cupDef.clubs.some((c) => c.id === a.id));
       const mine = (egypt ?? []).map((id) => egyptClubs.find((c) => c.id === id)).filter(Boolean) as Club[];
@@ -92,7 +101,7 @@ export default function TeamSelectionPage() {
     const all = baseLeague(league) === "egyptian-premier-league" ? egyptClubs : premierClubs;
     // a club another team of yours already manages is not free
     return all.filter((c) => !usedClubs.includes(c.id));
-  }, [league, egypt, cupDef, usedClubs]);
+  }, [league, egypt, cupDef, euroDef, usedClubs]);
 
   const [selectedClub, setSelectedClub] = useState<Club>(clubs[0] ?? egyptClubs[0]);
   const [search, setSearch] = useState("");
