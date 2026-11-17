@@ -39,10 +39,10 @@ Bellingham MF ENG 23 89 LaLiga
 Kane FW ENG 33 90 Bundesliga
 Musiala MF DE 23 87 Bundesliga
 Olise FW FR 24 86 Bundesliga
-Pedri MF ES 23 87 LaLiga
+Pedri MF ES 23 89 LaLiga
 Raphinha FW BR 29 86 LaLiga
 Dembélé FW FR 29 87 Ligue1
-Vitinha MF PT 26 86 Ligue1
+Vitinha MF PT 26 89 Ligue1
 Nuno_Mendes DF PT 24 85 Ligue1
 Hakimi DF MA 28 85 Ligue1
 Courtois GK BE 34 88 LaLiga
@@ -51,8 +51,8 @@ Valverde MF UY 28 87 LaLiga
 Kimmich MF DE 31 86 Bundesliga
 Lautaro FW AR 28 87 SerieA
 Osimhen FW NG 27 86 SerieA
-Kvaratskhelia FW GE 25 86 Ligue1
-Leão FW PT 27 84 SerieA
+Kvaratskhelia FW GE 25 89 Ligue1
+Leão FW PT 27 87 SerieA
 Barella MF IT 29 84 SerieA
 Tchouaméni MF FR 26 84 LaLiga
 Rüdiger DF DE 33 82 LaLiga
@@ -60,7 +60,7 @@ Militão DF BR 28 82 LaLiga
 Lewandowski FW PL 38 82 LaLiga
 Koundé DF FR 27 84 LaLiga
 Bastoni DF IT 27 84 SerieA
-Alexander-Arnold DF ENG 27 83 LaLiga
+Alexander-Arnold DF ENG 27 84 LaLiga
 Lucas_Moreno MF ES 28 77 LaLiga
 Dani_Bermúdez DF ES 26 76 LaLiga
 Mats_Hoffmann MF DE 27 76 Bundesliga
