@@ -147,3 +147,25 @@
 .fx-friendly-form { display: flex; gap: 10px; flex-wrap: wrap; }
 .fx-friendly select { min-width: 200px; padding: 12px 14px; border: 1px solid rgba(255,255,255,.2); background: rgba(8,12,24,.7); color: var(--chalk); font: 600 15px var(--font-text); }
 .fx-friendly-done { color: var(--brass); font-weight: 700; }
+
+/* every result of one matchday, with arrows between rounds */
+.fx-round { padding: 0 26px 28px; }
+.fx-round-nav { display: grid; grid-template-columns: 52px 1fr 52px; align-items: center; gap: 12px; margin-bottom: 14px; }
+.fx-round-nav > div { display: grid; justify-items: center; gap: 2px; text-align: center; }
+.fx-round-nav strong { font-family: var(--font-display); font-size: 26px; font-weight: 800; letter-spacing: 0.04em; text-transform: uppercase; }
+.fx-round-nav small { color: var(--chalk-3); font-size: 13px; }
+.fx-round-nav button { min-height: 48px; border: 1px solid var(--line-2); background: transparent; color: var(--brass-hi); font-size: 30px; font-weight: 700; line-height: 1; cursor: pointer; touch-action: manipulation; transition: background 0.2s, color 0.2s, transform 0.1s; }
+.fx-round-nav button:hover:not(:disabled) { background: var(--brass); color: var(--brass-ink); }
+.fx-round-nav button:active:not(:disabled) { transform: scale(0.96); }
+.fx-round-nav button:focus-visible { outline: 2px solid var(--brass-hi); outline-offset: 2px; }
+.fx-round-nav button:disabled { opacity: 0.35; cursor: not-allowed; }
+.fx-round-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
+.fx-round-list li { display: grid; grid-template-columns: minmax(0, 1fr) 72px minmax(0, 1fr); align-items: center; gap: 10px; min-height: 52px; padding: 6px 12px; background: rgba(255, 255, 255, 0.04); border-left: 3px solid transparent; }
+.fx-round-list li.is-mine { border-left-color: var(--brass); background: rgba(227, 178, 88, 0.1); }
+.fx-round-list .fx-empty { display: block; padding: 18px 0; }
+.fx-r-home, .fx-r-away { display: flex; align-items: center; gap: 10px; min-width: 0; font-weight: 700; font-size: 15px; overflow-wrap: anywhere; }
+.fx-r-home { justify-content: flex-end; text-align: right; }
+.fx-r-home img, .fx-r-away img { width: 28px; height: 28px; object-fit: contain; flex: none; }
+.fx-r-score { text-align: center; font-family: var(--font-display); font-size: 22px; font-variant-numeric: tabular-nums; color: var(--brass-hi); }
+@media (max-width: 520px) { .fx-round { padding: 0 12px 22px; } .fx-r-home, .fx-r-away { font-size: 13px; gap: 6px; } .fx-round-list li { grid-template-columns: minmax(0, 1fr) 56px minmax(0, 1fr); gap: 6px; padding: 6px 8px; } }
+@media (max-width: 560px) { .fx-tabs { width: 100%; } .fx-tabs button { flex: 1; padding: 0 6px; } }

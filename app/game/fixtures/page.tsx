@@ -40,7 +40,7 @@ import "./fixtures.css";
 
 
 type ManagerData = { manager_name?: string | null; selected_club: string; selected_league: string; room_id?: string | null; club_appointed_at?: string | null };
-type Tab = "upcoming" | "results" | "all";
+type Tab = "upcoming" | "results" | "all" | "round";
 
 function clubOf(id: string) {
   return clubs.find((club) => club.id === id);
@@ -70,6 +70,7 @@ export default function FixturesPage() {
   const [error, setError] = useState("");
   const [now, setNow] = useState(0); // set after mount: Date.now() during the first render breaks static prerendering
   const [tab, setTab] = useState<Tab>("upcoming");
+  const [pickedRound, setPickedRound] = useState(0); // 0 = the latest round that was played
   const [saving, setSaving] = useState(false);
   const liveSquad = useRef<Player[]>([]);
   const [playing, setPlaying] = useState<PlayedMatchday | null>(null);
@@ -236,6 +237,12 @@ export default function FixturesPage() {
         : m.status === "completed"
   );
   const rows = tab === "results" ? [...visible].reverse() : visible;
+
+  // every match of one matchday, all clubs: the arrows move between rounds
+  const lastRound = useMemo(() => matches.reduce((n, m) => Math.max(n, m.matchday), 0), [matches]);
+  const latestPlayed = useMemo(() => matches.reduce((n, m) => (m.status === "completed" ? Math.max(n, m.matchday) : n), 0), [matches]);
+  const round = Math.min(lastRound, Math.max(1, pickedRound || latestPlayed || next?.matchday || 1));
+  const roundMatches = useMemo(() => matches.filter((m) => m.matchday === round).sort((a, b) => (a.home_club < b.home_club ? -1 : 1)), [matches, round]);
 
   async function openSheet() {
     if (!next || !ready || saving || !manager) return;
@@ -566,7 +573,7 @@ export default function FixturesPage() {
           <div className="fx-cal-head">
             <h2>Season calendar</h2>
             <div className="fx-tabs" role="tablist">
-              {(["upcoming", "results", "all"] as Tab[]).map((id) => (
+              {(["upcoming", "results", "all", "round"] as Tab[]).map((id) => (
                 <button
                   key={id}
                   type="button"
@@ -574,13 +581,39 @@ export default function FixturesPage() {
                   aria-selected={tab === id}
                   onClick={() => setTab(id)}
                 >
-                  {id === "upcoming" ? "Upcoming" : id === "results" ? "Results" : "All"}
+                  {id === "upcoming" ? "Upcoming" : id === "results" ? "Results" : id === "all" ? "All" : "Round"}
                 </button>
               ))}
             </div>
           </div>
 
-          {rows.length === 0 ? (
+          {tab === "round" ? (
+            <div className="fx-round">
+              <div className="fx-round-nav">
+                <button type="button" aria-label="Previous matchday" disabled={round <= 1} onClick={() => setPickedRound(round - 1)}>&#8249;</button>
+                <div>
+                  <strong>Matchday {round}</strong>
+                  <small>{roundMatches[0]?.kickoff_at ? formatKickoffDay(roundMatches[0].kickoff_at) : "All results of the round"}</small>
+                </div>
+                <button type="button" aria-label="Next matchday" disabled={round >= lastRound} onClick={() => setPickedRound(round + 1)}>&#8250;</button>
+              </div>
+              <ul className="fx-round-list">
+                {roundMatches.map((m) => {
+                  const h = clubOf(m.home_club), a = clubOf(m.away_club);
+                  const done = m.status === "completed";
+                  const mineRow = m.home_club === myClub || m.away_club === myClub;
+                  return (
+                    <li key={m.id} className={mineRow ? "is-mine" : undefined}>
+                      <span className="fx-r-home">{h?.name ?? m.home_club}{h && <img src={h.logo} alt="" />}</span>
+                      <b className="fx-r-score">{done ? `${m.home_score} - ${m.away_score}` : "vs"}</b>
+                      <span className="fx-r-away">{a && <img src={a.logo} alt="" />}{a?.name ?? m.away_club}</span>
+                    </li>
+                  );
+                })}
+                {roundMatches.length === 0 && <li className="fx-empty">No matches in this round.</li>}
+              </ul>
+            </div>
+          ) : rows.length === 0 ? (
             <p className="fx-empty">
               {tab === "results"
                 ? "No matches played yet. Your results will appear here."

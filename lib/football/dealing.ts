@@ -49,7 +49,7 @@ export function dealError(err: unknown): string {
   const m = (err as { message?: string })?.message ?? "";
   if (!m || /fetch|network|failed to/i.test(m)) return "No connection. Nothing was changed: try again.";
   if (/function .* does not exist|could not find the function/i.test(m)) return "The transfer system is not installed yet: run supabase/025_transfer_security.sql.";
-  if (/permission denied|violates row-level/i.test(m)) return "The database refused this. Run supabase/025_transfer_security.sql, then try again.";
+  if (/permission denied|violates row-level/i.test(m)) return `The database refused this (${m}). Run supabase/029_fix_transfer_permissions.sql, then try again.`;
   return m;
 }
 
