@@ -1,4 +1,3 @@
-
 "use client";
 
 import { baseLeague } from "@/lib/football/leagueIds";
@@ -452,119 +451,140 @@ export default function DashboardPage() {
       />
 
       <div className="hub-body">
-        {/* hero: your club and the next match */}
-        <section className="hub-hero">
-          <div className="hub-club" style={{ "--i": 0 } as CSSProperties}>
-            <p className="hub-appointed"><span /> Manager of</p>
-            <h1>{club.name}</h1>
-            <p className="hub-where">{club.stadium}, {club.city} · {leagueName}</p>
-            <img className="hub-crest" src={club.logo} alt={`${club.name} crest`} />
+        <div className="hq-top">
+          <div className="hq-id">
+            <img src={club.logo} alt="" />
+            <div>
+              <h1>{club.name}</h1>
+              <p>{club.stadium}, {club.city} · {leagueName}</p>
+            </div>
           </div>
-
-          <button type="button" className="hub-match" style={{ "--i": 1 } as CSSProperties} onClick={() => router.push("/game/fixtures")} aria-label={nextMatch ? "Next match. Open the fixtures" : "Fixtures"}>
-            <span className="hub-match-top">
-              <em><i className={nextMatch ? "is-live" : ""} aria-hidden="true" />{nextMatch ? "Next match" : "Fixtures"}</em>
-              {nextMatch && <b>Matchday {nextMatch.matchday}</b>}
+          <button type="button" className="hq-continue" onClick={() => router.push("/game/fixtures")}>
+            <span>
+              <small>{nextMatch ? `Matchday ${nextMatch.matchday}` : seasonDone ? "Season finished" : "Calendar"}</small>
+              <strong>{nextMatch?.kickoff ? formatKickoff(nextMatch.kickoff) : nextMatch ? "Time to be set" : "Open fixtures"}</strong>
             </span>
+            <b>Continue</b>
+            <Icon name="chevron-right" size={26} />
+          </button>
+        </div>
 
-            <span className="hub-versus">
-              <span className="hub-team">
-                <img src={nextMatch ? (nextMatch.home ? club : clubs[nextMatch.opponent])?.logo : club.logo} alt="" />
-                <strong>{nextMatch ? (nextMatch.home ? club : clubs[nextMatch.opponent])?.name : club.name}</strong>
-                <small>{nextMatch ? "Home" : "Your club"}</small>
-              </span>
-              <span className="hub-vs">vs</span>
-              <span className="hub-team">
-                {nextMatch ? <img src={(nextMatch.home ? clubs[nextMatch.opponent] : club)?.logo} alt="" /> : <span className="hub-unknown">?</span>}
-                <strong>{nextMatch ? (nextMatch.home ? clubs[nextMatch.opponent] : club)?.name : "Opponent"}</strong>
-                <small>{nextMatch ? "Away" : "Not scheduled"}</small>
+        <div className="hq-grid">
+          {/* inbox */}
+          <section className="hq-tile hq-inbox" style={{ "--i": 0 } as CSSProperties} aria-label="Inbox">
+            <h2><Icon name="news" size={20} /> Inbox</h2>
+            <ul>
+              <li><button type="button" onClick={() => router.push("/game/fixtures")}><Icon name="calendar" size={18} /><span>{nextMatch ? `Next match: ${clubs[nextMatch.opponent]?.name ?? "opponent"}` : "Fixture list"}</span></button></li>
+              <li><button type="button" disabled={!nextMatch} onClick={() => setPressOpen(true)}><Icon name="news" size={18} /><span>Press conference</span></button></li>
+              <li><button type="button" onClick={() => router.push("/game/standings")}><Icon name="table" size={18} /><span>{myRow ? `You are ${ordinal(myIndex + 1)} in the table` : "League table"}</span></button></li>
+              <li><button type="button" onClick={() => router.push("/game/board")}><Icon name="flag" size={18} /><span>Board objectives</span></button></li>
+              <li><button type="button" onClick={() => router.push("/game/social")}><Icon name="chat" size={18} /><span>Feed and stories</span></button></li>
+              <li><button type="button" onClick={() => setRoomOpen(true)}><Icon name="user" size={18} /><span>Friends league</span></button></li>
+            </ul>
+          </section>
+
+          {/* team */}
+          <button type="button" className="hq-tile hq-team" style={{ "--i": 1 } as CSSProperties} onClick={() => router.push("/game/squad")} aria-label="Open your lineups">
+            <h2><Icon name="squad" size={20} /> Team</h2>
+            <span className="hq-team-body">
+              <img src={club.logo} alt={`${club.name} crest`} />
+              <span className="hq-ring" style={{ "--p": mySquad.length ? Math.round(shownRating) : 0 } as CSSProperties}>
+                <b>{mySquad.length ? Math.round(shownRating) : "—"}</b>
+                <small>Rating</small>
               </span>
             </span>
+            <small className="hq-foot">{Math.round(shownSquad)} players · Lineups and tactics</small>
+          </button>
 
-            <span className="hub-when">
-              <Icon name="calendar" size={20} />
-              <span>
-                <small>{nextMatch ? "When" : seasonDone ? "Season" : "Calendar"}</small>
-                <strong>{nextMatch ? (nextMatch.kickoff ? formatKickoff(nextMatch.kickoff) : "Time to be set") : seasonDone ? "Finished" : "Not set yet"}</strong>
-                {nextMatch?.kickoff && <em>Cairo time</em>}
+          {/* schedule */}
+          <button type="button" className="hq-tile hq-sched" style={{ "--i": 2 } as CSSProperties} onClick={() => router.push("/game/fixtures")} aria-label="Open the fixtures">
+            <h2><Icon name="calendar" size={20} /> Schedule</h2>
+            {nextMatch ? (
+              <span className="hq-sched-body">
+                <span className="hq-vs">
+                  <img src={(nextMatch.home ? club : clubs[nextMatch.opponent])?.logo} alt="" />
+                  <i>vs</i>
+                  <img src={(nextMatch.home ? clubs[nextMatch.opponent] : club)?.logo} alt="" />
+                </span>
+                <strong>{clubs[nextMatch.opponent]?.name}</strong>
+                <small>Matchday {nextMatch.matchday} · {nextMatch.home ? "Home" : "Away"}</small>
+                <small>{nextMatch.kickoff ? `${formatKickoff(nextMatch.kickoff)} · Cairo time` : "Time to be set"}</small>
               </span>
-              <Icon name="chevron-right" size={20} />
+            ) : (
+              <span className="hq-sched-body"><strong>{seasonDone ? "Season finished" : "No match scheduled"}</strong><small>Open the fixtures</small></span>
+            )}
+          </button>
+
+          {/* competitions */}
+          <button type="button" className="hq-tile hq-comp" style={{ "--i": 3 } as CSSProperties} onClick={() => router.push("/game/standings")} aria-label="Open the league table">
+            <h2><Icon name="table" size={20} /> Competitions</h2>
+            <span className="hq-league">{leagueName}</span>
+            {snapshot.length > 0 ? (
+              <ul className="hq-mini">
+                {snapshot.slice(0, 5).map((row, i) => (
+                  <li key={row.clubId} className={row.clubId === club.id ? "is-me" : undefined}>
+                    <b>{windowStart + i + 1}</b><img src={row.logo} alt="" /><span>{row.name}</span><em>{row.played}</em><strong>{row.points}</strong>
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <span className="hq-empty">The table appears once your calendar is ready.</span>
+            )}
+          </button>
+
+          {/* facilities / finances */}
+          <button type="button" className="hq-tile hq-fin" style={{ "--i": 4 } as CSSProperties} onClick={() => router.push("/game/finances")} aria-label="Open the finances">
+            <h2><Icon name="wallet" size={20} /> Finances</h2>
+            <strong>{balance !== null ? formatMoney(shownBalance) : "—"}</strong>
+            <small>{balance !== null ? `${tierProfiles[buildFinance(club.id, []).tier].label} · Club balance` : "Unavailable"}</small>
+          </button>
+
+          {/* manager */}
+          <button type="button" className="hq-tile hq-mgr" style={{ "--i": 5 } as CSSProperties} onClick={() => router.push("/game/manager")} aria-label="Open your manager page">
+            <h2><Icon name="user" size={20} /> Manager</h2>
+            <span className="hq-mgr-body">
+              {manager.avatar ? <img src={manager.avatar} alt="" /> : <span className="hub-avatar">GSM</span>}
+              <span><strong>{manager.manager_name}</strong><small>Season {season ? seasonLabel(season) : ""}</small></span>
             </span>
           </button>
-        </section>
 
-        {/* overview */}
-        <section className="hub-board" aria-label="Club overview">
-          <div className="hub-stat" style={{ "--i": 2 } as CSSProperties}>
-            <Icon name="wallet" size={20} />
-            <span>Club balance</span>
-            <strong>{balance !== null ? formatMoney(shownBalance) : "—"}</strong>
-            <small>{balance !== null ? tierProfiles[buildFinance(club.id, []).tier].label : "Unavailable"}</small>
-          </div>
+          {/* transfers */}
+          <button type="button" className="hq-tile hq-trf" style={{ "--i": 6 } as CSSProperties} onClick={() => router.push("/game/transfers")} aria-label="Open the transfers">
+            <h2><Icon name="transfer" size={20} /> Transfers</h2>
+            <strong>Buy and sell</strong>
+            <small>Window open all season · World market</small>
+          </button>
 
-          <div className="hub-stat" style={{ "--i": 3 } as CSSProperties}>
-            <Icon name="squad" size={20} />
-            <span>Squad</span>
-            <strong>{Math.round(shownSquad)}</strong>
-            <small>First-team players</small>
-          </div>
-
-          <div className="hub-stat is-position" style={{ "--i": 4 } as CSSProperties}>
-            <Icon name="table" size={20} />
-            <span>League position</span>
-            <strong>{myRow ? ordinal(myIndex + 1) : "—"}</strong>
-            <small>{myRow ? `${myRow.points} pts from ${myRow.played} played` : "Table unavailable"}</small>
+          {/* season panel */}
+          <aside className="hq-tile hq-season" style={{ "--i": 7 } as CSSProperties} aria-label="Your season">
+            <h2><Icon name="star" size={20} /> Season</h2>
+            <div className="hq-pos">
+              <strong>{myRow ? ordinal(myIndex + 1) : "—"}</strong>
+              <small>{myRow ? `${myRow.points} pts from ${myRow.played} played` : "Table unavailable"}</small>
+            </div>
+            <div className="hq-bar" role="img" aria-label={`${myRow?.played ?? 0} of 38 matches played`}><i style={{ width: `${Math.min(100, ((myRow?.played ?? 0) / 38) * 100)}%` }} /></div>
             {form.length > 0 && (
               <ul className="hub-form" aria-label={`Last ${form.length} results, newest first`}>
                 {form.map((r, i) => <li key={i} className={`is-${r}`}>{r}</li>)}
               </ul>
             )}
-          </div>
-
-          <div className="hub-stat" style={{ "--i": 5 } as CSSProperties}>
-            <Icon name="star" size={20} />
-            <span>Team rating</span>
-            <strong>{mySquad.length ? Math.round(shownRating) : "—"}</strong>
-            <small>Best eleven, 4-3-3</small>
-          </div>
-        </section>
-
-        <div className="hub-lower">
-          <section className="hub-table" style={{ "--i": 6 } as CSSProperties} aria-label="League table around your club">
-            <header>
-              <h2>League table</h2>
-              <button type="button" onClick={() => router.push("/game/standings")}>Full table <Icon name="chevron-right" size={16} /></button>
-            </header>
-            {snapshot.length > 0 ? (
-              <table>
-                <thead>
-                  <tr><th scope="col">#</th><th scope="col">Club</th><th scope="col">P</th><th scope="col">GD</th><th scope="col">Pts</th></tr>
-                </thead>
-                <tbody>
-                  {snapshot.map((row, i) => (
-                    <tr key={row.clubId} className={row.clubId === club.id ? "is-me" : undefined} style={{ "--r": i } as CSSProperties}>
-                      <td>{windowStart + i + 1}</td>
-                      <td><img src={row.logo} alt="" /><span>{row.name}</span></td>
-                      <td>{row.played}</td>
-                      <td>{row.gd > 0 ? `+${row.gd}` : row.gd}</td>
-                      <td><b>{row.points}</b></td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            ) : (
-              <p className="hub-empty">The table appears once your season calendar is ready.</p>
-            )}
-          </section>
-
-          <section className="hub-news" style={{ "--i": 7 } as CSSProperties}>
-            <Icon name="news" size={20} />
-            <div>
-              <strong>A new chapter begins.</strong>
-              <p>Club announcements and important updates will appear here.</p>
+            <div className="hq-links">
+              <button type="button" onClick={() => router.push("/game/cup")}><Icon name="star" size={18} /> League Cup</button>
+              {hasCont && <button type="button" onClick={() => router.push("/game/continental")}><Icon name="star" size={18} /> CAF Cup</button>}
+              {hasEuro && <button type="button" onClick={() => router.push("/game/europe")}><Icon name="star" size={18} /> Europe</button>}
+              <button type="button" onClick={() => router.push("/game/friendlies")}><Icon name="ball" size={18} /> Friendlies</button>
+              <button type="button" onClick={() => router.push("/game/training")}><Icon name="training" size={18} /> Training</button>
             </div>
-          </section>
+          </aside>
         </div>
+
+        <nav className="hq-bar-nav" aria-label="Shortcuts">
+          <button type="button" onClick={() => router.push("/game/squad")}><Icon name="squad" size={20} /> Lineups</button>
+          <button type="button" onClick={() => router.push("/game/transfers")}><Icon name="transfer" size={20} /> Transfers</button>
+          <button type="button" onClick={() => router.push("/game/contracts")}><Icon name="contract" size={20} /> Contracts</button>
+          <button type="button" onClick={() => router.push("/game/bank")}><Icon name="wallet" size={20} /> Bank</button>
+          <button type="button" onClick={() => setMenuOpen(true)}><Icon name="menu" size={20} /> All menu</button>
+        </nav>
       </div>
     {menuOpen && (
         <div className="hub-scrim" onClick={() => setMenuOpen(false)} aria-hidden="true" />
