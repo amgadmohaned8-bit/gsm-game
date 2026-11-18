@@ -104,8 +104,9 @@ export const openingExtra: Record<string, number> = {
 liverpool : 400_000_000,
  "hull-city" : 792_000_000,
 "man-city" : 100_000_000,
-newcastle : 500_000_000,
+newcastle : 510_000_000,
 tottenham : 300_000_000,
+chelsea : 200_000_000,
 };
 
 export function getTier(clubId: string | null | undefined): ClubTier {
