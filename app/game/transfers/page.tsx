@@ -12,6 +12,7 @@ import { nextRefresh, originOf, visibleMarket } from "@/lib/football/market";
 import {
   MARKET,
   askingPrice,
+  worldPrice,
   canBuy,
   canSell,
   findPlayer,
@@ -211,6 +212,17 @@ export default function TransfersPage() {
     await signFromClub(supabase, dctx, player, fee);
     await reload();
     await refreshShared(ctx!.userId, roomId);
+  }
+
+  /** the world market: the player is signed at once for his base price, no offer to make */
+  function buyWorld(player: Player) {
+    const fee = worldPrice(ctx!.userId, ctx!.season, player);
+    const why = canBuy({ ban: signingBan(ctx!.state.bank), balance: ctx!.spendM, fee, squadSize: mine.length, windowOpen: window.open });
+    if (why) return setNotice(why);
+    void run(player.id, async () => {
+      await sign(player, fee);
+      return `${player.name} is yours. ${money(fee)} paid.`;
+    });
   }
 
   function buyListed(l: ManagerListing) {
@@ -444,7 +456,7 @@ export default function TransfersPage() {
             {view === "world" && (
               <>
                 <p className="tx-hint">
-                  Free agents and players from abroad. New selection in <b>{untilRefresh(nextRefresh(now) - now)}</b>. A player you sign leaves the market for everyone.
+                  Free agents and players from abroad. New selection in <b>{untilRefresh(nextRefresh(now) - now)}</b>. Buy a player at his base price: he is yours at once and leaves the market for everyone.
                   {ctx.balanceM < 5 && <> Your balance is low: sell a player first.</>}
                 </p>
                 <ul className="tx-list">
@@ -457,8 +469,8 @@ export default function TransfersPage() {
                           <strong>{p.name}{onSale.isNew.has(p.id) && <em className="tr-tag is-new">New</em>}{onSale.leaving.has(p.id) && <em className="tr-tag is-leaving">Leaving soon</em>}</strong>
                           <small>{p.position} · {p.age} · {club ? club.name : sellerLabel(p)}</small>
                         </span>
-                        <span className="tx-val">{originOf(p.id) === "Free" ? "Free agent" : money(marketValue(p))}</span>
-                        <button type="button" className="tx-btn" disabled={!window.open} onClick={() => setBid(p)}>Offer</button>
+                        <span className="tx-val">{originOf(p.id) === "Free" ? "Free agent" : "Base price"}</span>
+                        <button type="button" className="tx-btn" disabled={!window.open || busy === p.id} onClick={() => buyWorld(p)}>{busy === p.id ? "Signing..." : `Buy ${money(worldPrice(ctx.userId, ctx.season, p))}`}</button>
                       </li>
                     );
                   })}

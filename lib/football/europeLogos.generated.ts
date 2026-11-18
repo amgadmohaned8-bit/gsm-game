@@ -98,6 +98,7 @@ export const EUROPE_LOGOS: Record<string, string> = {
  "torreense": "torreense.png",
  "trabzonspor": "trabzonspor-logo-footylogos.png",
  "tsg-hoffenheim": "tsg-hoffenheim.png",
+ "ucl": "ucl.png",
  "uel": "uel.png",
  "union-berlin": "union-berlin-logo-footylogos.png",
  "union-saint-gilloise": "union-saint-gilloise.png",

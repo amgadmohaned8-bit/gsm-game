@@ -213,6 +213,11 @@ export function askingPrice(userId: string, season: string, player: Player, sell
   return round1(value * tierFactor * (1.15 + 0.25 * luck + 0.4 * need));
 }
 
+/** What a world market player costs: his base value, with no haggling (a free agent costs a small signing fee). */
+export function worldPrice(userId: string, season: string, player: Player) {
+  return originOf(player.id) === "Free" ? askingPrice(userId, season, player, []) : round1(marketValue(player));
+}
+
 export type BidResult =
   | { kind: "accept"; price: number; line: string }
   | { kind: "counter"; price: number; line: string }

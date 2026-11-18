@@ -42,7 +42,7 @@ Olise FW FR 24 86 Bundesliga
 Pedri MF ES 23 87 LaLiga
 Raphinha FW BR 29 86 LaLiga
 Dembélé FW FR 29 87 Ligue1
-Vitinha MF PT 26 90 Ligue1
+Vitinha MF PT 26 86 Ligue1
 Nuno_Mendes DF PT 24 85 Ligue1
 Hakimi DF MA 28 85 Ligue1
 Courtois GK BE 34 88 LaLiga
@@ -59,7 +59,7 @@ Rüdiger DF DE 33 82 LaLiga
 Militão DF BR 28 82 LaLiga
 Lewandowski FW PL 38 82 LaLiga
 Koundé DF FR 27 84 LaLiga
-Bastoni DF IT 27 86 SerieA
+Bastoni DF IT 27 84 SerieA
 Alexander-Arnold DF ENG 27 83 LaLiga
 Lucas_Moreno MF ES 28 77 LaLiga
 Dani_Bermúdez DF ES 26 76 LaLiga
@@ -95,16 +95,16 @@ Pablo_Nieto GK ES 34 72 Free
 Stefan_Novak MF CZ 31 73 Free
 Carlos_Arriaga FW MX 31 74 Free
 Felix_Baumann DF DE 32 72 Free
-Rodrygo FW BR 25 86 LaLiga Real_Madrid
+Rodrygo FW BR 25 83 LaLiga Real_Madrid
 Arda_Güler MF TR 21 82 LaLiga Real_Madrid
 Camavinga MF FR 23 82 LaLiga Real_Madrid
-Huijsen DF ES 21 82 LaLiga Real_Madrid
+Huijsen DF ES 21 80 LaLiga Real_Madrid
 Endrick FW BR 20 78 LaLiga Real_Madrid
 Fran_García DF ES 26 77 LaLiga Real_Madrid
 Frenkie_de_Jong MF NL 29 82 LaLiga Barcelona
 Pau_Cubarsí DF ES 19 82 LaLiga Barcelona
 Araújo DF UY 27 82 LaLiga Barcelona
-Balde DF ES 22 82 LaLiga Barcelona
+Balde DF ES 22 80 LaLiga Barcelona
 Ter_Stegen GK DE 34 83 LaLiga Barcelona
 Gavi MF ES 21 80 LaLiga Barcelona
 Ferran_Torres FW ES 26 78 LaLiga Barcelona
@@ -113,7 +113,7 @@ Julián_Álvarez FW AR 26 85 LaLiga Atlético_Madrid
 Koke MF ES 34 77 LaLiga Atlético_Madrid
 Giménez DF UY 31 79 LaLiga Atlético_Madrid
 Nico_Williams FW ES 24 83 LaLiga Athletic_Club
-Unai_Simón GK ES 28 85 LaLiga Athletic_Club
+Unai_Simón GK ES 28 82 LaLiga Athletic_Club
 Oyarzabal FW ES 29 83 LaLiga Real_Sociedad
 Takefusa_Kubo FW JP 25 79 LaLiga Real_Sociedad
 Álex_Remiro GK ES 31 78 LaLiga Real_Sociedad
@@ -123,23 +123,23 @@ Iago_Aspas FW ES 38 76 LaLiga Celta_Vigo
 Isco MF ES 34 76 LaLiga Real_Betis
 Antony FW BR 26 77 LaLiga Real_Betis
 Luis_Díaz FW CO 29 85 Bundesliga Bayern_Munich
-Upamecano DF FR 27 87 Bundesliga Bayern_Munich
+Upamecano DF FR 27 82 Bundesliga Bayern_Munich
 Davies DF CA 25 81 Bundesliga Bayern_Munich
 Neuer GK DE 40 80 Bundesliga Bayern_Munich
 Gnabry FW DE 31 80 Bundesliga Bayern_Munich
 Guirassy FW GN 30 82 Bundesliga Borussia_Dortmund
-Schlotterbeck DF DE 26 87 Bundesliga Borussia_Dortmund
+Schlotterbeck DF DE 26 82 Bundesliga Borussia_Dortmund
 Kobel GK CH 28 83 Bundesliga Borussia_Dortmund
 Julian_Brandt MF DE 30 80 Bundesliga Borussia_Dortmund
 Jobe_Bellingham MF ENG 20 78 Bundesliga Borussia_Dortmund
-Adeyemi FW DE 24 82 Bundesliga Borussia_Dortmund
+Adeyemi FW DE 24 78 Bundesliga Borussia_Dortmund
 Patrik_Schick FW CZ 30 80 Bundesliga Bayer_Leverkusen
 Exequiel_Palacios MF AR 27 79 Bundesliga Bayer_Leverkusen
 Loïs_Openda FW BE 26 77 Bundesliga RB_Leipzig
 Undav FW DE 29 78 Bundesliga VfB_Stuttgart
 Hakan_Çalhanoğlu MF TR 32 83 SerieA Inter
 Marcus_Thuram FW FR 28 83 SerieA Inter
-Dimarco DF IT 28 86 SerieA Inter
+Dimarco DF IT 28 82 SerieA Inter
 Yann_Sommer GK CH 37 80 SerieA Inter
 Maignan GK FR 31 85 SerieA AC_Milan
 Pulisic FW US 27 82 SerieA AC_Milan
@@ -156,9 +156,9 @@ Dybala FW AR 32 80 SerieA Roma
 Zaccagni MF IT 31 77 SerieA Lazio
 Moise_Kean FW IT 26 80 SerieA Fiorentina
 Doué FW FR 20 85 Ligue1 Paris_Saint-Germain
-João_Neves MF PT 21 88 Ligue1 Paris_Saint-Germain
+João_Neves MF PT 21 84 Ligue1 Paris_Saint-Germain
 Marquinhos DF BR 32 85 Ligue1 Paris_Saint-Germain
-Zaïre-Emery MF FR 20 83 Ligue1 Paris_Saint-Germain
+Zaïre-Emery MF FR 20 81 Ligue1 Paris_Saint-Germain
 Lucas_Chevalier GK FR 24 80 Ligue1 Paris_Saint-Germain
 Mason_Greenwood FW ENG 24 82 Ligue1 Marseille
 Ben_Seghir FW MA 21 78 Ligue1 Monaco
@@ -269,7 +269,28 @@ Paulo_Henrique FW BR 23 77 Brazil Flamengo
 Estêvão FW BR 19 84 Brazil Palmeiras
 Lamine_Camara MF SN 22 79 Ligue1 Monaco
 Takumi_Minamino FW JP 31 75 Ligue1 Monaco
-Mikautadze FW GE 25 80 Ligue1 Lyon`;
+Mikautadze FW GE 25 80 Ligue1 Lyon
+Nico_Paz MF AR 21 80 SerieA Como
+Bradley_Barcola FW FR 24 84 Ligue1 Paris_Saint-Germain
+Khéphren_Thuram MF FR 25 79 SerieA Juventus
+Teun_Koopmeiners MF NL 28 80 SerieA Juventus
+Manuel_Locatelli MF IT 28 79 SerieA Juventus
+Vitor_Roque FW BR 21 77 Brazil Palmeiras
+Gonçalo_Ramos FW PT 25 80 Ligue1 Paris_Saint-Germain
+Kang-in_Lee MF KR 25 78 Ligue1 Paris_Saint-Germain
+Randal_Kolo_Muani FW FR 27 78 SerieA Juventus
+Rodrigo_De_Paul MF AR 32 79 MLS Inter_Miami
+Marcos_Leonardo FW BR 23 77 Saudi Al-Hilal
+Aymeric_Laporte DF ES 32 78 LaLiga Athletic_Club
+Aleksandar_Mitrović FW RS 31 78 Saudi Al-Hilal
+Riyad_Mahrez FW DZ 35 76 Saudi Al-Ahli
+Édouard_Mendy GK SN 34 76 Saudi Al-Ahli
+Yassine_Bounou GK MA 35 80 Saudi Al-Hilal
+Mario_Hermoso DF ES 30 78 SerieA Roma
+Evan_Ndicka DF CI 26 79 SerieA Roma
+Alessandro_Buongiorno DF IT 27 80 SerieA Napoli
+Giacomo_Raspadori FW IT 26 77 LaLiga Atlético_Madrid
+Nicolò_Zaniolo MF IT 27 76 SerieA Atalanta`;
 const EXTRA_FIRST_PERIOD = 10388; // the period in which the first of them arrives
 const EXTRA_PER_PERIOD = 2;
 
@@ -318,7 +339,9 @@ const EXTRA_FROM = marketPlayers.length - EXTRA.trim().split("\n").length;
 /** The period from which a player can be on the market (the new stars come a few at a time). */
 const unlockOf = (id: string) => {
   const n = Number(id.slice(3));
-  return n < EXTRA_FROM ? 0 : EXTRA_FIRST_PERIOD + Math.floor((n - EXTRA_FROM) / EXTRA_PER_PERIOD);
+  if (n < EXTRA_FROM) return 0;
+  const k = n - EXTRA_FROM;
+  return k < 20 ? EXTRA_FIRST_PERIOD + Math.floor(k / EXTRA_PER_PERIOD) : EXTRA_FIRST_PERIOD; // the second batch is all on sale right away
 };
 
 /** How likely a player is on the market in a given period: stars come and go the most, small names stay longer. */
@@ -335,7 +358,7 @@ const tierOf = (p: Player & { origin: Origin }) => (p.origin === "Free" ? "free"
 const periodCache = new Map<string, Set<string>>();
 /** Exactly the right share of every group (stars, solid pros, prospects, free agents, by position) is on sale, so every selection is balanced. */
 function selection(period: number): Set<string> {
-  const k = `world|${period}`; // the same selection for every manager
+  const k = `world2|${period}`; // the same selection for every manager
   const hit = periodCache.get(k);
   if (hit) return hit;
   const groups = new Map<string, (Player & { origin: Origin })[]>();
