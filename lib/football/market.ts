@@ -248,9 +248,34 @@ function generated(): string {
   return out.join("\n");
 }
 
+// new stars that reach the market a few at a time (appended last so every old player id stays the same)
+const EXTRA = `
+Désiré_Doué FW FR 21 84 Ligue1 Paris_Saint-Germain
+Willian_Pacho DF EC 24 82 Ligue1 Paris_Saint-Germain
+Ademola_Lookman FW NG 28 82 SerieA Atalanta
+Théo_Hernandez DF FR 29 82 Saudi Al-Hilal
+Heung-min_Son FW KR 34 80 MLS LAFC
+Kalidou_Koulibaly DF SN 35 76 Saudi Al-Hilal
+Gianluca_Scamacca FW IT 27 77 SerieA Atalanta
+Viktor_Gyökeres FW SE 28 86 Portugal Sporting_CP
+Francisco_Conceição FW PT 23 81 SerieA Juventus
+Jorrel_Hato DF NL 20 80 Netherlands Ajax
+Wilfried_Singo DF CI 25 80 Turkey Galatasaray
+Victor_Boniface FW NG 25 81 Bundesliga Bayer_Leverkusen
+Florian_Neuhaus MF DE 29 77 Bundesliga Borussia_Mönchengladbach
+Nicolás_González FW AR 27 80 SerieA Juventus
+Matías_Soulé FW AR 23 79 SerieA Roma
+Paulo_Henrique FW BR 23 77 Brazil Flamengo
+Estêvão FW BR 19 84 Brazil Palmeiras
+Lamine_Camara MF SN 22 79 Ligue1 Monaco
+Takumi_Minamino FW JP 31 75 Ligue1 Monaco
+Mikautadze FW GE 25 80 Ligue1 Lyon`;
+const EXTRA_FIRST_PERIOD = 10388; // the period in which the first of them arrives
+const EXTRA_PER_PERIOD = 2;
+
 const clubByPlayer = new Map<string, string>();
 
-export const marketPlayers: (Player & { origin: Origin })[] = (raw.trim() + "\n" + generated())
+export const marketPlayers: (Player & { origin: Origin })[] = (raw.trim() + "\n" + generated() + "\n" + EXTRA.trim())
   .split("\n")
   .map((line, i) => {
     const [name, position, nationality, age, rating, origin, club] = line.trim().split(/\s+/);
@@ -289,42 +314,50 @@ export const periodOf = (now: number = Date.now()) => Math.floor(Math.floor((now
 /** When the next selection arrives. */
 export const nextRefresh = (now: number = Date.now()) => ((periodOf(now) + 1) * REFRESH_DAYS * DAY) - CAIRO;
 
+const EXTRA_FROM = marketPlayers.length - EXTRA.trim().split("\n").length;
+/** The period from which a player can be on the market (the new stars come a few at a time). */
+const unlockOf = (id: string) => {
+  const n = Number(id.slice(3));
+  return n < EXTRA_FROM ? 0 : EXTRA_FIRST_PERIOD + Math.floor((n - EXTRA_FROM) / EXTRA_PER_PERIOD);
+};
+
 /** How likely a player is on the market in a given period: stars come and go the most, small names stay longer. */
 function chance(p: Player & { origin: Origin }) {
   if (p.origin === "Free") return 0.6;
   if (p.origin === "Prospect") return 0.62;
-  if (p.rating >= 86) return 0.28;
-  if (p.rating >= 82) return 0.4;
-  if (p.rating >= 77) return 0.55;
-  return 0.65;
+  if (p.rating >= 86) return 0.5;
+  if (p.rating >= 82) return 0.6;
+  if (p.rating >= 77) return 0.65;
+  return 0.7;
 }
 const tierOf = (p: Player & { origin: Origin }) => (p.origin === "Free" ? "free" : p.origin === "Prospect" ? "prospect" : p.rating >= 86 ? "a" : p.rating >= 82 ? "b" : p.rating >= 77 ? "c" : "d") + p.position;
 
 const periodCache = new Map<string, Set<string>>();
 /** Exactly the right share of every group (stars, solid pros, prospects, free agents, by position) is on sale, so every selection is balanced. */
-function selection(userId: string, period: number): Set<string> {
-  const k = `${userId}|${period}`;
+function selection(period: number): Set<string> {
+  const k = `world|${period}`; // the same selection for every manager
   const hit = periodCache.get(k);
   if (hit) return hit;
   const groups = new Map<string, (Player & { origin: Origin })[]>();
-  for (const p of marketPlayers) (groups.get(tierOf(p)) ?? groups.set(tierOf(p), []).get(tierOf(p))!).push(p);
+  for (const p of marketPlayers) if (unlockOf(p.id) <= period) (groups.get(tierOf(p)) ?? groups.set(tierOf(p), []).get(tierOf(p))!).push(p);
   const out = new Set<string>();
   for (const list of groups.values()) {
     const take = Math.max(1, Math.round(chance(list[0]) * list.length));
     list.sort((x, y) => hashOf(`${k}|${x.id}`) - hashOf(`${k}|${y.id}`)).slice(0, take).forEach((p) => out.add(p.id));
   }
+  for (const p of marketPlayers) if (unlockOf(p.id) === period) out.add(p.id); // a new star always arrives on sale
   if (periodCache.size > 40) periodCache.clear();
   periodCache.set(k, out);
   return out;
 }
-const onSale = (userId: string, p: Player & { origin: Origin }, period: number) => selection(userId, period).has(p.id);
+const onSale = (p: Player & { origin: Origin }, period: number) => selection(period).has(p.id);
 
 export type MarketEntry = { player: Player & { origin: Origin }; isNew: boolean; leaving: boolean };
 
 /** Who can be signed right now, and who just arrived or leaves at the next refresh. */
-export function visibleMarket(userId: string, now: number = Date.now()): MarketEntry[] {
+export function visibleMarket(now: number = Date.now()): MarketEntry[] {
   const period = periodOf(now);
   return marketPlayers
-    .filter((p) => onSale(userId, p, period))
-    .map((player) => ({ player, isNew: !onSale(userId, player, period - 1), leaving: !onSale(userId, player, period + 1) }));
+    .filter((p) => onSale(p, period))
+    .map((player) => ({ player, isNew: !onSale(player, period - 1), leaving: !onSale(player, period + 1) }));
 }

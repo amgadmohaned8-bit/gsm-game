@@ -177,11 +177,7 @@ export type WindowStatus = { open: boolean; label: string; note: string };
 
 /** Open for matchdays 1-10 and 20-26, and between seasons. */
 export function windowStatus(matchday: number | null): WindowStatus {
-  if (matchday === null) return { open: true, label: "Open", note: "Off-season: the window is open." };
-  if (matchday <= 10) return { open: true, label: "Summer window", note: `Closes after matchday 10 (now matchday ${matchday}).` };
-  if (matchday < 20) return { open: false, label: "Closed", note: "The winter window opens at matchday 20." };
-  if (matchday <= 26) return { open: true, label: "Winter window", note: `Closes after matchday 26 (now matchday ${matchday}).` };
-  return { open: false, label: "Closed", note: "Closed until the next season's summer window." };
+  return { open: true, label: "Open", note: matchday === null ? "Off-season: the window is open." : "The transfer window is open all season." };
 }
 
 /* ---------- asking prices and bids ---------- */

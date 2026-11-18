@@ -126,7 +126,7 @@ export default function TransfersPage() {
   const onSale = useMemo(() => {
     if (!ctx || !squads) return { list: [] as Player[], isNew: new Set<string>(), leaving: new Set<string>() };
     const stock = new Map((squads[MARKET] ?? []).map((p) => [p.id, p]));
-    const entries = (now ? visibleMarket(ctx.userId, now) : []).filter((e) => stock.has(e.player.id));
+    const entries = (now ? visibleMarket(now) : []).filter((e) => stock.has(e.player.id));
     return {
       list: entries.map((e) => stock.get(e.player.id)!),
       isNew: new Set(entries.filter((e) => e.isNew).map((e) => e.player.id)),
