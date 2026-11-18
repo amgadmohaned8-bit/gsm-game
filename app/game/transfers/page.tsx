@@ -368,7 +368,7 @@ export default function TransfersPage() {
           ))}
         </nav>
 
-        {!window.open && (tab === "market" || tab === "mine") && (
+        {!window.open && tab === "market" && (
           <p className="tx-closed" role="status">
             <b>The transfer window is closed.</b> {window.note} You can still list a player for sale, and every deal you started stays open.
           </p>
