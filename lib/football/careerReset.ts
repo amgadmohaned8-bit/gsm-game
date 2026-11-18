@@ -10,6 +10,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { clubsOfLeague } from "@/lib/football/leagueClubs";
 import { isSlot } from "@/lib/football/leagueIds";
+import { isEuroComp } from "@/lib/football/europe";
 
 const chunks = <T,>(list: T[], n = 100) => {
   const out: T[][] = [];
@@ -18,6 +19,31 @@ const chunks = <T,>(list: T[], n = 100) => {
 };
 
 export async function resetCareerData(client: SupabaseClient, userId: string, leagueId: string, clubId?: string | null) {
+  // A cup career (the CAF cups, the Champions League, the Europa League) is not a league with clubs of its own:
+  // starting or ending one only clears that cup. It never touches the transfers, lineups or money of your league teams.
+  if (leagueId.startsWith("caf-") || isEuroComp(leagueId)) {
+    const cupStep = async (job: () => PromiseLike<unknown>) => {
+      try { await job(); } catch { /* one table failing must not stop the rest */ }
+    };
+    await cupStep(() => client.from("league_matches").delete().eq("user_id", userId).eq("league_id", leagueId));
+    await cupStep(() => client.from("cup_matches").delete().eq("user_id", userId).eq("league_id", leagueId));
+    await cupStep(() => client.from("friendlies").delete().eq("user_id", userId).eq("league_id", leagueId));
+    if (isEuroComp(leagueId)) {
+      await cupStep(async () => {
+        const { data } = await client.from("euro_seasons").select("season").eq("user_id", userId).eq("comp_id", leagueId).eq("source", "standalone");
+        const seasons = ((data ?? []) as { season: string }[]).map((r) => r.season);
+        if (!seasons.length) return;
+        await client.from("euro_matches").delete().eq("user_id", userId).eq("comp_id", leagueId).in("season", seasons);
+        await client.from("euro_seasons").delete().eq("user_id", userId).eq("comp_id", leagueId).eq("source", "standalone");
+      });
+    } else {
+      await cupStep(() => client.from("continental_matches").delete().eq("user_id", userId).eq("comp_id", leagueId));
+      await cupStep(() => client.from("continental_seasons").delete().eq("user_id", userId).eq("comp_id", leagueId));
+    }
+    await cupStep(() => client.from("manager_careers").delete().eq("user_id", userId).eq("league_id", leagueId));
+    return;
+  }
+
   // the first team of a league also clears what older versions saved without a team label;
   // the other teams of the same league are separate saves and are never touched
   const first = !isSlot(leagueId);

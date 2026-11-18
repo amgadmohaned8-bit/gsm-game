@@ -4,7 +4,9 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import { allClubs as clubs } from "@/lib/football/leagueClubs";
-import { seasonLabel, nextSeason } from "@/lib/football/season";
+import { seasonLabel } from "@/lib/football/season";
+import { resetCareerData } from "@/lib/football/careerReset";
+import { loadCareers, switchCareer } from "@/lib/football/careers";
 import { baseLeague } from "@/lib/football/leagueIds";
 import { squadOf } from "@/lib/football/squads";
 import { euroLogo } from "@/lib/football/europeClubs";
@@ -18,7 +20,6 @@ import {
   euroStatus,
   fetchEuroSetups,
   isEuroComp,
-  saveEuroSetup,
   playEuroRound,
   qualifyFromEngland,
   recordEuroWin,
@@ -130,19 +131,22 @@ export default function EuropePage() {
     }
   }
 
-  async function nextYear() {
-    if (!setup || saving) return;
+  /** The cup is over: its slot goes away and you go back to your other team. */
+  async function finishCareer() {
+    if (!setup || !manager || saving) return;
     setSaving(true);
     try {
-      const fresh: EuroSetup = { ...setup, season: nextSeason(setup.season) };
-      await saveEuroSetup(supabase, userId, fresh);
-      setSetup(fresh);
-      setRows([]);
-      await settle(userId, fresh);
+      await resetCareerData(supabase, userId, setup.comp_id, setup.club_id);
+      const others = (await loadCareers(supabase, userId)).filter((c) => c.league_id !== setup.comp_id);
+      if (others.length) {
+        await switchCareer(supabase, userId, { selected_league: manager.selected_league, selected_club: manager.selected_club, room_id: manager.room_id ?? null }, others[0]);
+        router.push("/game/dashboard");
+      } else {
+        router.push("/game/leagues");
+      }
     } catch (err) {
       console.error(err);
-      setError("Could not start the next season.");
-    } finally {
+      setError("Could not close this career. Try again.");
       setSaving(false);
     }
   }
@@ -243,9 +247,9 @@ export default function EuropePage() {
                   <p>{status.position && status.position <= 8 && status.phaseDone ? `You finished ${status.position}${status.position === 1 ? "st" : status.position === 2 ? "nd" : status.position === 3 ? "rd" : "th"} and skip the play-off. Your round of 16 tie appears when the play-off is finished.` : "Your next tie appears when the round before it is finished."}</p>
                 </>
               )}
-              {finished && standalone && (
-                <button type="button" className="gx-btn fx-start is-ready" disabled={saving} onClick={nextYear}>
-                  {saving ? "Starting..." : `Play ${seasonLabel(nextSeason(setup.season))}`}
+              {(finished || status.eliminated) && standalone && (
+                <button type="button" className="gx-btn fx-start is-ready" disabled={saving} onClick={finishCareer}>
+                  {saving ? "Closing..." : "Finish and go back to your team"}
                 </button>
               )}
               {error && <p className="fx-error" role="alert">{error}</p>}

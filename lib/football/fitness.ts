@@ -1,6 +1,6 @@
 /**
  * Fitness. A player who starts every match gets tired, one who rests
- * recovers, and a training session takes a little out of him too. A tired
+ * a single match is back to 100%, and a training session takes a little out of him too. A tired
  * player plays below his rating. The lineups that were played are saved, so
  * fitness is worked out from them and the same for every visit.
  */
@@ -41,8 +41,12 @@ export function fitnessAt(rows: LineupRow[], training: TrainingRow[], season: st
     const factor = 1 + Math.max(0, (age.get(id) ?? 26) - 27) * 0.04;
     let f = 100;
     for (let md = 1; md < matchday; md++) {
-      f += byDay.get(md)?.has(id) ? -13 * factor : 9;
-      if (trained.get(md)?.has(id)) f -= 3;
+      if (byDay.get(md)?.has(id)) {
+        f -= 13 * factor;
+        if (trained.get(md)?.has(id)) f -= 3;
+      } else {
+        f = 100; // one match on the bench or out of the squad and he is fresh again
+      }
       f = Math.max(FIT_MIN, Math.min(100, f));
     }
     out[id] = Math.round(f);

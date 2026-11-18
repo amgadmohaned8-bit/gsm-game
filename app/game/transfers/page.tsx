@@ -67,6 +67,13 @@ export default function TransfersPage() {
   const [mlist, setMlist] = useState<ManagerListing[]>([]);
   const [notice, setNotice] = useState("");
   const [good, setGood] = useState("");
+
+  // good news disappears by itself; a problem stays until you close it
+  useEffect(() => {
+    if (!good) return;
+    const id = setTimeout(() => setGood(""), 5000);
+    return () => clearTimeout(id);
+  }, [good]);
   const [confirm, setConfirm] = useState("");
   const [logMine, setLogMine] = useState(false);
   const [members, setMembers] = useState<RoomMember[]>([]);
@@ -361,8 +368,18 @@ export default function TransfersPage() {
           ))}
         </nav>
 
-        {notice && <p className="tx-note is-warn" role="alert">{notice}</p>}
-        {good && <p className="tx-note is-good" role="status">{good}</p>}
+        {!window.open && (tab === "market" || tab === "mine") && (
+          <p className="tx-closed" role="status">
+            <b>The transfer window is closed.</b> {window.note} You can still list a player for sale, and every deal you started stays open.
+          </p>
+        )}
+
+        {(notice || good) && (
+          <div className={`tx-toast ${notice ? "is-warn" : "is-good"}`} role={notice ? "alert" : "status"} aria-live={notice ? "assertive" : "polite"}>
+            <p>{notice || good}</p>
+            <button type="button" aria-label="Close message" onClick={() => { setNotice(""); setGood(""); }}>Close</button>
+          </div>
+        )}
 
         {tab === "market" && (
           <section className="tx-pane" aria-label="Transfer market">
@@ -491,7 +508,7 @@ export default function TransfersPage() {
                             <button type="button" className="tx-btn is-ghost" onClick={() => setSell(p)}>List</button>
                           )}
                           <button type="button" className={`tx-btn ${confirm === p.id ? "is-sure" : ""}`} disabled={busy === p.id || !window.open} onClick={() => quickSell(p)}>
-                            {confirm === p.id ? `Confirm ${money(quick)}` : `Sell now ${money(quick)}`}
+                            {busy === p.id ? "Selling..." : confirm === p.id ? `Confirm ${money(quick)}` : `Sell now ${money(quick)}`}
                           </button>
                         </span>
                       </li>
