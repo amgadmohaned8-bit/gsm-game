@@ -21,6 +21,7 @@ import PlayerFace from "@/components/PlayerFace";
 import { photoOf } from "@/lib/football/playerPhotos";
 import GsmMark from "@/components/GsmMark";
 import GameHud from "@/components/GameHud";
+import Icon from "@/components/Icon";
 import "./squad.css";
 
 type Filter = "ALL" | Position;
@@ -168,7 +169,7 @@ export default function SquadPage() {
         <header className="sq-head">
           <div>
             <p>{club?.name}</p>
-            <h1><span className="gx-slant">Squad</span></h1>
+            <h1><span className="gx-slant">Lineups</span></h1>
           </div>
           <dl className="sq-kpis">
             <div><dt>Team rating</dt><dd>{rating}</dd></div>
@@ -180,6 +181,10 @@ export default function SquadPage() {
         </header>
 
         <section className="sq-pitch-card sq-one gx-cut" aria-label="Starting eleven">
+          <button type="button" className="sq-tactics" onClick={() => router.push("/game/tactics")}>
+            <Icon name="tactics" size={20} />
+            <span><b>Tactics</b><small>Style, press and shape</small></span>
+          </button>
           <div className="sq-forms" role="radiogroup" aria-label="Formation">
             {formationNames.map((f) => (
               <button key={f} type="button" role="radio" aria-checked={f === formation}

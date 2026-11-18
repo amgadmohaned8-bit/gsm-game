@@ -14,6 +14,7 @@ import { clubs } from "@/lib/football/clubs";
 import { allClubs } from "@/lib/football/leagueClubs";
 import { egyptRaw } from "@/lib/football/egypt";
 import { africaRaw } from "@/lib/football/africaSquads";
+import { europeRaw } from "@/lib/football/europeSquads";
 
 export type Position = "GK" | "DF" | "MF" | "FW";
 
@@ -613,7 +614,7 @@ function parse(clubId: string, text: string): Player[] {
 }
 
 export const squads: Record<string, Player[]> = Object.fromEntries(
-  Object.entries({ ...raw, ...egyptRaw, ...africaRaw }).map(([club, text]) => [club, parse(club, text)])
+  Object.entries({ ...raw, ...egyptRaw, ...africaRaw, ...europeRaw }).map(([club, text]) => [club, parse(club, text)])
 );
 
 export function squadOf(clubId: string): Player[] {

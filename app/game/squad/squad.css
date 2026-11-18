@@ -147,3 +147,13 @@
   linear-gradient(180deg, rgba(255, 255, 255, 0.05), transparent); }
 .sq-card.has-face .sq-ph { position: static; display: block; height: 150px; }
 @media (max-width: 560px) { .sq-card.has-face .sq-ph { height: 128px; } }
+
+/* the way into the tactics board */
+.sq-tactics { display: flex; align-items: center; gap: 12px; width: 100%; min-height: 56px; margin-bottom: 12px; padding: 8px 16px; border: 1px solid var(--brass); background: rgba(227, 178, 88, 0.08); color: var(--brass-hi); text-align: left; cursor: pointer; touch-action: manipulation; transition: background 0.2s, color 0.2s, transform 0.1s; }
+.sq-tactics:hover { background: var(--brass); color: var(--brass-ink); }
+.sq-tactics:active { transform: scale(0.99); }
+.sq-tactics:focus-visible { outline: 2px solid var(--brass-hi); outline-offset: 2px; }
+.sq-tactics span { display: grid; gap: 1px; }
+.sq-tactics b { font-family: var(--font-display); font-size: 20px; font-weight: 800; letter-spacing: 0.05em; text-transform: uppercase; }
+.sq-tactics small { color: inherit; opacity: 0.8; font-size: 13px; }
+@media (prefers-reduced-motion: reduce) { .sq-tactics { transition: none; } }

@@ -138,7 +138,7 @@ export default function TacticsPage() {
       <div className="gx-curtain" aria-hidden="true" />
       <div className="tc-bg gx-kb" aria-hidden="true" />
       <div className="tc-shade" aria-hidden="true" />
-      <GameHud onBack={() => router.push("/game/dashboard")} />
+      <GameHud onBack={() => router.push("/game/squad")} />
 
       <div className="tc-wrap">
         <header className="tc-head">

@@ -238,7 +238,7 @@ const tabs: { icon: IconName; label: string; href: string }[] = [
   { icon: "calendar", label: "Fixtures", href: "/game/fixtures" },
   { icon: "news", label: "Feed", href: "/game/social" },
   { icon: "table", label: "League", href: "/game/standings" },
-  { icon: "squad", label: "Squad", href: "/game/squad" },
+  { icon: "squad", label: "Lineups", href: "/game/squad" },
 ];
 
 export default function SocialPage() {
