@@ -470,7 +470,7 @@ const raw: Record<string, string> = {
 10 Cunha MF BR 27 83
 16 Diallo MF CI 24 79
 17 Santos MF BR 22 74
-18 Tielemans MF BE 29 77
+18 Tielemans MF BE 29 85
 20 Baleba MF CM 22 79
 25 Ugarte MF UY 25 79
 37 Mainoo MF ENG 21 80
