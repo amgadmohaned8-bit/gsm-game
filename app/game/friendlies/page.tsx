@@ -12,6 +12,7 @@ import { myRoom } from "@/lib/football/rooms";
 import { loadSim, withTimeout } from "@/lib/football/strength";
 import GsmMark from "@/components/GsmMark";
 import GameHud from "@/components/GameHud";
+import Icon from "@/components/Icon";
 import MatchOverlay from "@/components/MatchOverlay";
 import "./friendlies.css";
 
@@ -171,82 +172,108 @@ export default function FriendliesPage() {
   const name = (id: string) => clubs.find((c) => c.id === id)?.name ?? id;
   const me = clubs.find((c) => c.id === myClub);
   const opp = clubs.find((c) => c.id === target);
+  const outcome = (f: Friendly) => {
+    const mine = f.home_club === myClub ? f.home_score : f.away_score;
+    const theirs = f.home_club === myClub ? f.away_score : f.home_score;
+    return mine > theirs ? "win" : mine < theirs ? "loss" : "draw";
+  };
+  const past = [...history].sort((a, b) => b.after_matchday - a.after_matchday);
+  const canPlay = slot !== null && !used;
+  const playLabel = busy ? "Warming up..." : target ? `Play Friendly Match` : "Choose an opponent";
 
   return (
-    <main className="fr">
+    <main className="ff">
       <div className="gx-curtain" aria-hidden="true" />
-      <div className="fr-bg gx-kb" aria-hidden="true" />
-      <div className="fr-shade" aria-hidden="true" />
+      <div className="ff-bg gx-kb" aria-hidden="true" />
+      <div className="ff-shade" aria-hidden="true" />
       <GameHud onBack={() => router.push("/game/dashboard")} />
 
-      <div className="fr-wrap">
-        <header className="fr-head">
-          <p>Season {seasonLabel(season)}</p>
-          <h1><span className="gx-slant">Friendlies</span></h1>
-          <small>Up to three warm-up matches before each league matchday, each against a different club. A little gate money for every one, and your players get match practice. The table is not affected.</small>
+      <div className="ff-wrap">
+        <header className="ff-banner">
+          <Icon name="ball" size={44} />
+          <div>
+            <h1>Friendly Matches</h1>
+            <p>Up to {FRIENDLIES_PER_ROUND} warm-up matches before each league matchday, each against a different club. Gate money for every one, and your table is not affected.</p>
+          </div>
+          <span className="ff-earned">Earned this season <b>{earned.toFixed(2)}M</b></span>
         </header>
 
-        <section className="fr-stage gx-cut" aria-label="Next friendly">
-          <div className="fr-side">
-            {me && <img src={me.logo} alt="" />}
-            <strong>{me?.name}</strong>
-          </div>
-          <div className="fr-vs">
-            <i>VS</i>
+        <div className="ff-top">
+          <section className="ff-next" aria-label="Next friendly match">
+            <h2><Icon name="calendar" size={22} /> Next Friendly Match</h2>
+            <div className="ff-vsrow">
+              <div className="ff-team">
+                {me && <img src={me.logo} alt="" />}
+                <strong>{me?.name}</strong>
+              </div>
+              <div className="ff-mid">
+                <b>VS</b>
+                <small>Friendly Match</small>
+              </div>
+              <div className={`ff-team ${opp ? "" : "is-empty"}`}>
+                {opp ? <img src={opp.logo} alt="" key={opp.id} /> : <span aria-hidden="true">?</span>}
+                <strong>{opp?.name ?? "Pick an opponent"}</strong>
+                {opp && friends[opp.id] && <small className="ff-pal">Friend: {friends[opp.id].name}</small>}
+              </div>
+            </div>
+            <p className="ff-meta">
+              <span><Icon name="calendar" size={18} /> {slot === null ? "Season over" : `Before matchday ${slot + 1}`}</span>
+              <i aria-hidden="true" />
+              <span><Icon name="pin" size={18} /> {count} of {FRIENDLIES_PER_ROUND} played{opp ? ` · +${friendlyIncome(opp.id).toFixed(2)}M` : ""}</span>
+            </p>
+          </section>
+
+          <section className="ff-play" aria-label="Play">
+            <svg className="ff-ball" viewBox="0 0 100 100" aria-hidden="true"><defs><radialGradient id="ffb" cx="35%" cy="30%" r="75%"><stop offset="0" stopColor="#fff" /><stop offset=".6" stopColor="#e3e7ee" /><stop offset="1" stopColor="#8f98a8" /></radialGradient></defs><circle cx="50" cy="50" r="48" fill="url(#ffb)" /><g fill="#161a22" stroke="#161a22" strokeWidth="1.5" strokeLinejoin="round"><polygon points="50,33 65,44 59,62 41,62 35,44" /><polygon points="50,2 61,10 50,17 39,10" /><polygon points="94,40 90,54 80,50 82,38" /><polygon points="76,88 62,92 60,80 70,74" /><polygon points="24,88 38,92 40,80 30,74" /><polygon points="6,40 10,54 20,50 18,38" /></g><g stroke="#161a22" strokeWidth="1.5" fill="none"><path d="M50 33V17M65 44l15 6M59 62l11 12M41 62L30 74M35 44l-15 6" /></g></svg>
             {slot === null ? (
-              <span className="fr-done">The season is over. Friendlies come back with the new one.</span>
+              <p className="ff-done">The season is over. Friendlies come back with the new one.</p>
             ) : used ? (
-              <span className="fr-done">All three played this round. More open after matchday {slot}.</span>
+              <p className="ff-done">All {FRIENDLIES_PER_ROUND} played this round. More open after matchday {slot + 1}.</p>
             ) : (
-              <button type="button" className="gx-btn" disabled={!target || busy} onClick={play}>
-                {busy ? "Warming up..." : target ? `Play friendly ${count + 1} of ${FRIENDLIES_PER_ROUND} +${friendlyIncome(target).toFixed(2)}M` : `Choose an opponent · ${count} of ${FRIENDLIES_PER_ROUND} played`}
+              <button type="button" className="ff-go" disabled={!target || busy || !canPlay} onClick={play}>
+                <svg width="26" height="26" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 4.5v15l13-7.5z" fill="currentColor" /></svg> {playLabel}
               </button>
             )}
-            {error && <span className="fr-error" role="alert">{error}</span>}
-          </div>
-          <div className={`fr-side ${opp ? "" : "is-empty"}`}>
-            {opp ? <img src={opp.logo} alt="" key={opp.id} /> : <span aria-hidden="true">?</span>}
-            <strong>{opp?.name ?? "Opponent"}</strong>
-            {opp && friends[opp.id] && <small className="fr-pal">Friend: {friends[opp.id].name}</small>}
-          </div>
-        </section>
+            {error && <span className="ff-error" role="alert">{error}</span>}
+          </section>
+        </div>
 
-        {slot !== null && !used && (
-          <section className="fr-grid" aria-label="Choose an opponent">
-            {list.map((c, i) => (
-              <button
-                key={c.id}
-                type="button"
-                className={`fr-club gx-cut ${target === c.id ? "is-on" : ""} ${friends[c.id] ? "is-pal" : ""}`}
-                style={{ animationDelay: `${i * 25}ms` }}
-                onClick={() => setTarget(c.id)}
-                aria-pressed={target === c.id}
-              >
-                <img src={c.logo} alt="" />
-                <strong>{c.name}</strong>
-                <small>{friends[c.id] ? `Friend: ${friends[c.id].name}` : tierLabel(c.id)}</small>
-                <em>+{friendlyIncome(c.id).toFixed(2)}M</em>
-              </button>
-            ))}
+        {canPlay && (
+          <section className="ff-pick" aria-label="Choose an opponent">
+            <h2>Choose an opponent</h2>
+            <div className="ff-grid">
+              {list.map((c) => (
+                <button key={c.id} type="button" className={`ff-club ${target === c.id ? "is-on" : ""} ${friends[c.id] ? "is-pal" : ""}`} onClick={() => setTarget(c.id)} aria-pressed={target === c.id}>
+                  <img src={c.logo} alt="" />
+                  <strong>{c.name}</strong>
+                  <small>{friends[c.id] ? `Friend: ${friends[c.id].name}` : tierLabel(c.id)}</small>
+                  <em>+{friendlyIncome(c.id).toFixed(2)}M</em>
+                </button>
+              ))}
+            </div>
           </section>
         )}
 
-        <section className="fr-history gx-cut" aria-label="Played friendlies">
-          <header>
-            <h2>This season</h2>
-            <span>Earned <b>{earned.toFixed(2)}M</b></span>
-          </header>
-          {history.length === 0 ? (
-            <p>No friendlies yet.</p>
+        <section className="ff-past" aria-label="Past friendly matches">
+          <h2><Icon name="news" size={22} /> Past Friendly Matches</h2>
+          {past.length === 0 ? (
+            <p className="ff-none">No friendlies yet. Pick an opponent and play the first one.</p>
           ) : (
             <ul>
-              {[...history].sort((a, b) => b.after_matchday - a.after_matchday).map((f) => (
-                <li key={`${f.after_matchday}-${f.home_club}-${f.away_club}`}>
-                  <small>Before matchday {f.after_matchday + 1}</small>
-                  <span>{name(f.home_club)} <b>{f.home_score}-{f.away_score}</b> {name(f.away_club)}{f.opp_manager ? <em className="fr-with"> · vs {f.opp_manager}</em> : null}</span>
-                  <em>+{Number(f.income).toFixed(2)}M</em>
-                </li>
-              ))}
+              {past.map((f) => {
+                const h = clubs.find((c) => c.id === f.home_club), a = clubs.find((c) => c.id === f.away_club);
+                const o = outcome(f);
+                return (
+                  <li key={`${f.after_matchday}-${f.home_club}-${f.away_club}`}>
+                    <span className="ff-h">{h && <img src={h.logo} alt="" />}{name(f.home_club)}</span>
+                    <b className="ff-sc">{f.home_score} - {f.away_score}</b>
+                    <span className="ff-a">{a && <img src={a.logo} alt="" />}{name(f.away_club)}{f.opp_manager ? <em> · vs {f.opp_manager}</em> : null}</span>
+                    <small className="ff-when">Before matchday {f.after_matchday + 1}</small>
+                    <em className="ff-inc">+{Number(f.income).toFixed(2)}M</em>
+                    <i className={`ff-res is-${o}`}>{o === "win" ? "Win" : o === "loss" ? "Loss" : "Draw"}</i>
+                  </li>
+                );
+              })}
             </ul>
           )}
         </section>

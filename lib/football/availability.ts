@@ -7,6 +7,7 @@
  */
 
 import { bestEleven, squadOf, type Player } from "@/lib/football/squads";
+import { pushPref } from "@/lib/prefsSync";
 
 export type Absence = { kind: "injury" | "ban"; from: number; to: number; label: string };
 
@@ -58,7 +59,7 @@ export function absences(key: string, season: string, playerId: string): Absence
 
 type Card = { id: string; season: string; matchday: number; kind: "red" | "yellow" };
 const DISCIPLINE = "gsm-discipline";
-export const YELLOWS_FOR_BAN = 3;
+export const YELLOWS_FOR_BAN = 5;
 
 function readCards(): Card[] {
   try {
@@ -69,7 +70,7 @@ function readCards(): Card[] {
   }
 }
 
-/** Matchdays a player misses because of cards: the match after a red, and after every third yellow of the season. */
+/** Matchdays a player misses because of cards: the match after a red, and after every fifth yellow of the season. */
 function banDays(playerId: string, season: string): number[] {
   const cards = readCards().filter((c) => c.id === playerId && c.season === season).sort((a, b) => a.matchday - b.matchday);
   const days: number[] = [];
@@ -86,7 +87,7 @@ export const yellowsOf = (playerId: string, season: string) => readCards().filte
 
 /**
  * Called once a match of the manager's club is played: its cards become real.
- * A sent-off player misses the next match; the third yellow of a season is a ban too.
+ * A sent-off player misses the next match; the fifth yellow of a season is a ban too.
  */
 export function recordCards(season: string, matchday: number, cards: { playerId?: string; card?: "yellow" | "red" }[]) {
   try {
@@ -97,6 +98,7 @@ export function recordCards(season: string, matchday: number, cards: { playerId?
       all.push({ id: c.playerId, season, matchday, kind: c.card });
     }
     localStorage.setItem(DISCIPLINE, JSON.stringify(all.slice(-400)));
+    pushPref(DISCIPLINE);
   } catch {
     /* the cards just do not carry over */
   }
@@ -105,7 +107,7 @@ export function recordCards(season: string, matchday: number, cards: { playerId?
 export function absenceOn(key: string, season: string, playerId: string, matchday: number): Absence | null {
   if (banDays(playerId, season).includes(matchday)) {
     const red = readCards().some((c) => c.id === playerId && c.season === season && c.kind === "red" && c.matchday + 1 === matchday);
-    return { kind: "ban", from: matchday, to: matchday, label: red ? "Red card ban" : "Yellow card ban (3 yellows)" };
+    return { kind: "ban", from: matchday, to: matchday, label: red ? "Red card ban" : `Yellow card ban (${YELLOWS_FOR_BAN} yellows)` };
   }
   return absences(key, season, playerId).find((a) => matchday >= a.from && matchday <= a.to) ?? null;
 }

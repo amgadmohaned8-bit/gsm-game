@@ -45,7 +45,11 @@ export function currentLineup(userId: string, clubId: string, squad: Player[], d
     const saved = JSON.parse(localStorage.getItem(`gsm-lineup:${userId}:${clubId}`) ?? "null");
     if (saved && saved.formation in formations && Array.isArray(saved.starters) && saved.starters.length === 11) {
       const byId = new Map(squad.map((p) => [p.id, p]));
-      const eleven = saved.starters.map((id: string) => byId.get(id)).filter(Boolean) as Player[];
+      let eleven = saved.starters.map((id: string) => byId.get(id)).filter(Boolean) as Player[];
+      // a starter was sold: keep the formation the manager chose and let the best eleven fill it, as the Lineups page does
+      if (eleven.length !== 11) return { formation: saved.formation as FormationName, starters: bestEleven(pool, saved.formation as FormationName) };
+      // an older save has no slot order: line it up by position, goalkeeper first
+      if (!saved.slots) eleven = (["GK", "DF", "MF", "FW"] as Position[]).flatMap((g) => eleven.filter((p) => p.position === g));
       if (eleven.length === 11) {
         const used = new Set(eleven.filter((p) => ok.has(p.id)).map((p) => p.id));
         const fitted = eleven.map((p) => {

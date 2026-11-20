@@ -144,3 +144,15 @@
   .mgr-edit { grid-template-columns: minmax(0, 1fr); }
 }
 @media (prefers-reduced-motion: reduce) { .mgr-stats li, .mgr-tr, .mgr-detail, .mgr-trophy.is-won img { animation: none; } .mgr-level, .mgr-trophy { transition: none; } }
+
+/* management office and board room */
+.mgr-office { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+.mgr-oc { display: flex; align-items: center; gap: 16px; min-height: 84px; padding: 14px 20px; border: 1px solid rgba(255, 255, 255, .16); background: linear-gradient(160deg, rgba(14, 20, 38, .8), rgba(8, 12, 24, .7)); color: var(--chalk); text-decoration: none; transition: border-color .2s, transform .2s var(--ease-out); touch-action: manipulation; }
+.mgr-oc:hover { border-color: var(--brass); transform: translateY(-2px); }
+.mgr-oc:focus-visible { outline: 3px solid var(--brass-hi); outline-offset: 3px; }
+.mgr-oc > svg:first-child { flex: none; color: var(--brass-hi); }
+.mgr-oc > svg:last-child { flex: none; margin-left: auto; color: var(--chalk-3); }
+.mgr-oc span { display: grid; gap: 2px; min-width: 0; }
+.mgr-oc strong { font: 800 22px var(--font-display); letter-spacing: .03em; text-transform: uppercase; }
+.mgr-oc small { color: var(--chalk-3); font-size: 14px; }
+@media (max-width: 700px) { .mgr-office { grid-template-columns: 1fr; } }

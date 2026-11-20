@@ -7,7 +7,7 @@
  * league owner).
  */
 
-import { GOAL_SHAPE, type StyleId } from "@/lib/football/tactics";
+import { GOAL_SHAPE, aiStyle, loggedStyle, type StyleId } from "@/lib/football/tactics";
 import { allClubs as clubs } from "@/lib/football/leagueClubs";
 import { egyptRatings } from "@/lib/football/egypt";
 import { africaRatings } from "@/lib/football/africa";
@@ -64,6 +64,19 @@ const clubRatings: Record<string, number> = {
   coventry: 69,
   "hull-city": 68,
 };
+
+/**
+ * How a computer club's season goes compared with its usual level: a good or a bad year, between -7 and +7.
+ * Fixed for a club and a season, so everybody sees the same one. The manager's own club does not drift
+ * (its strength comes from the squad the manager builds).
+ */
+export function formOf(clubId: string, season: string): number {
+  const r = seedFromString(`${clubId}|${season}|form`) / 4294967296;
+  return Math.round((r * 2 - 1) * 7 * 10) / 10;
+}
+
+/** How much of the gap between two ratings counts in a match (the rest is football being football). */
+const GAP = 0.8;
 
 export function getRating(clubId: string) {
   return clubRatings[clubId] ?? egyptRatings[clubId] ?? africaRatings[clubId] ?? europeRatings[clubId] ?? 72;
@@ -141,9 +154,11 @@ export function simulateFixture(key: FixtureKey): SimulationResult {
   const pool = key.squads ?? baseSquads;
   const homeBonus = key.homeBonus ?? injuryBonus(key.homeClub, pool[key.homeClub] ?? [], key.leagueKey, key.season, key.matchday);
   const awayBonus = key.awayBonus ?? injuryBonus(key.awayClub, pool[key.awayClub] ?? [], key.leagueKey, key.season, key.matchday);
-  const homeRating = getRating(key.homeClub) + 3 + homeBonus; // home advantage
-  const awayRating = getRating(key.awayClub) + awayBonus;
-  const difference = (homeRating - awayRating) / 20;
+  const homeForm = key.homeBonus === undefined ? formOf(key.homeClub, key.season) : 0;
+  const awayForm = key.awayBonus === undefined ? formOf(key.awayClub, key.season) : 0;
+  const homeRating = getRating(key.homeClub) + 3 + homeBonus + homeForm; // home advantage
+  const awayRating = getRating(key.awayClub) + awayBonus + awayForm;
+  const difference = ((homeRating - awayRating) * GAP) / 20;
 
   const hs = key.homeStyle ? GOAL_SHAPE[key.homeStyle] : null;
   const as = key.awayStyle ? GOAL_SHAPE[key.awayStyle] : null;
@@ -165,7 +180,16 @@ export function simulateFixture(key: FixtureKey): SimulationResult {
   const other = (s: Side): Side => (s === "home" ? "away" : "home");
   const nameOfSide = (s: Side) => (s === "home" ? homeName : awayName);
   const outfield = (s: Side) => availableSquad(pool[s === "home" ? key.homeClub : key.awayClub] ?? [], key.leagueKey, key.season, key.matchday).filter((p) => p.position !== "GK");
-  const someone = (s: Side) => { const l = outfield(s); return l.length ? l[Math.floor(er() * l.length)] : undefined; };
+  // defenders and midfielders pick up more cards than forwards
+  const CARD_W = { DF: 1.35, MF: 1.2, FW: 0.75, GK: 0 } as const;
+  const someone = (s: Side, roll = er()) => {
+    const l = outfield(s);
+    if (!l.length) return undefined;
+    const total = l.reduce((n, p) => n + CARD_W[p.position], 0);
+    let at = roll * total;
+    for (const p of l) { at -= CARD_W[p.position]; if (at < 0) return p; }
+    return l[l.length - 1];
+  };
   const incidents: MatchEvent[] = [];
   const adjust = { home: 0, away: 0 };
   const penalty = { home: false, away: false };
@@ -186,6 +210,14 @@ export function simulateFixture(key: FixtureKey): SimulationResult {
     const p = someone(s);
     incidents.push({ minute: 8 + Math.floor(er() * 80), type: "foul", team: other(s), card: "yellow", player: p?.name, playerId: p?.id, text: `Yellow card for ${p?.name ?? "a player"} (${nameOfSide(s)}).` });
   }
+  // a match has more bookings than that: a few more from a stream of their own
+  const yr = createRng(seedFromString([key.leagueKey, key.season, key.matchday, key.homeClub, key.awayClub, "yellows"].join("|")));
+  const more = Math.floor(yr() * 3);
+  for (let i = 0; i < more; i++) {
+    const s: Side = yr() < 0.5 ? "home" : "away";
+    const p = someone(s, yr());
+    incidents.push({ minute: 8 + Math.floor(yr() * 80), type: "foul", team: other(s), card: "yellow", player: p?.name, playerId: p?.id, text: `Yellow card for ${p?.name ?? "a player"} (${nameOfSide(s)}).` });
+  }
   for (let i = 0; i < 2; i++) {
     const s: Side = er() < 0.5 ? "home" : "away";
     incidents.push({ minute: 6 + Math.floor(er() * 82), type: "foul", team: other(s), text: `Foul on ${nameOfSide(other(s))}. Free kick.` });
@@ -203,8 +235,11 @@ export function simulateFixture(key: FixtureKey): SimulationResult {
   const events: MatchEvent[] = [];
 
   const seedKey = [key.leagueKey, key.season, key.matchday, key.homeClub, key.awayClub].join("|");
-  const homeWho = pickScorers(availableSquad(pool[key.homeClub] ?? [], key.leagueKey, key.season, key.matchday), homeGoals, `${seedKey}|h`);
-  const awayWho = pickScorers(availableSquad(pool[key.awayClub] ?? [], key.leagueKey, key.season, key.matchday), awayGoals, `${seedKey}|a`);
+  // who scores depends on how the club plays: the style it used (my club) or its usual one (the computer clubs)
+  const homePlay = key.homeStyle ?? loggedStyle(key.season, key.matchday, key.homeClub) ?? aiStyle(key.homeClub);
+  const awayPlay = key.awayStyle ?? loggedStyle(key.season, key.matchday, key.awayClub) ?? aiStyle(key.awayClub);
+  const homeWho = pickScorers(availableSquad(pool[key.homeClub] ?? [], key.leagueKey, key.season, key.matchday), homeGoals, `${seedKey}|h`, undefined, homePlay);
+  const awayWho = pickScorers(availableSquad(pool[key.awayClub] ?? [], key.leagueKey, key.season, key.matchday), awayGoals, `${seedKey}|a`, undefined, awayPlay);
 
   const goalEvent = (team: "home" | "away", name: string, who: ReturnType<typeof pickScorers>[number] | undefined): MatchEvent => ({
     minute: 5 + Math.floor(rng() * 85),

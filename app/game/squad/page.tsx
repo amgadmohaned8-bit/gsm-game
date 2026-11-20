@@ -1,5 +1,6 @@
 "use client";
 
+import { pushPref } from "@/lib/prefsSync";
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
@@ -100,6 +101,7 @@ export default function SquadPage() {
     setStarters(ids);
     try {
       localStorage.setItem(`gsm-lineup:${userId}:${clubId}`, JSON.stringify({ formation: name, starters: ids, slots: true }));
+      pushPref(`gsm-lineup:${userId}:${clubId}`);
     } catch {
       /* the lineup still works for this visit */
     }

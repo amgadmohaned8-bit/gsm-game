@@ -204,6 +204,7 @@ export default function StandingsPage() {
             ["assists", "Assists"],
             ["teams", "Best attack"],
             ["best", "Best players"],
+            ["value", "Market value"],
           ] as const).map(([id, label]) => (
             <button key={id} type="button" role="tab" aria-selected={view === id} onClick={() => setView(id)}>
               {label}

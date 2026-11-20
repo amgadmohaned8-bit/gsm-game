@@ -89,8 +89,7 @@ const navigation: {
   href?: string;
   action?: "room" | "press";
 }[] = [
-  { icon: "office", label: "Management", note: "Your office and your board", active: false, href: "/game/management" },
-  { icon: "flag", label: "Board room", note: "Objectives and confidence", active: false, href: "/game/board" },
+  { icon: "user", label: "Manager", note: "Management, board room and trophies", active: false, href: "/game/manager" },
   { icon: "table", label: "League", note: "Table and form", active: false, href: "/game/standings" },
   { icon: "calendar", label: "Fixtures", note: "Every matchday", active: false, href: "/game/fixtures" },
   { icon: "squad", label: "Lineups", note: "Players, formation and tactics", active: false, href: "/game/squad" },
@@ -98,7 +97,6 @@ const navigation: {
   { icon: "training", label: "Training", note: "Develop your players", active: false, href: "/game/training" },
   { icon: "ball", label: "Friendlies", note: "Warm-up matches", active: false, href: "/game/friendlies" },
   { icon: "transfer", label: "Transfers", note: "Buy and sell", active: false, href: "/game/transfers" },
-  { icon: "wallet", label: "Finances", note: "Income, spending, balance", active: false, href: "/game/finances" },
   { icon: "wallet", label: "Bank", note: "Loans, debts and credit", active: false, href: "/game/bank" },
   { icon: "star", label: "League Cup", note: "Knockout cup", active: false, href: "/game/cup" },
   { icon: "chat", label: "Social", note: "Feed, stories and coaches", active: false, href: "/game/social" },

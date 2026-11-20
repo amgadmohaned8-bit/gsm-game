@@ -5,7 +5,7 @@
 
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { simulateFixture, type SimulationResult } from "@/lib/football/matchSim";
-import { aiStyle, matchup } from "@/lib/football/tactics";
+import { aiStyle, matchup, recordStyle } from "@/lib/football/tactics";
 import { recordCards } from "@/lib/football/availability";
 import { scoreKey, sharedScores, shareScores, type SimContext } from "@/lib/football/strength";
 
@@ -140,6 +140,7 @@ export async function playMatchday(
 
   // the cards my club's players got count for the next matches
   if (out.mine) {
+    if (sim?.style) recordStyle(out.mine.match.season, out.mine.match.matchday, myClub, sim.style);
     const mySide = out.mine.match.home_club === myClub ? "home" : "away";
     recordCards(
       out.mine.match.season,

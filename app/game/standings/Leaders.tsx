@@ -5,9 +5,10 @@ import { allClubs as clubs } from "@/lib/football/leagueClubs";
 import { computeStats, type PlayerStat, type StatMatch } from "@/lib/football/stats";
 import type { Renewal } from "@/lib/football/contracts";
 import type { TrainingRow } from "@/lib/football/development";
-import type { Deal } from "@/lib/football/transfers";
+import { applyDeals, type Deal } from "@/lib/football/transfers";
+import { marketValue } from "@/lib/football/squads";
 
-export type LeaderTab = "scorers" | "assists" | "teams" | "best";
+export type LeaderTab = "scorers" | "assists" | "teams" | "best" | "value";
 
 const clubOf = (id: string) => clubs.find((c) => c.id === id);
 
@@ -40,6 +41,7 @@ const TITLES: Record<LeaderTab, { title: string; unit: string; sub: string }> = 
   assists: { title: "Playmakers", unit: "assists", sub: "Most assists of the season" },
   teams: { title: "Best attack", unit: "goals", sub: "Teams that scored the most" },
   best: { title: "Player of the season", unit: "G+A", sub: "Goals plus assists" },
+  value: { title: "Market value", unit: "€M", sub: "Total value of every squad, with the number of players" },
 };
 
 type Row = { key: string; name: string; club: string; value: number; extra: string; position?: string };
@@ -69,8 +71,19 @@ export default function Leaders({
     if (tab === "scorers") return fromPlayers(stats.scorers, (p) => p.goals, (p) => `${p.assists} assists`);
     if (tab === "assists") return fromPlayers(stats.assisters, (p) => p.assists, (p) => `${p.goals} goals`);
     if (tab === "best") return fromPlayers(stats.best.filter((p) => p.total > 0), (p) => p.total, (p) => `${p.goals}G · ${p.assists}A`);
+    if (tab === "value") {
+      const season = matches[0]?.season;
+      const ids = [...new Set(matches.flatMap((m) => [m.home_club, m.away_club]))];
+      const squads = applyDeals(deals, { season, training, matchday: 999, own: { club: myClub, renewals } });
+      return ids
+        .map((id) => {
+          const list = squads[id] ?? [];
+          return { key: id, name: clubOf(id)?.name ?? id, club: id, value: Math.round(list.reduce((n, p) => n + marketValue(p), 0)), extra: `${list.length} players` };
+        })
+        .sort((a, b) => b.value - a.value);
+    }
     return stats.teams.slice(0, 20).map((t) => ({ key: t.club, name: clubOf(t.club)?.name ?? t.club, club: t.club, value: t.goals, extra: `${t.per.toFixed(2)} per match` }));
-  }, [stats, tab]);
+  }, [stats, tab, matches, deals, training, renewals, myClub]);
 
   const meta = TITLES[tab];
   const max = Math.max(1, ...rows.map((r) => r.value));
@@ -105,7 +118,7 @@ export default function Leaders({
               <span className="ld-medal" aria-hidden="true">{i + 1}</span>
               {c && <img src={c.logo} alt="" />}
               <strong>{r.name}</strong>
-              {tab !== "teams" && <small>{c?.name}</small>}
+              {tab === "value" ? <small>{r.extra}</small> : tab !== "teams" && <small>{c?.name}</small>}
               <b className="ld-big"><Num n={r.value} /></b>
               <em>{meta.unit}</em>
               <div className="ld-step" aria-hidden="true" />
@@ -124,7 +137,7 @@ export default function Leaders({
                 {c && <img src={c.logo} alt="" />}
                 <div className="ld-who">
                   <strong>{r.name}</strong>
-                  <small>{tab === "teams" ? r.extra : `${c?.name ?? ""} · ${r.extra}`}</small>
+                  <small>{tab === "teams" || tab === "value" ? r.extra : `${c?.name ?? ""} · ${r.extra}`}</small>
                   <i aria-hidden="true"><b style={{ width: `${(r.value / max) * 100}%`, animationDelay: `${0.6 + i * 0.05}s` }} /></i>
                 </div>
                 <span className="ld-val"><Num n={r.value} /></span>

@@ -9,6 +9,7 @@
 
 import type { FormationName, Player } from "@/lib/football/squads";
 import { getTier } from "@/lib/football/finance";
+import { pushPref } from "@/lib/prefsSync";
 
 export type StyleId = "balanced" | "possession" | "longball" | "counter" | "wings" | "press" | "bus";
 export type OptId = "offside" | "counterpress" | "playout" | "target" | "overlap" | "setpieces";
@@ -147,6 +148,7 @@ export function readTactic(userId: string, clubId: string): Tactic | null {
 export function saveTactic(userId: string, clubId: string, t: Tactic) {
   try {
     localStorage.setItem(key(userId, clubId), JSON.stringify(t));
+    pushPref(key(userId, clubId));
   } catch {
     /* it still applies for this visit */
   }
@@ -228,6 +230,38 @@ export function tacticBonus(t: Tactic | null, eleven: Player[], formation?: Form
     .reduce((sum, [id]) => sum + (syn.includes(id) ? 0.3 : -0.1), 0);
   const total = (fitPart + coh + opts) * 1.6 + shape;
   return Math.max(-MAX_TACTIC, Math.min(MAX_TACTIC, Math.round(total * 10) / 10));
+}
+
+/* ---------- the style each of my matches was played with ---------- */
+
+export const STYLE_LOG = "gsm-styles";
+
+function readStyleLog(): Record<string, StyleId> {
+  try {
+    return JSON.parse(localStorage.getItem(STYLE_LOG) ?? "{}") as Record<string, StyleId>;
+  } catch {
+    return {};
+  }
+}
+
+/** The scorers of a match depend on how the club played it, so what was used is kept for when the match is worked out again. */
+export function recordStyle(season: string, matchday: number, club: string, style: StyleId) {
+  try {
+    const log = readStyleLog();
+    const k = `${season}|${matchday}|${club}`;
+    if (log[k]) return;
+    const keys = Object.keys(log);
+    if (keys.length > 400) for (const old of keys.slice(0, keys.length - 400)) delete log[old];
+    log[k] = style;
+    localStorage.setItem(STYLE_LOG, JSON.stringify(log));
+    pushPref(STYLE_LOG);
+  } catch {
+    /* the club's usual style is used */
+  }
+}
+
+export function loggedStyle(season: string, matchday: number, club: string): StyleId | null {
+  return readStyleLog()[`${season}|${matchday}|${club}`] ?? null;
 }
 
 /* ---------- the other clubs ---------- */

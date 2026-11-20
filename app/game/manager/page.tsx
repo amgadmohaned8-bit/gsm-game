@@ -217,7 +217,7 @@ export default function ManagerPage() {
         </section>
 
         <nav className="mgr-nav" aria-label="Sections">
-          {[["mgr-trophies", "Trophy room"], ["mgr-careers", "Careers"], ["mgr-history", "History"], ["mgr-ach", "Achievements"], ["mgr-friends", "Friends"], ["mgr-edit", "Edit profile"]].map(([id, label]) => (
+          {[["mgr-office", "Management"], ["mgr-trophies", "Trophy room"], ["mgr-careers", "Careers"], ["mgr-history", "History"], ["mgr-ach", "Achievements"], ["mgr-friends", "Friends"], ["mgr-edit", "Edit profile"]].map(([id, label]) => (
             <button key={id} type="button" onClick={() => go(id)}>{label}</button>
           ))}
         </nav>
@@ -312,6 +312,23 @@ export default function ManagerPage() {
             <p className="mgr-soon">More cabinets are on the way: {LEAGUES.filter((l) => !l.available && !cabinet.some((c) => c.leagueId === l.id)).map((l) => l.name).join(", ")}.</p>
           )}
           {cups > 0 && <p className="mgr-soon">{cups} cup {cups === 1 ? "win" : "wins"} so far. Every new cup you add to the game gets its own place on the shelf.</p>}
+        </section>
+
+        {/* management: the office and the board, moved here from the game menu */}
+        <section id="mgr-office" className="mgr-sec">
+          <header className="mgr-sh"><div><p>Your office and your board</p><h2>Management</h2></div></header>
+          <div className="mgr-office">
+            <Link href="/game/management" className="mgr-oc">
+              <Icon name="office" size={30} />
+              <span><strong>Management office</strong><small>Your staff, your club and your decisions</small></span>
+              <Icon name="arrow-right" size={18} />
+            </Link>
+            <Link href="/game/board" className="mgr-oc">
+              <Icon name="flag" size={30} />
+              <span><strong>Board room</strong><small>Season objectives and board confidence</small></span>
+              <Icon name="arrow-right" size={18} />
+            </Link>
+          </div>
         </section>
 
         {/* careers */}

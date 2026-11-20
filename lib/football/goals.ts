@@ -6,6 +6,7 @@
 
 import type { Player } from "@/lib/football/squads";
 import { bestEleven } from "@/lib/football/squads";
+import type { StyleId } from "@/lib/football/tactics";
 
 export type Squads = Record<string, Player[]>;
 export type GoalCredit = { scorer: Player; assist: Player | null };
@@ -34,6 +35,30 @@ export function rng(text: string) {
 const SCORE_W = { GK: 0.01, DF: 0.7, MF: 2.6, FW: 6 } as const;
 const ASSIST_W = { GK: 0.05, DF: 1.2, MF: 4, FW: 3 } as const;
 
+/**
+ * How a style of play moves the goals between the positions.
+ * Wing play and long balls create for the forwards and full-backs, possession football for the midfield,
+ * a team that sits deep scores from set pieces (defenders) and breaks on the counter (forwards).
+ */
+const STYLE_SCORE: Record<StyleId, Partial<Record<Player["position"], number>>> = {
+  balanced: {},
+  possession: { MF: 1.5, FW: 0.95 },
+  longball: { FW: 1.25, MF: 0.8 },
+  counter: { FW: 1.2, MF: 1.1, DF: 0.8 },
+  wings: { FW: 1.1, MF: 1.05 },
+  press: { MF: 1.3, FW: 1.1 },
+  bus: { DF: 1.9, FW: 0.9, MF: 0.8 },
+};
+const STYLE_ASSIST: Record<StyleId, Partial<Record<Player["position"], number>>> = {
+  balanced: {},
+  possession: { MF: 1.3, DF: 0.9 },
+  longball: { FW: 1.5, MF: 0.7 },
+  counter: { FW: 1.3, MF: 1.1 },
+  wings: { DF: 1.8, MF: 1.2, FW: 1.1 },
+  press: { MF: 1.2, FW: 1.1 },
+  bus: { DF: 1.4, MF: 0.9 },
+};
+
 /** Starters count fully, the rest of the first 16 a little. */
 function pool(squad: Player[], xi?: Player[]) {
   const eleven = new Set((xi && xi.length === 11 ? xi : bestEleven(squad, "4-3-3")).map((p) => p.id));
@@ -54,18 +79,18 @@ function draw<T>(items: { item: T; w: number }[], r: number): T | null {
 }
 
 /** A scorer, and most of the time an assist from a different player, for each goal. */
-export function pickScorers(squad: Player[], goals: number, key: string, xi?: Player[]): GoalCredit[] {
+export function pickScorers(squad: Player[], goals: number, key: string, xi?: Player[], style: StyleId = "balanced"): GoalCredit[] {
   if (!goals || !squad.length) return [];
   const r = rng(`${key}|scorers`);
   const list = pool(squad, xi);
   const out: GoalCredit[] = [];
   for (let g = 0; g < goals; g++) {
     const quality = (p: Player) => Math.pow(Math.max(p.rating, 40) / 75, 4);
-    const scorer = draw(list.map(({ p, depth }) => ({ item: p, w: SCORE_W[p.position] * quality(p) * depth })), r())!;
+    const scorer = draw(list.map(({ p, depth }) => ({ item: p, w: SCORE_W[p.position] * (STYLE_SCORE[style][p.position] ?? 1) * quality(p) * depth })), r())!;
     let assist: Player | null = null;
     if (r() < 0.78) {
       assist = draw(
-        list.filter(({ p }) => p.id !== scorer.id).map(({ p, depth }) => ({ item: p, w: ASSIST_W[p.position] * quality(p) * depth })),
+        list.filter(({ p }) => p.id !== scorer.id).map(({ p, depth }) => ({ item: p, w: ASSIST_W[p.position] * (STYLE_ASSIST[style][p.position] ?? 1) * quality(p) * depth })),
         r()
       );
     } else r();

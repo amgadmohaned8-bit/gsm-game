@@ -3,7 +3,7 @@
  *
  * Every new season players get a year older: the young improve, the players
  * past thirty lose a little. On top of that a manager can train three players
- * a week. Training helps the young most and the old only a little, and a
+ * a session. Training builds the young up several times faster than the old, and a
  * player cannot gain more than a cap per season.
  *
  * Nothing is stored for ageing: it is worked out from the season, so every
@@ -13,7 +13,7 @@
 import type { Player } from "@/lib/football/squads";
 
 export const FIRST_YEAR = 2026;
-export const SLOTS = 3;
+export const SLOTS = 4;
 /** a session of up to three players takes this long to finish; the gains count once it is done */
 export const TRAIN_HOURS = 8;
 export const TRAIN_MS = TRAIN_HOURS * 3600_000;
@@ -64,17 +64,18 @@ export function phase(age: number): "rising" | "prime" | "declining" {
 
 /** Rating gained by one training session. */
 export function sessionGain(age: number) {
-  if (age <= 21) return 0.5;
-  if (age <= 24) return 0.34;
+  if (age <= 19) return 1;
+  if (age <= 21) return 0.75;
+  if (age <= 24) return 0.4;
   if (age <= 28) return 0.2;
-  if (age <= 31) return 0.12;
-  return 0.06;
+  if (age <= 31) return 0.1;
+  return 0.05;
 }
 
 /** Most a player can gain from training in one season. */
 export function seasonCap(age: number) {
-  if (age <= 21) return 6;
-  if (age <= 24) return 4;
+  if (age <= 21) return 9;
+  if (age <= 24) return 5;
   if (age <= 28) return 2.5;
   return 1;
 }
