@@ -61,7 +61,7 @@ Rüdiger DF DE 33 82 LaLiga
 Militão DF BR 28 82 LaLiga
 Lewandowski FW PL 38 82 LaLiga
 Koundé DF FR 27 84 LaLiga
-Bastoni DF IT 27 84 SerieA
+Bastoni DF IT 27 86 SerieA
 Alexander-Arnold DF ENG 27 86 LaLiga
 Lucas_Moreno MF ES 28 77 LaLiga
 Dani_Bermúdez DF ES 26 76 LaLiga
@@ -115,7 +115,7 @@ Julián_Álvarez FW AR 26 85 LaLiga Atlético_Madrid
 Koke MF ES 34 77 LaLiga Atlético_Madrid
 Giménez DF UY 31 79 LaLiga Atlético_Madrid
 Nico_Williams FW ES 24 83 LaLiga Athletic_Club
-Unai_Simón GK ES 28 82 LaLiga Athletic_Club
+Unai_Simón GK ES 28 85 LaLiga Athletic_Club
 Oyarzabal FW ES 29 83 LaLiga Real_Sociedad
 Takefusa_Kubo FW JP 25 79 LaLiga Real_Sociedad
 Álex_Remiro GK ES 31 78 LaLiga Real_Sociedad
@@ -252,14 +252,13 @@ function generated(): string {
 
 // new stars that reach the market a few at a time (appended last so every old player id stays the same)
 const EXTRA = `
-Désiré_Doué FW FR 21 84 Ligue1 Paris_Saint-Germain
+
 Willian_Pacho DF EC 24 82 Ligue1 Paris_Saint-Germain
 Ademola_Lookman FW NG 28 82 SerieA Atalanta
 Théo_Hernandez DF FR 29 82 Saudi Al-Hilal
 Heung-min_Son FW KR 34 80 MLS LAFC
 Kalidou_Koulibaly DF SN 35 76 Saudi Al-Hilal
 Gianluca_Scamacca FW IT 27 77 SerieA Atalanta
-Viktor_Gyökeres FW SE 28 86 Portugal Sporting_CP
 Francisco_Conceição FW PT 23 81 SerieA Juventus
 Jorrel_Hato DF NL 20 80 Netherlands Ajax
 Wilfried_Singo DF CI 25 80 Turkey Galatasaray
@@ -268,7 +267,6 @@ Florian_Neuhaus MF DE 29 77 Bundesliga Borussia_Mönchengladbach
 Nicolás_González FW AR 27 80 SerieA Juventus
 Matías_Soulé FW AR 23 79 SerieA Roma
 Paulo_Henrique FW BR 23 77 Brazil Flamengo
-Estêvão FW BR 19 84 Brazil Palmeiras
 Lamine_Camara MF SN 22 79 Ligue1 Monaco
 Takumi_Minamino FW JP 31 75 Ligue1 Monaco
 Mikautadze FW GE 25 80 Ligue1 Lyon
