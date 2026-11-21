@@ -44,7 +44,7 @@ Olise FW FR 24 86 Bundesliga
 Pedri MF ES 23 87 LaLiga
 Raphinha FW BR 29 86 LaLiga
 Dembélé FW FR 29 87 Ligue1
-Vitinha MF PT 26 86 Ligue1
+Vitinha MF PT 26 92 Ligue1
 Nuno_Mendes DF PT 24 85 Ligue1
 Hakimi DF MA 28 85 Ligue1
 Courtois GK BE 34 88 LaLiga
@@ -62,7 +62,7 @@ Militão DF BR 28 82 LaLiga
 Lewandowski FW PL 38 82 LaLiga
 Koundé DF FR 27 84 LaLiga
 Bastoni DF IT 27 84 SerieA
-Alexander-Arnold DF ENG 27 83 LaLiga
+Alexander-Arnold DF ENG 27 86 LaLiga
 Lucas_Moreno MF ES 28 77 LaLiga
 Dani_Bermúdez DF ES 26 76 LaLiga
 Mats_Hoffmann MF DE 27 76 Bundesliga
@@ -97,10 +97,10 @@ Pablo_Nieto GK ES 34 72 Free
 Stefan_Novak MF CZ 31 73 Free
 Carlos_Arriaga FW MX 31 74 Free
 Felix_Baumann DF DE 32 72 Free
-Rodrygo FW BR 25 83 LaLiga Real_Madrid
+Rodrygo FW BR 25 86 LaLiga Real_Madrid
 Arda_Güler MF TR 21 82 LaLiga Real_Madrid
 Camavinga MF FR 23 82 LaLiga Real_Madrid
-Huijsen DF ES 21 80 LaLiga Real_Madrid
+Huijsen DF ES 21 83 LaLiga Real_Madrid
 Endrick FW BR 20 78 LaLiga Real_Madrid
 Fran_García DF ES 26 77 LaLiga Real_Madrid
 Frenkie_de_Jong MF NL 29 82 LaLiga Barcelona
@@ -125,12 +125,12 @@ Iago_Aspas FW ES 38 76 LaLiga Celta_Vigo
 Isco MF ES 34 76 LaLiga Real_Betis
 Antony FW BR 26 77 LaLiga Real_Betis
 Luis_Díaz FW CO 29 85 Bundesliga Bayern_Munich
-Upamecano DF FR 27 82 Bundesliga Bayern_Munich
+Upamecano DF FR 27 88 Bundesliga Bayern_Munich
 Davies DF CA 25 81 Bundesliga Bayern_Munich
 Neuer GK DE 40 80 Bundesliga Bayern_Munich
 Gnabry FW DE 31 80 Bundesliga Bayern_Munich
 Guirassy FW GN 30 82 Bundesliga Borussia_Dortmund
-Schlotterbeck DF DE 26 82 Bundesliga Borussia_Dortmund
+Schlotterbeck DF DE 26 87 Bundesliga Borussia_Dortmund
 Kobel GK CH 28 83 Bundesliga Borussia_Dortmund
 Julian_Brandt MF DE 30 80 Bundesliga Borussia_Dortmund
 Jobe_Bellingham MF ENG 20 78 Bundesliga Borussia_Dortmund
@@ -141,7 +141,7 @@ Loïs_Openda FW BE 26 77 Bundesliga RB_Leipzig
 Undav FW DE 29 78 Bundesliga VfB_Stuttgart
 Hakan_Çalhanoğlu MF TR 32 83 SerieA Inter
 Marcus_Thuram FW FR 28 83 SerieA Inter
-Dimarco DF IT 28 82 SerieA Inter
+Dimarco DF IT 28 86 SerieA Inter
 Yann_Sommer GK CH 37 80 SerieA Inter
 Maignan GK FR 31 85 SerieA AC_Milan
 Pulisic FW US 27 82 SerieA AC_Milan
@@ -157,10 +157,10 @@ Lookman FW NG 28 83 SerieA Atalanta
 Dybala FW AR 32 80 SerieA Roma
 Zaccagni MF IT 31 77 SerieA Lazio
 Moise_Kean FW IT 26 80 SerieA Fiorentina
-Doué FW FR 20 85 Ligue1 Paris_Saint-Germain
-João_Neves MF PT 21 84 Ligue1 Paris_Saint-Germain
+Doué FW FR 20 86 Ligue1 Paris_Saint-Germain
+João_Neves MF PT 21 89 Ligue1 Paris_Saint-Germain
 Marquinhos DF BR 32 85 Ligue1 Paris_Saint-Germain
-Zaïre-Emery MF FR 20 81 Ligue1 Paris_Saint-Germain
+Zaïre-Emery MF FR 20 83 Ligue1 Paris_Saint-Germain
 Lucas_Chevalier GK FR 24 80 Ligue1 Paris_Saint-Germain
 Mason_Greenwood FW ENG 24 82 Ligue1 Marseille
 Ben_Seghir FW MA 21 78 Ligue1 Monaco
