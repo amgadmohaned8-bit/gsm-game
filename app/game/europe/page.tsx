@@ -140,7 +140,7 @@ export default function EuropePage() {
       const others = (await loadCareers(supabase, userId)).filter((c) => c.league_id !== setup.comp_id);
       if (others.length) {
         await switchCareer(supabase, userId, { selected_league: manager.selected_league, selected_club: manager.selected_club, room_id: manager.room_id ?? null }, others[0]);
-        router.push("/game/dashboard");
+        router.push("/game/myteams");
       } else {
         router.push("/game/leagues");
       }
@@ -247,10 +247,14 @@ export default function EuropePage() {
                   <p>{status.position && status.position <= 8 && status.phaseDone ? `You finished ${status.position}${status.position === 1 ? "st" : status.position === 2 ? "nd" : status.position === 3 ? "rd" : "th"} and skip the play-off. Your round of 16 tie appears when the play-off is finished.` : "Your next tie appears when the round before it is finished."}</p>
                 </>
               )}
-              {(finished || status.eliminated) && standalone && (
-                <button type="button" className="gx-btn fx-start is-ready" disabled={saving} onClick={finishCareer}>
-                  {saving ? "Closing..." : "Finish and go back to your team"}
-                </button>
+              {(finished || status.eliminated) && (
+                standalone ? (
+                  <button type="button" className="gx-btn fx-start is-ready" disabled={saving} onClick={finishCareer}>
+                    {saving ? "Closing..." : "Finish and go back to your team"}
+                  </button>
+                ) : (
+                  <button type="button" className="gx-btn fx-start is-ready" onClick={back}>Back to the dashboard</button>
+                )
               )}
               {error && <p className="fx-error" role="alert">{error}</p>}
             </article>

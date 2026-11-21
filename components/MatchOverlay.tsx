@@ -5,12 +5,13 @@ import { allClubs as clubs } from "@/lib/football/leagueClubs";
 import type { MatchEvent } from "@/lib/football/matchSim";
 import { buildLine, foulBuildLine, foulLine, fullTimeLine, goalLine, halfLine, kickoffLine, missLine, penBuildLine, penGoalLine, penMissLine, pick, studioScript, type Line } from "@/lib/football/commentary";
 import PitchView from "@/components/PitchView";
+import { photoOf } from "@/lib/football/playerPhotos";
 import { matchKits } from "@/lib/football/kits";
 import "@/app/game/fixtures/fixtures.css";
 import PressConference from "@/components/PressConference";
 import HalftimePanel, { type HalftimeChange } from "@/components/HalftimePanel";
 import type { Revised } from "@/lib/football/halftime";
-import type { Player } from "@/lib/football/squads";
+import { squads as allSquads, type Player } from "@/lib/football/squads";
 import { supabase } from "@/lib/supabase";
 import type { Quote } from "@/lib/football/press";
 import { readSettings } from "@/lib/settings";
@@ -58,7 +59,7 @@ function clubOf(id: string) {
   return clubs.find((club) => club.id === id);
 }
 
-type Moment = { minute: number; kind: "goal" | "chance" | "save" | "half" | "foul"; team: "home" | "away"; player?: string; assist?: string; /** a penalty (shown on the pitch only) */ pen?: boolean; card?: "yellow" | "red"; by?: string };
+type Moment = { minute: number; kind: "goal" | "chance" | "save" | "half" | "foul" | "sub"; out?: string; outPid?: string; team: "home" | "away"; player?: string; pid?: string; assist?: string; /** a penalty (shown on the pitch only) */ pen?: boolean; card?: "yellow" | "red"; by?: string };
 type Said = { id: number; text: string; tone: "plain" | "goal" | "miss" };
 
 /** How the manager wants matches to run (see the settings page). */
@@ -185,6 +186,93 @@ function Studio({ homeClub, awayClub, myClub, label = "Today's match", onDone }:
   );
 }
 
+
+/* ---------- the timeline of the match ---------- */
+
+let ratings: Map<string, number> | null = null;
+/** the rating shown on a player's picture, when the player is in one of the squads */
+function ratingOf(id?: string): number | undefined {
+  if (!id) return undefined;
+  if (!ratings) {
+    ratings = new Map();
+    for (const list of Object.values(allSquads)) for (const p of list) ratings.set(p.id, p.rating);
+  }
+  return ratings.get(id);
+}
+
+function TlFace({ pid, name, color }: { pid?: string; name?: string; color: string }) {
+  const rate = ratingOf(pid);
+  const src = pid ? photoOf({ id: pid }) : null;
+  const [bad, setBad] = useState(false);
+  const initials = (name ?? "?").split(" ").map((w) => w[0]).join("").slice(0, 2).toUpperCase();
+  return (
+    <span className="tl-face" style={{ "--k": color } as React.CSSProperties}>
+      {src && !bad ? /* eslint-disable-next-line @next/next/no-img-element */ <img src={src} alt="" loading="lazy" onError={() => setBad(true)} /> : <b>{initials}</b>}
+      {rate !== undefined && <em className="tl-rate">{rate}</em>}
+    </span>
+  );
+}
+
+/** What has happened so far, newest on top: goals, cards and the chances that went begging. */
+function Timeline({ moments, homeName, awayName, homeColor, awayColor }: { moments: Moment[]; homeName: string; awayName: string; homeColor: string; awayColor: string }) {
+  const rows = moments.filter((m) => m.kind === "goal" || m.kind === "chance" || m.kind === "save" || m.kind === "sub" || (m.kind === "foul" && m.card)).slice().reverse();
+  if (!rows.length) return null;
+  return (
+    <section className="tl" aria-label="Match events">
+      <ol>
+        {rows.map((m, i) => {
+          const home = m.team === "home";
+          const color = home ? homeColor : awayColor;
+          const club = home ? homeName : awayName;
+          const minute = `${Math.floor(m.minute)}'`;
+          let body;
+          if (m.kind === "goal") {
+            body = (
+              <div className="tl-card is-goal">
+                <span className="tl-word" aria-hidden="true">{m.pen ? "PEN" : "GOAL"}</span>
+                <TlFace pid={m.pid} name={m.player} color={color} />
+                <span className="tl-who"><strong>{m.player ?? club}</strong>{m.assist ? <small>Assist: {m.assist}</small> : <small>{m.pen ? "Penalty" : club}</small>}</span>
+              </div>
+            );
+          } else if (m.kind === "sub") {
+            body = (
+              <div className="tl-card is-sub">
+                <TlFace pid={m.pid} name={m.player} color={color} />
+                <span className="tl-who">
+                  <strong className="tl-in">IN: {m.player}</strong>
+                  <small className="tl-out">OUT: {m.out}</small>
+                </span>
+              </div>
+            );
+          } else if (m.kind === "foul") {
+            body = (
+              <div className={`tl-card is-card is-${m.card}`}>
+                <i className="tl-pip" aria-hidden="true" />
+                <TlFace pid={m.pid} name={m.by} color={color} />
+                <span className="tl-who"><strong>{m.by ?? club}</strong><small>{m.card === "red" ? "Red card" : "Yellow card"}</small></span>
+              </div>
+            );
+          } else {
+            body = (
+              <div className="tl-card is-miss">
+                <span className="tl-who"><strong>{m.kind === "save" ? "Great save" : "Missed chance"}</strong><small>{club}</small></span>
+                <b className="tl-x" aria-hidden="true">{m.kind === "save" ? "\u2713" : "\u2715"}</b>
+              </div>
+            );
+          }
+          return (
+            <li key={`${m.minute}-${m.kind}-${m.team}-${i}`} className={`tl-row ${home ? "is-home" : "is-away"}`}>
+              <div className="tl-side">{home && body}</div>
+              <span className="tl-min">{minute}</span>
+              <div className="tl-side">{!home && body}</div>
+            </li>
+          );
+        })}
+      </ol>
+    </section>
+  );
+}
+
 /* ---------- the match ---------- */
 
 function Match({
@@ -214,9 +302,9 @@ function Match({
     const list: Moment[] = [];
     let extras = 0;
     data.events.forEach((e, idx) => {
-      if (e.type === "goal" && e.team) list.push({ minute: e.minute, kind: "goal", team: e.team, player: e.player, assist: e.assist, pen: !!e.pen });
+      if (e.type === "goal" && e.team) list.push({ minute: e.minute, kind: "goal", team: e.team, player: e.player, pid: e.playerId, assist: e.assist, pen: !!e.pen });
       else if (e.type === "pen_miss" && e.team) list.push({ minute: e.minute, kind: e.saved ? "save" : "chance", team: e.team, pen: true });
-      else if (e.type === "foul" && e.team) list.push({ minute: e.minute + 0.2, kind: "foul", team: e.team, card: e.card, by: e.player });
+      else if (e.type === "foul" && e.team) list.push({ minute: e.minute + 0.2, kind: "foul", team: e.team, card: e.card, by: e.player, pid: e.playerId });
       else if ((e.type === "chance" || e.type === "save") && extras < 4) {
         extras++;
         list.push({ minute: e.minute, kind: e.type, team: pick(["home", "away"] as const, `${seedBase}|${idx}`) });
@@ -236,6 +324,7 @@ function Match({
   const [cursor, setCursor] = useState(reduced ? moments.length : 0);
   const [stage, setStage] = useState<"kick" | "run" | "build" | "break" | "result" | "end">(reduced ? "end" : "kick");
   const [skipped, setSkipped] = useState(reduced);
+  const [subs, setSubs] = useState<Moment[]>([]);
   const [log, setLog] = useState<Said[]>([]);
   const [now, setNow] = useState<Said | null>(null);
   const [voice, setVoice] = useState(Boolean(opts?.voice));
@@ -377,6 +466,19 @@ function Match({
       try {
         const revised = await halftime.apply(change, { events: data.events, home_score: data.homeScore, away_score: data.awayScore });
         setData({ events: revised.events, homeScore: revised.home_score, awayScore: revised.away_score });
+        // who came on for whom, listed at the break
+        const before = new Set(halftime.starters.map((p) => p.id));
+        const after = new Set(change.starters.map((p) => p.id));
+        const ins = change.starters.filter((p) => !before.has(p.id));
+        const outs = halftime.starters.filter((p) => !after.has(p.id));
+        const used = new Set<string>();
+        setSubs(
+          ins.map((p, n) => {
+            const out = outs.find((o) => o.position === p.position && !used.has(o.id)) ?? outs.find((o) => !used.has(o.id)) ?? outs[n];
+            if (out) used.add(out.id);
+            return { minute: 45.5 + n * 0.01, kind: "sub" as const, team: myIsHome ? ("home" as const) : ("away" as const), player: p.name, pid: p.id, out: out?.name };
+          })
+        );
         say(change.subs ? `تغييرات في الشوط التاني! ${change.subs} ${change.subs > 1 ? "تبديلات" : "تبديل"} ومدرب ${myIsHome ? homeName : awayName} بيغيّر شكل الماتش.` : "المدرب غيّر الأسلوب للشوط التاني!");
       } catch {
         /* the match goes on as it was */
@@ -431,17 +533,6 @@ function Match({
           </div>
         </header>
 
-        {shownMoments.some((m) => m.player) && (
-          <div className="bc-scorers" aria-label="Scorers">
-            <ul>
-              {shownMoments.filter((m) => m.team === "home" && m.player).map((m, i) => <li key={i}>{m.player} {Math.floor(m.minute)}&apos;</li>)}
-            </ul>
-            <ul className="is-away">
-              {shownMoments.filter((m) => m.team === "away" && m.player).map((m, i) => <li key={i}>{m.player} {Math.floor(m.minute)}&apos;</li>)}
-            </ul>
-          </div>
-        )}
-
         <div className="fx-clock" aria-hidden="true">
           <span>{done ? "FT" : `${Math.floor(minute)}'`}</span>
           <i>
@@ -474,6 +565,8 @@ function Match({
             </div>
           )}
         </section>
+
+        <Timeline moments={[...moments.slice(0, revealed), ...(revealed > moments.findIndex((m) => m.kind === "half") ? subs : [])].sort((a, b) => a.minute - b.minute)} homeName={homeName} awayName={awayName} homeColor={kits.home} awayColor={kits.away} />
 
         <ul className="fx-feed bc-log" aria-label="Commentary log" dir="rtl" lang="ar">
           {log.slice(1).map((l) => (

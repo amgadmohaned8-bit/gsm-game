@@ -4,7 +4,9 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import { allClubs as clubs } from "@/lib/football/leagueClubs";
-import { seasonLabel, nextSeason } from "@/lib/football/season";
+import { seasonLabel } from "@/lib/football/season";
+import { resetCareerData } from "@/lib/football/careerReset";
+import { loadCareers, switchCareer } from "@/lib/football/careers";
 import { isCafCup } from "@/lib/football/africa";
 import { squadOf } from "@/lib/football/squads";
 import {
@@ -21,7 +23,6 @@ import {
   qualifyFromLeague,
   recordContWin,
   roundLabel,
-  saveContSetup,
   settleCont,
   GROUP_NAMES,
   type ContMatch,
@@ -134,19 +135,22 @@ export default function ContinentalPage() {
     }
   }
 
-  async function nextYear() {
-    if (!setup || saving) return;
+  /** The competition is over: its slot goes away and you go back to your other team. */
+  async function finishCareer() {
+    if (!setup || !manager || saving) return;
     setSaving(true);
     try {
-      const fresh: ContSetup = { ...setup, season: nextSeason(setup.season) };
-      await saveContSetup(supabase, userId, fresh);
-      setSetup(fresh);
-      setRows([]);
-      await settle(userId, fresh);
+      await resetCareerData(supabase, userId, setup.comp_id, setup.club_id);
+      const others = (await loadCareers(supabase, userId)).filter((c) => c.league_id !== setup.comp_id);
+      if (others.length) {
+        await switchCareer(supabase, userId, { selected_league: manager.selected_league, selected_club: manager.selected_club, room_id: manager.room_id ?? null }, others[0]);
+        router.push("/game/myteams");
+      } else {
+        router.push("/game/leagues");
+      }
     } catch (err) {
       console.error(err);
-      setError("Could not start the next season.");
-    } finally {
+      setError("Could not close this competition. Try again.");
       setSaving(false);
     }
   }
@@ -246,10 +250,14 @@ export default function ContinentalPage() {
                   <p>Your next tie appears when the round before it is finished.</p>
                 </>
               )}
-              {finished && standalone && (
-                <button type="button" className="gx-btn fx-start is-ready" disabled={saving} onClick={nextYear}>
-                  {saving ? "Starting..." : `Play ${seasonLabel(nextSeason(setup.season))}`}
-                </button>
+              {(finished || status.eliminated) && (
+                standalone ? (
+                  <button type="button" className="gx-btn fx-start is-ready" disabled={saving} onClick={finishCareer}>
+                    {saving ? "Closing..." : "Finish and go back to your team"}
+                  </button>
+                ) : (
+                  <button type="button" className="gx-btn fx-start is-ready" onClick={back}>Back to my teams</button>
+                )
               )}
               {error && <p className="fx-error" role="alert">{error}</p>}
             </article>
