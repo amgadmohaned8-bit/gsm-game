@@ -16,7 +16,7 @@ const BAN = 0; // bans now come from real cards (see recordCards)
 const SCALE = 2.5;
 const MAX_BONUS = 10;
 const LAST_DAY = 38;
-const LABELS = ["Hamstring strain", "Ankle sprain", "Knee knock", "Muscle fatigue", "Groin strain", "Calf injury"];
+const LABELS = ["Hamstring strain", "Ankle sprain", "Knee knock", "Muscle strain", "Groin strain", "Calf injury"];
 
 function hash(text: string) {
   let h = 1779033703 ^ text.length;

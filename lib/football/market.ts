@@ -14,7 +14,7 @@
 
 import type { Player, Position } from "@/lib/football/squads";
 
-export type Origin = "LaLiga" | "Bundesliga" | "SerieA" | "Ligue1" | "Saudi" | "Portugal" | "Netherlands" | "Turkey" | "Brazil" | "MLS" | "Prospect" | "Free";
+export type Origin = "LaLiga" | "Bundesliga" | "SerieA" | "Ligue1" | "Saudi" | "Portugal" | "Netherlands" | "Turkey" | "Brazil" | "MLS" | "Icon" | "Star" | "Prospect" | "Free";
 
 export const originLabel: Record<Origin, string> = {
   LaLiga: "La Liga",
@@ -27,6 +27,8 @@ export const originLabel: Record<Origin, string> = {
   Turkey: "Süper Lig",
   Brazil: "Brasileirão",
   MLS: "MLS",
+  Icon: "Icon",
+  Star: "Star",
   Prospect: "Young prospect",
   Free: "Free agent",
 };
@@ -42,7 +44,7 @@ Olise FW FR 24 86 Bundesliga
 Pedri MF ES 23 87 LaLiga
 Raphinha FW BR 29 86 LaLiga
 Dembélé FW FR 29 87 Ligue1
-Vitinha MF PT 26 91 Ligue1
+Vitinha MF PT 26 86 Ligue1
 Nuno_Mendes DF PT 24 85 Ligue1
 Hakimi DF MA 28 85 Ligue1
 Courtois GK BE 34 88 LaLiga
@@ -60,7 +62,7 @@ Militão DF BR 28 82 LaLiga
 Lewandowski FW PL 38 82 LaLiga
 Koundé DF FR 27 84 LaLiga
 Bastoni DF IT 27 84 SerieA
-Alexander-Arnold DF ENG 27 84 LaLiga
+Alexander-Arnold DF ENG 27 83 LaLiga
 Lucas_Moreno MF ES 28 77 LaLiga
 Dani_Bermúdez DF ES 26 76 LaLiga
 Mats_Hoffmann MF DE 27 76 Bundesliga
@@ -95,16 +97,16 @@ Pablo_Nieto GK ES 34 72 Free
 Stefan_Novak MF CZ 31 73 Free
 Carlos_Arriaga FW MX 31 74 Free
 Felix_Baumann DF DE 32 72 Free
-Rodrygo FW BR 25 86 LaLiga Real_Madrid
+Rodrygo FW BR 25 83 LaLiga Real_Madrid
 Arda_Güler MF TR 21 82 LaLiga Real_Madrid
 Camavinga MF FR 23 82 LaLiga Real_Madrid
-Huijsen DF ES 21 82 LaLiga Real_Madrid
+Huijsen DF ES 21 80 LaLiga Real_Madrid
 Endrick FW BR 20 78 LaLiga Real_Madrid
 Fran_García DF ES 26 77 LaLiga Real_Madrid
 Frenkie_de_Jong MF NL 29 82 LaLiga Barcelona
 Pau_Cubarsí DF ES 19 82 LaLiga Barcelona
 Araújo DF UY 27 82 LaLiga Barcelona
-Balde DF ES 22 82 LaLiga Barcelona
+Balde DF ES 22 80 LaLiga Barcelona
 Ter_Stegen GK DE 34 83 LaLiga Barcelona
 Gavi MF ES 21 80 LaLiga Barcelona
 Ferran_Torres FW ES 26 78 LaLiga Barcelona
@@ -112,8 +114,8 @@ Julián_Álvarez FW AR 26 85 LaLiga Atlético_Madrid
 Álex_Baena MF ES 24 81 LaLiga Atlético_Madrid
 Koke MF ES 34 77 LaLiga Atlético_Madrid
 Giménez DF UY 31 79 LaLiga Atlético_Madrid
-Nico_Williams FW ES 24 84 LaLiga Athletic_Club
-Unai_Simón GK ES 28 85 LaLiga Athletic_Club
+Nico_Williams FW ES 24 83 LaLiga Athletic_Club
+Unai_Simón GK ES 28 82 LaLiga Athletic_Club
 Oyarzabal FW ES 29 83 LaLiga Real_Sociedad
 Takefusa_Kubo FW JP 25 79 LaLiga Real_Sociedad
 Álex_Remiro GK ES 31 78 LaLiga Real_Sociedad
@@ -123,12 +125,12 @@ Iago_Aspas FW ES 38 76 LaLiga Celta_Vigo
 Isco MF ES 34 76 LaLiga Real_Betis
 Antony FW BR 26 77 LaLiga Real_Betis
 Luis_Díaz FW CO 29 85 Bundesliga Bayern_Munich
-Upamecano DF FR 27 87 Bundesliga Bayern_Munich
+Upamecano DF FR 27 82 Bundesliga Bayern_Munich
 Davies DF CA 25 81 Bundesliga Bayern_Munich
 Neuer GK DE 40 80 Bundesliga Bayern_Munich
 Gnabry FW DE 31 80 Bundesliga Bayern_Munich
 Guirassy FW GN 30 82 Bundesliga Borussia_Dortmund
-Schlotterbeck DF DE 26 87 Bundesliga Borussia_Dortmund
+Schlotterbeck DF DE 26 82 Bundesliga Borussia_Dortmund
 Kobel GK CH 28 83 Bundesliga Borussia_Dortmund
 Julian_Brandt MF DE 30 80 Bundesliga Borussia_Dortmund
 Jobe_Bellingham MF ENG 20 78 Bundesliga Borussia_Dortmund
@@ -139,7 +141,7 @@ Loïs_Openda FW BE 26 77 Bundesliga RB_Leipzig
 Undav FW DE 29 78 Bundesliga VfB_Stuttgart
 Hakan_Çalhanoğlu MF TR 32 83 SerieA Inter
 Marcus_Thuram FW FR 28 83 SerieA Inter
-Dimarco DF IT 28 86 SerieA Inter
+Dimarco DF IT 28 82 SerieA Inter
 Yann_Sommer GK CH 37 80 SerieA Inter
 Maignan GK FR 31 85 SerieA AC_Milan
 Pulisic FW US 27 82 SerieA AC_Milan
@@ -155,8 +157,8 @@ Lookman FW NG 28 83 SerieA Atalanta
 Dybala FW AR 32 80 SerieA Roma
 Zaccagni MF IT 31 77 SerieA Lazio
 Moise_Kean FW IT 26 80 SerieA Fiorentina
-Doué FW FR 20 86 Ligue1 Paris_Saint-Germain
-João_Neves MF PT 21 88 Ligue1 Paris_Saint-Germain
+Doué FW FR 20 85 Ligue1 Paris_Saint-Germain
+João_Neves MF PT 21 84 Ligue1 Paris_Saint-Germain
 Marquinhos DF BR 32 85 Ligue1 Paris_Saint-Germain
 Zaïre-Emery MF FR 20 81 Ligue1 Paris_Saint-Germain
 Lucas_Chevalier GK FR 24 80 Ligue1 Paris_Saint-Germain
@@ -290,7 +292,52 @@ Mario_Hermoso DF ES 30 78 SerieA Roma
 Evan_Ndicka DF CI 26 79 SerieA Roma
 Alessandro_Buongiorno DF IT 27 80 SerieA Napoli
 Giacomo_Raspadori FW IT 26 77 LaLiga Atlético_Madrid
-Nicolò_Zaniolo MF IT 27 76 SerieA Atalanta`;
+Nicolò_Zaniolo MF IT 27 76 SerieA Atalanta
+Ronaldo_Nazário FW BR 29 97 Icon Inter_Milan
+Diego_Maradona MF AR 29 97 Icon Napoli
+Pelé FW BR 29 97 Icon Santos
+Ronaldinho MF BR 29 96 Icon Barcelona
+Zinedine_Zidane MF FR 29 96 Icon Real_Madrid
+Paolo_Maldini DF IT 29 96 Icon AC_Milan
+Thierry_Henry FW FR 29 95 Icon Arsenal
+Xavi MF ES 29 95 Icon Barcelona
+Andrés_Iniesta MF ES 29 95 Icon Barcelona
+Franz_Beckenbauer DF DE 29 95 Icon Bayern_Munich
+Gianluigi_Buffon GK IT 29 95 Icon Juventus
+Lev_Yashin GK RU 29 95 Icon Dynamo_Moscow
+Cafu DF BR 29 94 Icon AC_Milan
+Roberto_Carlos DF BR 29 94 Icon Real_Madrid
+Fabio_Cannavaro DF IT 29 94 Icon Juventus
+Iker_Casillas GK ES 29 94 Icon Real_Madrid
+Gabriel_Batistuta FW AR 29 94 Icon Fiorentina
+Eric_Cantona FW FR 29 94 Icon Manchester_United
+Rabiot MF FR 31 86 Star AC_Milan
+Mateo_Retegui FW IT 27 85 Star Al_Qadsiah
+Sadio_Mané FW SN 34 84 Star Al_Nassr
+Domenico_Berardi FW IT 31 82 Star Sassuolo
+Edoardo_Rovella MF IT 24 82 Star Lazio
+Alexander_Sörloth FW NO 30 83 Star Atlético_Madrid
+Franck_Kessié MF CI 29 82 Star Al_Ahli
+Marcelo_Brozović MF HR 33 81 Star Al_Nassr
+Fabinho MF BR 32 81 Star Al_Ittihad
+Breel_Embolo FW CH 28 80 Star Rennes
+Niclas_Füllkrug FW DE 33 80 Star AC_Milan
+Memphis_Depay FW NL 32 81 Star Corinthians
+Gabigol FW BR 30 80 Star Cruzeiro
+Ángel_Correa FW AR 31 80 Star Tigres
+Roberto_Firmino FW BR 34 78 Star Al_Ahli
+Hakim_Ziyech MF MA 33 78 Star Galatasaray
+Lorenzo_Insigne FW IT 35 77 Star Toronto_FC
+Hirving_Lozano FW MX 30 78 Star PSV
+Mohamed_Salah FW EG 33 91 Star Trabzonspor
+Rodri MF ES 30 91 Star Barcelona
+Kim_Min-jae DF KR 29 85 Star Bayern_Munich
+Azzedine_Ounahi MF MA 25 78 Star Girona
+Ritsu_Doan MF JP 28 78 Star Eintracht_Frankfurt
+Dominik_Livaković GK HR 31 79 Star Fenerbahçe
+Sardar_Azmoun FW IR 31 77 Star Roma
+Dušan_Tadić FW RS 37 74 Star Fenerbahçe
+Alexis_Sánchez FW CL 37 73 Star Udinese`;
 const EXTRA_FIRST_PERIOD = 10388; // the period in which the first of them arrives
 const EXTRA_PER_PERIOD = 2;
 
@@ -362,13 +409,14 @@ function selection(period: number): Set<string> {
   const hit = periodCache.get(k);
   if (hit) return hit;
   const groups = new Map<string, (Player & { origin: Origin })[]>();
-  for (const p of marketPlayers) if (unlockOf(p.id) <= period) (groups.get(tierOf(p)) ?? groups.set(tierOf(p), []).get(tierOf(p))!).push(p);
+  for (const p of marketPlayers) if (p.origin !== "Star" && p.origin !== "Icon" && unlockOf(p.id) <= period) (groups.get(tierOf(p)) ?? groups.set(tierOf(p), []).get(tierOf(p))!).push(p);
   const out = new Set<string>();
   for (const list of groups.values()) {
     const take = Math.max(1, Math.round(chance(list[0]) * list.length));
     list.sort((x, y) => hashOf(`${k}|${x.id}`) - hashOf(`${k}|${y.id}`)).slice(0, take).forEach((p) => out.add(p.id));
   }
   for (const p of marketPlayers) if (unlockOf(p.id) === period) out.add(p.id); // a new star always arrives on sale
+  for (const p of marketPlayers) if ((p.origin === "Star" || p.origin === "Icon")) out.add(p.id); // the stars and icons are always for sale
   if (periodCache.size > 40) periodCache.clear();
   periodCache.set(k, out);
   return out;

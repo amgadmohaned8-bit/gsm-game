@@ -16,7 +16,6 @@ import {
 } from "@/lib/football/squads";
 import { formatMoney } from "@/lib/football/finance";
 import { bonusFor, slotPositions } from "@/lib/football/strength";
-import { loadFitness, TIRED_BELOW } from "@/lib/football/fitness";
 import { useTransfers } from "@/lib/football/useTransfers";
 import PlayerFace from "@/components/PlayerFace";
 import { photoOf } from "@/lib/football/playerPhotos";
@@ -34,17 +33,6 @@ function tone(rating: number) {
   return rating >= 85 ? "elite" : rating >= 78 ? "high" : rating >= 70 ? "mid" : "low";
 }
 
-/** the tiredness bar: green when fresh, amber when he needs a rest, red when he is worn out */
-function Fit({ value }: { value: number }) {
-  const cls = value < TIRED_BELOW ? "is-low" : value < 85 ? "is-mid" : "";
-  return (
-    <span className={`sq-fit ${cls}`} role="img" aria-label={`Fitness ${value} percent`} title={`Fitness ${value}%`}>
-      <i style={{ width: `${value}%` }} />
-      <small>{value}%</small>
-    </span>
-  );
-}
-
 export default function SquadPage() {
   const router = useRouter();
   const { ctx, loading } = useTransfers();
@@ -56,7 +44,6 @@ export default function SquadPage() {
   const [filter, setFilter] = useState<Filter>("ALL");
   const [subsOpen, setSubsOpen] = useState(false);
   const [note, setNote] = useState("");
-  const [fitness, setFitness] = useState<Record<string, number>>({});
 
   const clubId = ctx?.clubId ?? "";
   const userId = ctx?.userId ?? "";
@@ -87,14 +74,6 @@ export default function SquadPage() {
     setReady(true);
   }, [ctx, ready, players, byId]);
 
-  // how tired everybody is today, from the matches and training they played
-  useEffect(() => {
-    if (!ctx) return;
-    let cancelled = false;
-    loadFitness(supabase, ctx.userId, ctx.season, ctx.matchday ?? 39, ctx.state.training, players).then((f) => { if (!cancelled) setFitness(f); });
-    return () => { cancelled = true; };
-  }, [ctx, players]);
-  const fit = (id: string) => fitness[id] ?? 100;
 
   function save(name: FormationName, ids: string[]) {
     setFormation(name);
@@ -134,7 +113,7 @@ export default function SquadPage() {
   const eleven = starters.map((id) => byId.get(id)!).filter(Boolean);
   const bench = players.filter((p) => !starters.includes(p.id)).sort((a, b) => b.rating - a.rating);
   const rating = teamRating(eleven.length ? eleven : players, formation);
-  const effect = bonusFor(eleven, clubId, fitness, formation);
+  const effect = bonusFor(eleven, clubId, undefined, formation);
   const value = players.reduce((sum, p) => sum + marketValue(p), 0);
   const age = players.length ? players.reduce((s, p) => s + p.age, 0) / players.length : 0;
   const subs = (filter === "ALL" ? bench : bench.filter((p) => p.position === filter));
@@ -158,7 +137,6 @@ export default function SquadPage() {
     return { key: g, list };
   }).reverse();
   const pickedPlayer = picked ? byId.get(picked) ?? null : null;
-  const tiredStarters = eleven.filter((p) => fit(p.id) < TIRED_BELOW).length;
 
   return (
     <main className="sq">
@@ -204,12 +182,11 @@ export default function SquadPage() {
                     className={`sq-dot t-${tone(p.rating)} has-face ${picked === p.id ? "is-picked" : ""} ${p.position !== slots[idx] ? "is-off" : ""}`}
                     onClick={() => tapPlayer(p)}
                     aria-pressed={picked === p.id}
-                    aria-label={`${p.name}, ${p.position}${p.position !== slot ? ` playing as ${slot}` : ""}, rating ${p.rating}, fitness ${fit(p.id)} percent`}>
+                    aria-label={`${p.name}, ${p.position}${p.position !== slot ? ` playing as ${slot}` : ""}, rating ${p.rating}`}>
                     {photoOf(p) ? <PlayerFace player={p} /> : <s className="sq-ph" aria-hidden="true" />}
                     <u className="sq-glass" aria-hidden="true">{p.rating}</u>
                     <i>{p.position !== slot ? `${p.position}>${slot}` : p.position}</i>
                     <span>{p.name}</span>
-                    <Fit value={fit(p.id)} />
                   </button>
                 ))}
               </div>
@@ -219,7 +196,7 @@ export default function SquadPage() {
           <p className="sq-hint" role="status">
             {note || (pickedPlayer
               ? `${pickedPlayer.name} picked. Tap a ${starters.includes(pickedPlayer.id) ? "starter to swap places, or a substitute to bring him on" : "starter to bring him on"}.`
-              : tiredStarters > 0 ? `${tiredStarters} of your starters ${tiredStarters === 1 ? "is" : "are"} tired. Tap a starter, then a substitute, to rest him.` : "Tap a player, then another, to change their places.")}
+              : "Tap a player, then another, to change their places.")}
           </p>
 
           <button type="button" className={`sq-subs-toggle ${subsOpen ? "is-open" : ""}`} aria-expanded={subsOpen} onClick={() => setSubsOpen((v) => !v)}>
@@ -247,16 +224,14 @@ export default function SquadPage() {
                       <i>{p.position}</i>
                       <strong>{p.name}</strong>
                       <small>{p.age} yrs{p.nationality ? ` · ${p.nationality}` : ""}</small>
-                      <Fit value={fit(p.id)} />
-                      <em className={fit(p.id) < TIRED_BELOW ? "is-low" : fit(p.id) < 85 ? "is-mid" : ""}>{fit(p.id) >= 85 ? "Fresh" : fit(p.id) < TIRED_BELOW ? "Tired" : "A bit tired"} · {fit(p.id)}%</em>
-                    </button>
+                      </button>
                   </li>
                 ))}
                 {subs.length === 0 && <li className="sq-foot">No substitutes in this position.</li>}
               </ul>
             </div>
           )}
-          <p className="sq-foot">Ratings and values are game estimates. A tired player plays below his rating.</p>
+          <p className="sq-foot">Ratings and values are game estimates.</p>
         </section>
       </div>
     </main>

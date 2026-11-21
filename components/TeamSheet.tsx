@@ -4,7 +4,6 @@ import { useMemo, useState } from "react";
 import { absenceOn } from "@/lib/football/availability";
 import { bestEleven, formations, type FormationName, type Player } from "@/lib/football/squads";
 import { currentLineup, bonusFor, type DayCtx } from "@/lib/football/strength";
-import { TIRED_BELOW } from "@/lib/football/fitness";
 import "./teamsheet.css";
 
 const GROUPS = ["GK", "DF", "MF", "FW"] as const;
@@ -16,7 +15,6 @@ export default function TeamSheet({
   squad,
   day,
   opponent,
-  fitness,
   onConfirm,
   onCancel,
 }: {
@@ -43,30 +41,11 @@ export default function TeamSheet({
   const starters = ids.map((id) => byId.get(id)).filter(Boolean) as Player[];
   const shape = { GK: 1, ...formations[formation] };
   const rating = starters.length ? Math.round(starters.reduce((s, p) => s + p.rating, 0) / starters.length) : 0;
-  const effect = bonusFor(starters, clubId, fitness, formation);
-  const fit = (id: string) => fitness?.[id] ?? 100;
-  const tiredCount = starters.filter((p) => fit(p.id) < TIRED_BELOW).length;
+  const effect = bonusFor(starters, clubId, undefined, formation);
 
   function pickFormation(f: FormationName) {
     setFormation(f);
     setIds(bestEleven(pool.length >= 14 ? pool : squad, f).map((p) => p.id));
-  }
-
-  /** swap each tired starter for a fresher player of the same position who is almost as good */
-  function rest() {
-    const used = new Set(ids);
-    setIds(
-      ids.map((id) => {
-        const p = byId.get(id)!;
-        if (fit(id) >= TIRED_BELOW) return id;
-        const sub = pool
-          .filter((x) => x.position === p.position && !used.has(x.id) && fit(x.id) >= 85 && x.rating >= p.rating - 5)
-          .sort((a, b) => b.rating - a.rating)[0];
-        if (!sub) return id;
-        used.add(sub.id);
-        return sub.id;
-      })
-    );
   }
 
   function swap(slot: string, next: string) {
@@ -108,13 +87,12 @@ export default function TeamSheet({
                   {line.map((p) => (
                     <label key={p.id} className="ts-slot">
                       <b>{p.rating}</b>
-                      <span className={`ts-fit ${fit(p.id) < TIRED_BELOW ? "is-low" : fit(p.id) < 85 ? "is-mid" : ""}`} title="Fitness"><i style={{ width: `${fit(p.id)}%` }} /></span>
                       <select value={p.id} onChange={(e) => swap(p.id, e.target.value)} aria-label={`${NAMES[g]} slot`}>
                         {pool
                           .filter((x) => x.position === g && (x.id === p.id || !ids.includes(x.id)))
                           .sort((a, b) => b.rating - a.rating)
                           .map((x) => (
-                            <option key={x.id} value={x.id}>{x.name} ({x.rating}) · {fit(x.id)}%</option>
+                            <option key={x.id} value={x.id}>{x.name} ({x.rating})</option>
                           ))}
                       </select>
                     </label>
@@ -132,7 +110,7 @@ export default function TeamSheet({
             </div>
             <h3>Unavailable</h3>
             {out.length === 0 ? (
-              <p className="ts-none">Everyone is fit. No bans.</p>
+              <p className="ts-none">No injuries or bans.</p>
             ) : (
               <ul>
                 {out.map(({ p, a }) => (
@@ -148,7 +126,6 @@ export default function TeamSheet({
 
         <footer>
           <button type="button" className="ts-ghost" onClick={() => pickFormation(formation)}>Pick best eleven</button>
-          {tiredCount > 0 && <button type="button" className="ts-ghost" onClick={rest}>Rest {tiredCount} tired {tiredCount === 1 ? "player" : "players"}</button>}
           <button type="button" className="gx-btn" onClick={confirm}>Confirm and kick off</button>
         </footer>
       </div>
