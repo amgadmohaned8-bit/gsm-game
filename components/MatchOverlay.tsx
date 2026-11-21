@@ -553,7 +553,7 @@ function Match({
           homeColor={kits.home}
           awayColor={kits.away}
           seed={seedBase}
-          ev={!done && current && current.kind !== "half" && (stage === "build" || stage === "result") ? { id: cursor, kind: current.kind, team: current.team, stage: stage === "build" ? "build" : "result", pen: current.pen, card: current.card } : null}
+          ev={!done && current && current.kind !== "half" && current.kind !== "sub" && (stage === "build" || stage === "result") ? { id: cursor, kind: current.kind, team: current.team, stage: stage === "build" ? "build" : "result", pen: current.pen, card: current.card } : null}
         />
 
         <section className="bc-booth" aria-label="Commentary">
