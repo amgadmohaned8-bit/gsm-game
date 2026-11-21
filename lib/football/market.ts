@@ -53,7 +53,7 @@ Valverde MF UY 28 87 LaLiga
 Kimmich MF DE 31 86 Bundesliga
 Lautaro FW AR 28 87 SerieA
 Osimhen FW NG 27 86 SerieA
-Kvaratskhelia FW GE 25 86 Ligue1
+Kvaratskhelia FW GE 25 89 Ligue1
 Leão FW PT 27 84 SerieA
 Barella MF IT 29 84 SerieA
 Tchouaméni MF FR 26 84 LaLiga
