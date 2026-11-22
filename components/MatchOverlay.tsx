@@ -4,7 +4,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { allClubs as clubs } from "@/lib/football/leagueClubs";
 import type { MatchEvent } from "@/lib/football/matchSim";
 import { buildLine, foulBuildLine, foulLine, fullTimeLine, goalLine, halfLine, kickoffLine, missLine, penBuildLine, penGoalLine, penMissLine, pick, studioScript, type Line } from "@/lib/football/commentary";
-import PitchView from "@/components/PitchView";
+import PitchView, { type VarCheck } from "@/components/PitchView";
 import { photoOf } from "@/lib/football/playerPhotos";
 import { matchKits } from "@/lib/football/kits";
 import "@/app/game/fixtures/fixtures.css";
@@ -322,6 +322,7 @@ function Match({
   const gap = (ms: number) => (fast ? Math.round(ms * 0.45) : ms);
   const [minute, setMinute] = useState(reduced ? 90 : 0);
   const [cursor, setCursor] = useState(reduced ? moments.length : 0);
+  const [varCheck, setVarCheck] = useState<VarCheck | null>(null);
   const [stage, setStage] = useState<"kick" | "run" | "build" | "break" | "result" | "end">(reduced ? "end" : "kick");
   const [skipped, setSkipped] = useState(reduced);
   const [subs, setSubs] = useState<Moment[]>([]);
@@ -389,7 +390,18 @@ function Match({
         if (current.kind === "foul") sfx("foul");
         else { sfx("kick"); setTimeout(() => sfx("chance"), 250); }
         say(current.kind === "foul" ? foulBuildLine(name, `${seedBase}|${cursor}|b`) : current.pen ? penBuildLine(name, `${seedBase}|${cursor}|b`) : buildLine(name, `${seedBase}|${cursor}|b`));
-        timers.push(setTimeout(() => setStage("result"), gap(2300)));
+        // the VAR looks at a part of the goals, at every penalty and at every red card before the decision comes
+        const looks = !fast && (current.kind === "goal" && (current.pen || pick([true, false, false, true, false], `${seedBase}|${cursor}|var`))) || (!fast && current.kind === "foul" && current.card === "red");
+        if (looks) {
+          const check: VarCheck = { kind: current.kind === "goal" ? "goal" : "card", pen: current.pen };
+          timers.push(setTimeout(() => {
+            setVarCheck(check);
+            say(pick(["لحظة… الحكم بيراجع اللقطة مع الفار", "الفار بيراجع اللقطة، استنوا القرار", "في مراجعة من الفار… نستنى"], `${seedBase}|${cursor}|vs`));
+            timers.push(setTimeout(() => { setVarCheck(null); setStage("result"); }, gap(3000)));
+          }, gap(2300)));
+        } else {
+          timers.push(setTimeout(() => setStage("result"), gap(2300)));
+        }
       }
     } else if (stage === "result" && current) {
       const name = current.team === "home" ? homeName : awayName;
@@ -550,6 +562,7 @@ function Match({
         )}
 
         <PitchView
+          check={!done ? varCheck : null}
           homeColor={kits.home}
           awayColor={kits.away}
           seed={seedBase}

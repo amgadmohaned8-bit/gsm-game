@@ -8,7 +8,7 @@ import { supabase } from "@/lib/supabase";
 import { allClubs as clubs, clubsOfLeague, leagueOfClub } from "@/lib/football/leagueClubs";
 import { getTier } from "@/lib/football/finance";
 import { marketValue, teamRating, type Player, type Position } from "@/lib/football/squads";
-import { nextRefresh, originOf, visibleMarket } from "@/lib/football/market";
+import { hiddenOrigin, nextRefresh, originOf, visibleMarket } from "@/lib/football/market";
 import {
   MARKET,
   askingPrice,
@@ -127,13 +127,14 @@ export default function TransfersPage() {
   const onSale = useMemo(() => {
     if (!ctx || !squads) return { list: [] as Player[], isNew: new Set<string>(), leaving: new Set<string>() };
     const stock = new Map((squads[MARKET] ?? []).map((p) => [p.id, p]));
-    const entries = (now ? visibleMarket(now) : []).filter((e) => stock.has(e.player.id));
+    const hide = hiddenOrigin(leagueId);
+    const entries = (now ? visibleMarket(now) : []).filter((e) => stock.has(e.player.id) && e.player.origin !== hide);
     return {
       list: entries.map((e) => stock.get(e.player.id)!),
       isNew: new Set(entries.filter((e) => e.isNew).map((e) => e.player.id)),
       leaving: new Set(entries.filter((e) => e.leaving).map((e) => e.player.id)),
     };
-  }, [ctx, squads, now]);
+  }, [ctx, squads, now, leagueId]);
 
   const targets = useMemo(() => {
     if (!ctx || !squads) return [];
@@ -271,7 +272,6 @@ export default function TransfersPage() {
 
   /** sell at once for a lower price: the way to get money before a signing */
   function quickSell(player: Player) {
-    if (confirm !== player.id) return setConfirm(player.id);
     const why = canSell(mine, player);
     if (why) return setNotice(why);
     if (!window.open) return setNotice("The transfer window is closed.");
@@ -519,8 +519,8 @@ export default function TransfersPage() {
                           ) : (
                             <button type="button" className="tx-btn is-ghost" onClick={() => setSell(p)}>List</button>
                           )}
-                          <button type="button" className={`tx-btn ${confirm === p.id ? "is-sure" : ""}`} disabled={busy === p.id || !window.open} onClick={() => quickSell(p)}>
-                            {busy === p.id ? "Selling..." : confirm === p.id ? `Confirm ${money(quick)}` : `Sell now ${money(quick)}`}
+                          <button type="button" className="tx-btn" disabled={busy === p.id || !window.open} onClick={() => quickSell(p)}>
+                            {busy === p.id ? "Selling..." : `Sell now ${money(quick)}`}
                           </button>
                         </span>
                       </li>

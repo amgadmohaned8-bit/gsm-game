@@ -12,13 +12,15 @@ export type PitchEvent = {
   card?: "yellow" | "red";
 };
 
-type Props = { homeColor: string; awayColor: string; ev: PitchEvent | null; seed: string };
+/** the VAR is looking at a goal or a red card */
+export type VarCheck = { kind: "goal" | "card"; pen?: boolean };
+type Props = { homeColor: string; awayColor: string; ev: PitchEvent | null; seed: string; check?: VarCheck | null };
 
 // 4-3-3, attacking to the right. x 0-105, y 0-68
 const HOME: [number, number][] = [[24, 10], [24, 25], [24, 43], [24, 58], [45, 17], [45, 34], [45, 51], [68, 12], [68, 34], [68, 56]];
 const mirror = (p: [number, number]): [number, number] => [105 - p[0], p[1]];
 
-export default function PitchView({ homeColor, awayColor, ev, seed }: Props) {
+export default function PitchView({ homeColor, awayColor, ev, seed, check }: Props) {
   const away = useMemo(() => HOME.map(mirror), []);
   const atk = ev?.team ?? null; // attacking side
   const dir = atk === "home" ? 1 : -1;
@@ -43,6 +45,18 @@ export default function PitchView({ homeColor, awayColor, ev, seed }: Props) {
   } else if (ev && ev.kind === "foul") {
     bx = atk === "home" ? 76 : 29; by = 40;
   }
+
+  // the shot as the goal sees it: the frame is 100 wide, the posts at 14 and 86, the bar at 8, the grass at 38
+  const hi = pick([15, 21, 28], key + "h");
+  const shotKind: "goal" | "save" | "over" | "post" | "wide" | null = ev && ev.kind !== "foul" ? (ev.kind === "goal" ? "goal" : ev.kind === "save" ? "save" : (missWay as "over" | "post" | "wide")) : null;
+  let tx = 50, ty = 24;
+  if (shotKind === "goal") { tx = 50 + off * 9; ty = hi; }
+  else if (shotKind === "save") { tx = 50 + off * 7; ty = 24; }
+  else if (shotKind === "over") { tx = 50 + off * 8; ty = -6; }
+  else if (shotKind === "post") { tx = wide > 0 ? 86 : 14; ty = 22; }
+  else if (shotKind === "wide") { tx = wide > 0 ? 97 : 3; ty = 20; }
+  const keeperX = shotKind === "save" ? tx : shotKind === "goal" ? 50 - Math.sign(off) * 22 : 50;
+  const start = { x: goalX === 105 ? 80 : 25, y: 34 + off * 3 };
 
   const shift = (side: "home" | "away") => {
     if (!ev) return 0;
@@ -91,12 +105,40 @@ export default function PitchView({ homeColor, awayColor, ev, seed }: Props) {
           </g>
         )}
 
+        {/* the line of the shot: gold into the goal, red when it is lost */}
+        {res && shotKind && (
+          <line key={`t${ev?.id}`} x1={start.x} y1={start.y} x2={bx} y2={by} className={`pv-trail ${shotKind === "goal" ? "is-goal" : shotKind === "save" ? "is-save" : "is-miss"}`} pathLength={1} />
+        )}
+
         {/* the ball */}
         <g key={ev ? `${ev.id}${ev.stage}` : "idle"} className={`pv-ball ${ev ? "" : "is-idle"} ${res ? "is-shot" : ""}`} style={{ transform: `translate(${bx}px, ${by}px) scale(${bs})`, opacity: bo, ["--bc" as string]: color }}>
           <circle r="2.6" className="pv-glow" />
           <circle r="1.15" fill="#fff" stroke="#111" strokeWidth=".3" />
         </g>
       </svg>
+      {ev && ev.kind !== "foul" && (
+        <div className={`pv-cam ${res && shotKind ? (shotKind === "goal" ? "is-goal" : shotKind === "save" ? "is-save" : "is-miss") : ""}`}>
+          <svg viewBox="0 0 100 44">
+            <defs><pattern id="pv-mesh" width="5" height="5" patternUnits="userSpaceOnUse"><path d="M5 0H0V5" fill="none" stroke="rgba(255,255,255,.28)" strokeWidth=".4" /></pattern></defs>
+            <rect x="0" y="0" width="100" height="44" fill="#0c2415" />
+            <rect x="14" y="8" width="72" height="30" fill="url(#pv-mesh)" className={res && shotKind === "goal" ? "pv-mesh-hit" : ""} />
+            <line x1="0" y1="38" x2="100" y2="38" stroke="rgba(255,255,255,.5)" strokeWidth=".6" />
+            <circle cx={keeperX} cy="31" r="3.4" fill={atk === "home" ? awayColor : homeColor} stroke="#ffd23f" strokeWidth=".9" style={{ transition: "cx .45s cubic-bezier(.2,.8,.2,1)" }} />
+            <path d="M14 38V8H86V38" fill="none" stroke="#fff" strokeWidth="2" strokeLinejoin="round" />
+            <g key={`${ev.id}${ev.stage}`} className="pv-cam-ball" style={{ transform: res && shotKind ? `translate(${tx}px, ${ty}px) scale(${shotKind === "over" ? 1.4 : 1})` : "translate(50px, 52px) scale(.35)", opacity: res && shotKind === "over" ? 0.2 : 1 }}>
+              <circle r="2.6" fill="#fff" stroke="#111" strokeWidth=".5" />
+            </g>
+          </svg>
+        </div>
+      )}
+      {check && (
+        <div className="pv-var" role="status" key={`var${ev?.id ?? 0}`}>
+          <i className="pv-var-scan" />
+          <b className="pv-var-logo">VAR</b>
+          <span className="pv-var-wait">CHECKING<em>.</em><em>.</em><em>.</em></span>
+          <span className="pv-var-ok">{check.kind === "goal" ? (check.pen ? "PENALTY CONFIRMED" : "GOAL CONFIRMED") : "RED CARD CONFIRMED"}</span>
+        </div>
+      )}
       {(label || buildLabel) && (
         <span className={`pv-tag ${label ? "is-result" : ""} ${ev?.kind === "goal" && res ? "is-goal" : ""}`} key={`${ev?.id}${ev?.stage}`} style={{ [dir > 0 ? "right" : "left"]: 10 } as React.CSSProperties}>{label ?? buildLabel}</span>
       )}
