@@ -16,7 +16,9 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { allClubs } from "@/lib/football/leagueClubs";
 import { CAF_CUPS, EGYPT_LEAGUE, type CafCup } from "@/lib/football/africa";
-import { getRating, simulateFixture, type SimulationResult } from "@/lib/football/matchSim";
+import { getRating, simulateFixture, type SimOptions, type SimulationResult } from "@/lib/football/matchSim";
+import { matchup, aiStyle } from "@/lib/football/tactics";
+import type { SimContext } from "@/lib/football/strength";
 import { nextSeason } from "@/lib/football/season";
 import { calculateStandings, type Match } from "@/lib/football/table";
 
@@ -161,8 +163,22 @@ export function knockoutPairs(roundNo: number, rows: ContMatch[], groups: string
 
 const nameOf = (id: string) => allClubs.find((c) => c.id === id)?.name ?? id;
 
-export function simulateContMatch(userId: string, season: string, compId: string, roundNo: number, home: string, away: string): ContResult {
-  const base = simulateFixture({ leagueKey: `${userId}:${compId}`, season, matchday: 200 + roundNo, homeClub: home, awayClub: away });
+/** The manager's own club in a cup match: its squad strength, its signings and its style count, like in the league. */
+function simOptions(home: string, away: string, sim?: SimContext): SimOptions {
+  if (!sim?.myClub) return {};
+  const mine = sim.myClub === home ? "home" : sim.myClub === away ? "away" : null;
+  if (!mine) return {};
+  const style = sim.style;
+  const edge = style ? matchup(style, aiStyle(mine === "home" ? away : home)) : 0;
+  const bonus = (sim.bonus[sim.myClub] ?? 0) + edge;
+  return {
+    squads: sim.squads,
+    ...(mine === "home" ? { homeBonus: bonus, ...(style ? { homeStyle: style, awayStyle: aiStyle(away) } : {}) } : { awayBonus: bonus, ...(style ? { awayStyle: style, homeStyle: aiStyle(home) } : {}) }),
+  };
+}
+
+export function simulateContMatch(userId: string, season: string, compId: string, roundNo: number, home: string, away: string, options: SimOptions = {}): ContResult {
+  const base = simulateFixture({ leagueKey: `${userId}:${compId}`, season, matchday: 200 + roundNo, homeClub: home, awayClub: away, ...options });
   if (isGroupRound(roundNo)) return { ...base, pens_home: null, pens_away: null, winner: base.home_score === base.away_score ? null : base.home_score > base.away_score ? home : away };
 
   if (base.home_score !== base.away_score) {
@@ -183,8 +199,8 @@ export function simulateContMatch(userId: string, season: string, compId: string
   return { ...base, events, pens_home: homeWins ? high : low, pens_away: homeWins ? low : high, winner };
 }
 
-async function saveMatch(client: SupabaseClient, m: ContMatch, userId: string, playedAt: string) {
-  const result = simulateContMatch(userId, m.season, m.comp_id, m.round_no, m.home_club, m.away_club);
+async function saveMatch(client: SupabaseClient, m: ContMatch, userId: string, playedAt: string, sim?: SimContext) {
+  const result = simulateContMatch(userId, m.season, m.comp_id, m.round_no, m.home_club, m.away_club, simOptions(m.home_club, m.away_club, sim));
   const { error } = await client
     .from("continental_matches")
     .update({ home_score: result.home_score, away_score: result.away_score, pens_home: result.pens_home, pens_away: result.pens_away, winner: result.winner, status: "completed", played_at: playedAt })
@@ -197,13 +213,13 @@ async function saveMatch(client: SupabaseClient, m: ContMatch, userId: string, p
 }
 
 /** Plays every match of a round together, the manager's included. */
-export async function playContRound(client: SupabaseClient, all: ContMatch[], roundNo: number, myClub: string, userId: string): Promise<PlayedContRound> {
+export async function playContRound(client: SupabaseClient, all: ContMatch[], roundNo: number, myClub: string, userId: string, sim?: SimContext): Promise<PlayedContRound> {
   const todo = all.filter((m) => m.round_no === roundNo && m.status === "scheduled");
   const playedAt = new Date().toISOString();
   const out: PlayedContRound = { mine: null, others: [] };
   await Promise.all(
     todo.map(async (m) => {
-      const entry = await saveMatch(client, m, userId, playedAt);
+      const entry = await saveMatch(client, m, userId, playedAt, m.home_club === myClub || m.away_club === myClub ? sim : undefined);
       if (m.home_club === myClub || m.away_club === myClub) out.mine = entry;
       else out.others.push(entry);
     })

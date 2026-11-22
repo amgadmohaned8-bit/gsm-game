@@ -115,6 +115,7 @@ export async function loadSim(
   try {
     const state = await withTimeout(loadTransferState(client, opts.userId, opts.clubId, opts.season, opts.matchday, opts.leagueId ?? undefined), 8000);
     if (opts.matchday !== null) squads = squadsAt(state.deals, opts.season, opts.matchday, state.training, { club: opts.clubId, renewals: state.renewals });
+    else squads = state.squads; // a cup or European match: the club as it is today, signings included
     const mySquad = state.squads[opts.clubId] ?? [];
     if (opts.matchday !== null) fitness = await withTimeout(loadFitness(client, opts.userId, opts.season, opts.matchday, state.training, mySquad), 6000).catch(() => ({}));
     const day = opts.matchday !== null ? { key: opts.roomId ?? opts.userId, season: opts.season, matchday: opts.matchday, fit: fitness } : undefined;

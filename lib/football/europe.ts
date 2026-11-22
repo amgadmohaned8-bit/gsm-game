@@ -21,7 +21,9 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { allClubs } from "@/lib/football/leagueClubs";
 import { UCL_CLUBS, UEL_CLUBS } from "@/lib/football/europeClubs";
 import { clubs as premierClubs } from "@/lib/football/clubs";
-import { getRating, simulateFixture, type SimulationResult } from "@/lib/football/matchSim";
+import { getRating, simulateFixture, type SimOptions, type SimulationResult } from "@/lib/football/matchSim";
+import { matchup, aiStyle } from "@/lib/football/tactics";
+import type { SimContext } from "@/lib/football/strength";
 import { nextSeason } from "@/lib/football/season";
 import { calculateStandings, type Match } from "@/lib/football/table";
 
@@ -241,8 +243,22 @@ export function stagePairs(first: number, rows: EuroMatch[], entrants: string[])
 
 const nameOf = (id: string) => allClubs.find((c) => c.id === id)?.name ?? id;
 
-export function simulateEuroMatch(userId: string, season: string, compId: string, roundNo: number, home: string, away: string, leg1?: EuroMatch | null): EuroResult {
-  const base = simulateFixture({ leagueKey: `${userId}:${compId}`, season, matchday: 300 + roundNo, homeClub: home, awayClub: away });
+/** The manager's own club in a cup match: its squad strength, its signings and its style count, like in the league. */
+function simOptions(home: string, away: string, sim?: SimContext): SimOptions {
+  if (!sim?.myClub) return {};
+  const mine = sim.myClub === home ? "home" : sim.myClub === away ? "away" : null;
+  if (!mine) return {};
+  const style = sim.style;
+  const edge = style ? matchup(style, aiStyle(mine === "home" ? away : home)) : 0;
+  const bonus = (sim.bonus[sim.myClub] ?? 0) + edge;
+  return {
+    squads: sim.squads,
+    ...(mine === "home" ? { homeBonus: bonus, ...(style ? { homeStyle: style, awayStyle: aiStyle(away) } : {}) } : { awayBonus: bonus, ...(style ? { awayStyle: style, homeStyle: aiStyle(home) } : {}) }),
+  };
+}
+
+export function simulateEuroMatch(userId: string, season: string, compId: string, roundNo: number, home: string, away: string, leg1?: EuroMatch | null, options: SimOptions = {}): EuroResult {
+  const base = simulateFixture({ leagueKey: `${userId}:${compId}`, season, matchday: 300 + roundNo, homeClub: home, awayClub: away, ...options });
   const none = { pens_home: null, pens_away: null };
   if (isLeagueRound(roundNo)) return { ...base, ...none, winner: null };
   if (isFirstLeg(roundNo)) return { ...base, ...none, winner: null };
@@ -274,8 +290,8 @@ export function simulateEuroMatch(userId: string, season: string, compId: string
   return { ...base, events, pens_home: homeWins ? high : low, pens_away: homeWins ? low : high, winner };
 }
 
-async function saveMatch(client: SupabaseClient, m: EuroMatch, userId: string, playedAt: string, leg1: EuroMatch | null) {
-  const result = simulateEuroMatch(userId, m.season, m.comp_id, m.round_no, m.home_club, m.away_club, leg1);
+async function saveMatch(client: SupabaseClient, m: EuroMatch, userId: string, playedAt: string, leg1: EuroMatch | null, sim?: SimContext) {
+  const result = simulateEuroMatch(userId, m.season, m.comp_id, m.round_no, m.home_club, m.away_club, leg1, simOptions(m.home_club, m.away_club, sim));
   const { error } = await client
     .from("euro_matches")
     .update({ home_score: result.home_score, away_score: result.away_score, pens_home: result.pens_home, pens_away: result.pens_away, winner: result.winner, status: "completed", played_at: playedAt })
@@ -288,14 +304,14 @@ async function saveMatch(client: SupabaseClient, m: EuroMatch, userId: string, p
 }
 
 /** Plays every match of a round together, the manager's included. */
-export async function playEuroRound(client: SupabaseClient, all: EuroMatch[], roundNo: number, myClub: string, userId: string): Promise<PlayedEuroRound> {
+export async function playEuroRound(client: SupabaseClient, all: EuroMatch[], roundNo: number, myClub: string, userId: string, sim?: SimContext): Promise<PlayedEuroRound> {
   const todo = all.filter((m) => m.round_no === roundNo && m.status === "scheduled");
   const playedAt = new Date().toISOString();
   const out: PlayedEuroRound = { mine: null, others: [] };
   await Promise.all(
     todo.map(async (m) => {
       const leg1 = isSecondLeg(roundNo) ? all.find((x) => x.round_no === roundNo - 1 && x.slot === m.slot) ?? null : null;
-      const entry = await saveMatch(client, m, userId, playedAt, leg1);
+      const entry = await saveMatch(client, m, userId, playedAt, leg1, m.home_club === myClub || m.away_club === myClub ? sim : undefined);
       if (m.home_club === myClub || m.away_club === myClub) out.mine = entry;
       else out.others.push(entry);
     })
