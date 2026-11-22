@@ -1,3 +1,4 @@
+
 "use client";
 
 import { baseLeague } from "@/lib/football/leagueIds";
@@ -89,7 +90,7 @@ const navigation: {
   href?: string;
   action?: "room" | "press";
 }[] = [
-  { icon: "user", label: "Manager", note: "Management, board room and trophies", active: false, href: "/game/manager" },
+  { icon: "user", label: "Manager", note: "Your office and the manager", active: false, href: "/game/management" },
   { icon: "table", label: "League", note: "Table and form", active: false, href: "/game/standings" },
   { icon: "calendar", label: "Fixtures", note: "Every matchday", active: false, href: "/game/fixtures" },
   { icon: "squad", label: "Lineups", note: "Players, formation and tactics", active: false, href: "/game/squad" },
@@ -428,7 +429,7 @@ export default function DashboardPage() {
             <button
               type="button"
               className="hub-manager"
-              onClick={() => router.push("/game/manager")}
+              onClick={() => router.push("/game/management")}
               aria-label="Open your manager page"
             >
               {manager.avatar ? (
@@ -538,7 +539,7 @@ export default function DashboardPage() {
           </button>
 
           {/* manager */}
-          <button type="button" className="hq-tile hq-mgr" style={{ "--i": 5 } as CSSProperties} onClick={() => router.push("/game/manager")} aria-label="Open your manager page">
+          <button type="button" className="hq-tile hq-mgr" style={{ "--i": 5 } as CSSProperties} onClick={() => router.push("/game/management")} aria-label="Open your manager page">
             <h2><Icon name="user" size={20} /> Manager</h2>
             <span className="hq-mgr-body">
               {manager.avatar ? <img src={manager.avatar} alt="" /> : <span className="hub-avatar">GSM</span>}

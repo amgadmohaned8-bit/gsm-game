@@ -8,21 +8,19 @@ import { allClubs as clubs } from "@/lib/football/leagueClubs";
 import {
   bestEleven,
   formations,
-  marketValue,
   teamRating,
   type FormationName,
   type Player,
   type Position,
 } from "@/lib/football/squads";
-import { formatMoney } from "@/lib/football/finance";
 import { bonusFor, slotPositions } from "@/lib/football/strength";
 import { useTransfers } from "@/lib/football/useTransfers";
 import PlayerFace from "@/components/PlayerFace";
 import { photoOf } from "@/lib/football/playerPhotos";
 import GsmMark from "@/components/GsmMark";
-import GameHud from "@/components/GameHud";
 import Icon from "@/components/Icon";
 import "./squad.css";
+import "./lineup.css";
 
 type Filter = "ALL" | Position;
 
@@ -42,6 +40,8 @@ export default function SquadPage() {
   const [ready, setReady] = useState(false);
   const [picked, setPicked] = useState<string | null>(null);
   const [filter, setFilter] = useState<Filter>("ALL");
+  const [showAll, setShowAll] = useState(false);
+  const [formsOpen, setFormsOpen] = useState(false);
   const [subsOpen, setSubsOpen] = useState(false);
   const [note, setNote] = useState("");
 
@@ -114,9 +114,10 @@ export default function SquadPage() {
   const bench = players.filter((p) => !starters.includes(p.id)).sort((a, b) => b.rating - a.rating);
   const rating = teamRating(eleven.length ? eleven : players, formation);
   const effect = bonusFor(eleven, clubId, undefined, formation);
-  const value = players.reduce((sum, p) => sum + marketValue(p), 0);
-  const age = players.length ? players.reduce((s, p) => s + p.age, 0) / players.length : 0;
-  const subs = (filter === "ALL" ? bench : bench.filter((p) => p.position === filter));
+  // the chosen bench: the best of each position (one goalkeeper, two of every other line)
+  const BENCH: Record<Position, number> = { GK: 1, DF: 2, MF: 2, FW: 2 };
+  const chosen = ORDER.map((g) => ({ g, list: bench.filter((p) => p.position === g).slice(0, BENCH[g]) }));
+  const everyone = filter === "ALL" ? bench : bench.filter((p) => p.position === filter);
 
   if (loading || !ctx || !ready) {
     return (
@@ -138,102 +139,123 @@ export default function SquadPage() {
   }).reverse();
   const pickedPlayer = picked ? byId.get(picked) ?? null : null;
 
+  const roleName: Record<Position, string> = { GK: "Goalkeeper", DF: "Defender", MF: "Midfielder", FW: "Forward" };
+  const groupName: Record<Position, string> = { GK: "Goalkeepers", DF: "Defenders", MF: "Midfielders", FW: "Forwards" };
+
+  /** a substitute was tapped in the sheet: swap with the picked starter, or pick him and go back to the pitch */
+  function tapSub(p: Player) {
+    tapPlayer(p);
+    setSubsOpen(false);
+  }
+
+  const card = (p: Player, opts: { slot?: Position; small?: boolean; onTap: () => void }) => {
+    const off = opts.slot && p.position !== opts.slot;
+    return (
+      <button key={p.id} type="button"
+        className={`lu-card t-${tone(p.rating)} ${opts.small ? "is-small" : ""} ${picked === p.id ? "is-picked" : ""} ${off ? "is-off" : ""}`}
+        onClick={opts.onTap}
+        aria-pressed={picked === p.id}
+        aria-label={`${p.name}, ${p.position}${off ? ` playing as ${opts.slot}` : ""}, rating ${p.rating}`}>
+        {photoOf(p) ? <PlayerFace player={p} /> : <s className="lu-ph" aria-hidden="true" />}
+        <em className="lu-pos">{off ? `${p.position}>${opts.slot}` : p.position}</em>
+        <b className="lu-rate">{p.rating}</b>
+        <span className="lu-name">{p.name}</span>
+      </button>
+    );
+  };
+
   return (
-    <main className="sq">
-      <div className="gx-curtain" aria-hidden="true" />
-      <div className="sq-bg gx-kb" aria-hidden="true" />
-      <div className="sq-shade" aria-hidden="true" />
-      <GameHud onBack={() => router.push("/game/dashboard")} />
+    <main className="lu">
+      <div className="lu-bg" aria-hidden="true" />
 
-      <div className="sq-wrap">
-        <header className="sq-head">
-          <div>
-            <p>{club?.name}</p>
-            <h1><span className="gx-slant">Lineups</span></h1>
-          </div>
-          <dl className="sq-kpis">
-            <div><dt>Team rating</dt><dd>{rating}</dd></div>
-            <div title="How much this eleven moves your club rating in matches"><dt>Match effect</dt><dd>{effect > 0 ? "+" : ""}{effect.toFixed(1)}</dd></div>
-            <div><dt>Players</dt><dd>{players.length}</dd></div>
-            <div><dt>Average age</dt><dd>{age.toFixed(1)}</dd></div>
-            <div><dt>Squad value</dt><dd>{formatMoney(value * 1_000_000)}</dd></div>
-          </dl>
-        </header>
-
-        <section className="sq-pitch-card sq-one gx-cut" aria-label="Starting eleven">
-          <button type="button" className="sq-tactics" onClick={() => router.push("/game/tactics")}>
-            <Icon name="tactics" size={20} />
-            <span><b>Tactics</b><small>Style, press and shape</small></span>
-          </button>
-          <div className="sq-forms" role="radiogroup" aria-label="Formation">
-            {formationNames.map((f) => (
-              <button key={f} type="button" role="radio" aria-checked={f === formation}
-                className={f === formation ? "is-on" : ""} onClick={() => changeFormation(f)}>
-                {f}
-              </button>
-            ))}
-          </div>
-
-          <div className="sq-pitch">
-            {lines.map((line) => (
-              <div key={line.key} className="sq-line">
-                {line.list.map(({ slot, idx, p }) => p && (
-                  <button key={p.id} type="button"
-                    className={`sq-dot t-${tone(p.rating)} has-face ${picked === p.id ? "is-picked" : ""} ${p.position !== slots[idx] ? "is-off" : ""}`}
-                    onClick={() => tapPlayer(p)}
-                    aria-pressed={picked === p.id}
-                    aria-label={`${p.name}, ${p.position}${p.position !== slot ? ` playing as ${slot}` : ""}, rating ${p.rating}`}>
-                    {photoOf(p) ? <PlayerFace player={p} /> : <s className="sq-ph" aria-hidden="true" />}
-                    <u className="sq-glass" aria-hidden="true">{p.rating}</u>
-                    <i>{p.position !== slot ? `${p.position}>${slot}` : p.position}</i>
-                    <span>{p.name}</span>
+      <header className="lu-top">
+        <button type="button" className="lu-icon" onClick={() => router.push("/game/dashboard")} aria-label="Back to the dashboard">
+          <Icon name="arrow-left" size={22} />
+        </button>
+        <div className="lu-title">
+          <small>{club?.name}</small>
+          <strong>Lineups</strong>
+        </div>
+        <dl className="lu-kpis">
+          <div><dt>Rating</dt><dd>{rating}</dd></div>
+          <div title="How much this eleven moves your club rating in matches"><dt>Effect</dt><dd className={effect >= 0 ? "is-up" : "is-down"}>{effect > 0 ? "+" : ""}{effect.toFixed(1)}</dd></div>
+        </dl>
+        <div className="lu-actions">
+          <div className="lu-formwrap">
+            <button type="button" className="lu-btn" aria-haspopup="listbox" aria-expanded={formsOpen} onClick={() => setFormsOpen((v) => !v)}>
+              <Icon name="table" size={18} /><span>{formation}</span>
+            </button>
+            {formsOpen && (
+              <div className="lu-forms" role="listbox" aria-label="Formation">
+                {formationNames.map((f) => (
+                  <button key={f} type="button" role="option" aria-selected={f === formation} className={f === formation ? "is-on" : ""}
+                    onClick={() => { changeFormation(f); setFormsOpen(false); }}>
+                    {f}
                   </button>
                 ))}
               </div>
-            ))}
+            )}
           </div>
-
-          <p className="sq-hint" role="status">
-            {note || (pickedPlayer
-              ? `${pickedPlayer.name} picked. Tap a ${starters.includes(pickedPlayer.id) ? "starter to swap places, or a substitute to bring him on" : "starter to bring him on"}.`
-              : "Tap a player, then another, to change their places.")}
-          </p>
-
-          <button type="button" className={`sq-subs-toggle ${subsOpen ? "is-open" : ""}`} aria-expanded={subsOpen} onClick={() => setSubsOpen((v) => !v)}>
-            <strong>Subs</strong>
-            <span>{bench.length} players</span>
-            <i aria-hidden="true" />
+          <button type="button" className="lu-btn" onClick={() => router.push("/game/tactics")}>
+            <Icon name="tactics" size={18} /><span>Tactics</span>
           </button>
+          <button type="button" className="lu-btn is-gold" onClick={() => setSubsOpen(true)}>
+            <Icon name="squad" size={18} /><span>Subs</span><b>{bench.length}</b>
+          </button>
+        </div>
+      </header>
 
-          {subsOpen && (
-            <div className="sq-subs">
-              <div className="sq-tabs" role="tablist" aria-label="Filter by position">
-                {(["ALL", "GK", "DF", "MF", "FW"] as Filter[]).map((f) => (
-                  <button key={f} type="button" role="tab" aria-selected={filter === f}
-                    className={filter === f ? "is-on" : ""} onClick={() => setFilter(f)}>
-                    {f === "ALL" ? "All" : f}
-                  </button>
+      <section className="lu-pitch" aria-label="Starting eleven">
+        <div className="lu-marks" aria-hidden="true"><i className="lu-box lu-box-t" /><i className="lu-circle" /><i className="lu-box lu-box-b" /></div>
+        {lines.map((line) => (
+          <div key={line.key} className="lu-line">
+            {line.list.map(({ slot, p }) => p && card(p, { slot, onTap: () => tapPlayer(p) }))}
+          </div>
+        ))}
+      </section>
+
+      <p className="lu-hint" role="status">
+        {note || (pickedPlayer
+          ? `${pickedPlayer.name} picked. Tap a ${starters.includes(pickedPlayer.id) ? "starter to swap places, or open Subs to bring a substitute on" : "starter to bring him on"}.`
+          : "Tap a player, then another, to change their places.")}
+      </p>
+
+      {subsOpen && (
+        <div className="lu-veil" onClick={() => setSubsOpen(false)}>
+          <section className="lu-sheet" role="dialog" aria-label="Substitutes" onClick={(e) => e.stopPropagation()}>
+            <header>
+              <strong>Substitutes</strong>
+              <span>{pickedPlayer && starters.includes(pickedPlayer.id) ? `Pick who replaces ${pickedPlayer.name}` : "Pick a substitute, then the starter he replaces"}</span>
+              <button type="button" className="lu-toggle" aria-pressed={showAll} onClick={() => setShowAll((v) => !v)}>{showAll ? "Chosen bench" : "All players"}</button>
+              <button type="button" className="lu-icon" onClick={() => setSubsOpen(false)} aria-label="Close"><Icon name="close" size={20} /></button>
+            </header>
+
+            {!showAll ? (
+              <div className="lu-bench">
+                {chosen.map(({ g, list }) => (
+                  <div key={g} className="lu-col">
+                    <h3>{groupName[g]}</h3>
+                    {list.map((p) => card(p, { small: true, onTap: () => tapSub(p) }))}
+                    {Array.from({ length: BENCH[g] - list.length }, (_, k) => <div key={k} className="lu-empty">{roleName[g]}</div>)}
+                  </div>
                 ))}
               </div>
-              <ul className="sq-benchgrid">
-                {subs.map((p) => (
-                  <li key={p.id}>
-                    <button type="button" className={`sq-card t-${tone(p.rating)} has-face ${picked === p.id ? "is-picked" : ""}`} onClick={() => tapPlayer(p)} aria-pressed={picked === p.id}>
-                      {photoOf(p) ? <PlayerFace player={p} /> : <s className="sq-ph" aria-hidden="true" />}
-                      <u className="sq-glass" aria-hidden="true">{p.rating}</u>
-                      <i>{p.position}</i>
-                      <strong>{p.name}</strong>
-                      <small>{p.age} yrs{p.nationality ? ` · ${p.nationality}` : ""}</small>
-                      </button>
-                  </li>
-                ))}
-                {subs.length === 0 && <li className="sq-foot">No substitutes in this position.</li>}
-              </ul>
-            </div>
-          )}
-          <p className="sq-foot">Ratings and values are game estimates.</p>
-        </section>
-      </div>
+            ) : (
+              <>
+                <div className="lu-tabs" role="tablist" aria-label="Filter by position">
+                  {(["ALL", "GK", "DF", "MF", "FW"] as Filter[]).map((f) => (
+                    <button key={f} type="button" role="tab" aria-selected={filter === f} className={filter === f ? "is-on" : ""} onClick={() => setFilter(f)}>{f === "ALL" ? "All" : f}</button>
+                  ))}
+                </div>
+                <div className="lu-all">
+                  {everyone.map((p) => card(p, { small: true, onTap: () => tapSub(p) }))}
+                  {everyone.length === 0 && <p className="lu-none">No substitutes in this position.</p>}
+                </div>
+              </>
+            )}
+          </section>
+        </div>
+      )}
     </main>
   );
 }

@@ -84,3 +84,6 @@
 /* the manager himself is the "talk" button; resigning is a small quiet link at the bottom */
 .mg-actions.mg-glass { background: none; border: 0; box-shadow: none; backdrop-filter: none; -webkit-backdrop-filter: none; padding: 0; justify-items: end; }
 .mg-actions .mg-resign { width: auto; min-height: 34px; padding: 0 14px; gap: 6px; font-size: 13px; background: rgba(8, 12, 19, 0.55); }
+
+.mg-plus { display: inline-grid; place-items: center; width: 44px; height: 44px; border: 1px solid var(--brass); background: rgba(5, 7, 13, 0.55); color: var(--brass-hi); font-size: 26px; font-weight: 700; line-height: 1; text-decoration: none; }
+.mg-plus:hover, .mg-plus:focus-visible { background: var(--brass); color: #05070d; }

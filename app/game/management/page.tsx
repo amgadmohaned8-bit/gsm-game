@@ -5,6 +5,7 @@ import { leaveCurrentRoom, loadCareers, switchCareer } from "@/lib/football/care
 import { resetCareerData } from "@/lib/football/careerReset";
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { supabase } from "@/lib/supabase";
 import { loadDeductions } from "@/lib/football/bank";
 import { activeSeason } from "@/lib/football/season";
@@ -50,6 +51,7 @@ export default function ManagementPage() {
   const [resigning, setResigning] = useState(false);
   const [resignError, setResignError] = useState("");
   const [error, setError] = useState("");
+  const [tick, setTick] = useState(0);
 
   useEffect(() => {
     let cancelled = false;
@@ -114,7 +116,18 @@ export default function ManagementPage() {
     return () => {
       cancelled = true;
     };
-  }, [router]);
+  }, [router, tick]);
+
+  // coming back to the office after a match: read the new results again
+  useEffect(() => {
+    const again = () => { if (document.visibilityState === "visible") setTick((n) => n + 1); };
+    document.addEventListener("visibilitychange", again);
+    window.addEventListener("pageshow", again);
+    return () => {
+      document.removeEventListener("visibilitychange", again);
+      window.removeEventListener("pageshow", again);
+    };
+  }, []);
 
   const club = clubs.find(
     (item) => item.id === manager?.selected_club
@@ -177,9 +190,10 @@ export default function ManagementPage() {
     (standings.length - 1) * 2
   );
 
+  // rounds already played (the schedule holds every round from the start)
   const currentMatchday = Math.max(
     0,
-    ...matches.map((match) => match.matchday)
+    ...completedMatches.map((match) => match.matchday)
   );
 
   const seasonProgress = currentMatchday / totalMatchdays;
@@ -383,7 +397,14 @@ export default function ManagementPage() {
       </button>
       <div className="mg-shade" aria-hidden="true" />
 
-      <GameHud onBack={() => router.push("/game/dashboard")} />
+      <GameHud
+        onBack={() => router.push("/game/dashboard")}
+        right={
+          <Link href="/game/manager" className="mg-plus" aria-label="Profile and management tasks" title="Profile and management tasks">
+            +
+          </Link>
+        }
+      />
 
       <div className="mg-body">
         <aside className="mg-side mg-glass" aria-label="Club overview">

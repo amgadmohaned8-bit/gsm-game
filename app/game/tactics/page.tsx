@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, type CSSProperties } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import { allClubs as clubs } from "@/lib/football/leagueClubs";
@@ -133,129 +133,127 @@ export default function TacticsPage() {
   });
   const play = PLAYS[tactic.style];
 
+  const sliders = [
+    { k: "press" as const, name: "Pressing" },
+    { k: "line" as const, name: "Defensive line" },
+    { k: "tempo" as const, name: "Tempo" },
+    { k: "width" as const, name: "Width" },
+  ];
+
   return (
-    <main className="tc">
-      <div className="gx-curtain" aria-hidden="true" />
-      <div className="tc-bg gx-kb" aria-hidden="true" />
-      <div className="tc-shade" aria-hidden="true" />
+    <main className="tk">
+      <div className="tk-bg" aria-hidden="true" />
       <GameHud onBack={() => router.push("/game/squad")} />
 
-      <div className="tc-wrap">
-        <header className="tc-head">
-          <p>Tactics room</p>
-          <h1><span className="gx-slant">Tactics</span></h1>
+      <div className="tk-wrap">
+        <header className="tk-head">
+          <small>GSM tactics</small>
+          <h1>{formation ?? "Tactics"}</h1>
         </header>
 
-        <div className="tc-grid">
-          <nav className="tc-styles" aria-label="Playing style">
-            {STYLES.map((s, i) => {
-              const f = fitOf(s.id, eleven).score;
-              return (
-                <button key={s.id} type="button" className={`tc-style gx-cut ${tactic.style === s.id ? "is-on" : ""}`} style={{ animationDelay: `${i * 45}ms` }} onClick={() => pickStyle(s.id)} aria-pressed={tactic.style === s.id}>
-                  <strong>{s.name}</strong>
-                  <small>{s.tag}</small>
-                  <span className="tc-fitbar" aria-label={`Suits your players ${f} of 100`}><em style={{ width: `${f}%` }} /></span>
-                  <b>{f}</b>
-                </button>
-              );
-            })}
-          </nav>
+        <div className="tk-grid">
+          {/* left: the style and the board */}
+          <div className="tk-col">
+            <section className="tk-card tk-stylecard" aria-label="Style of play">
+              <header><small>Style of play</small><strong>{def.name}</strong><em>{def.desc}</em></header>
+              <svg className="tk-board" viewBox="0 0 100 140" role="img" aria-label={`${def.name} on the pitch`} key={tactic.style}>
+                <defs>
+                  <marker id="tc-head" viewBox="0 0 10 10" refX="7" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse">
+                    <path d="M0 0L10 5L0 10z" fill="#f7db96" />
+                  </marker>
+                </defs>
+                <rect x="1" y="1" width="98" height="138" className="tc-line" />
+                <path d="M1 70H99" className="tc-line" />
+                <circle cx="50" cy="70" r="11" className="tc-line" />
+                <rect x="26" y="1" width="48" height="18" className="tc-line" />
+                <rect x="26" y="121" width="48" height="18" className="tc-line" />
+                {play.zone && <rect x="1" y={play.zone[0]} width="98" height={play.zone[1]} className="tc-zone" />}
+                {play.paths.map((d, i) => (
+                  <path key={i} d={d} className="tc-arrow" markerEnd="url(#tc-head)" style={{ animationDelay: `${i * 0.25}s` }} />
+                ))}
+                {dots.map((d) => (
+                  <g key={d.id} className="tc-dot" style={{ transform: `translate(${d.x}px, ${d.y}px)` }}>
+                    <circle r="4.2" />
+                    <text y="8.6" textAnchor="middle">{d.name}</text>
+                  </g>
+                ))}
+              </svg>
+              <span className="tk-needs">Needs: {def.needs}</span>
+            </section>
+          </div>
 
-          <section className="tc-board-card gx-cut" aria-label="Tactical board">
-            <div className="tc-title">
-              <div>
-                <h2>{def.name}</h2>
-                <p>{def.desc}</p>
-              </div>
-              <span className="tc-needs">Needs: {def.needs}</span>
-            </div>
+          {/* middle: the styles and the sliders */}
+          <div className="tk-col">
+            <nav className="tk-styles" aria-label="Playing style">
+              {STYLES.map((st) => {
+                const f = fitOf(st.id, eleven).score;
+                return (
+                  <button key={st.id} type="button" className={`tk-chip ${tactic.style === st.id ? "is-on" : ""}`} onClick={() => pickStyle(st.id)} aria-pressed={tactic.style === st.id}>
+                    <strong>{st.name}</strong>
+                    <b>{f}</b>
+                  </button>
+                );
+              })}
+            </nav>
+            {sliders.map(({ k, name }) => (
+              <label key={k} className="tk-card tk-slider">
+                <small>{name}</small>
+                <strong>{label(k, tactic[k])}</strong>
+                <span className="tk-range">
+                  <input type="range" min={0} max={100} value={tactic[k]} style={{ "--v": `${tactic[k]}%` } as CSSProperties} onChange={(e) => slide(k, Number(e.target.value))} aria-label={name} />
+                  <i style={{ left: `${def.ideal[k]}%` }} aria-hidden="true" title="What this style wants" />
+                </span>
+                <output>{tactic[k]}</output>
+              </label>
+            ))}
+          </div>
 
-            <svg className="tc-board" viewBox="0 0 100 140" role="img" aria-label={`${def.name} on the pitch`} key={tactic.style}>
-              <defs>
-                <marker id="tc-head" viewBox="0 0 10 10" refX="7" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse">
-                  <path d="M0 0L10 5L0 10z" fill="#f4d58a" />
-                </marker>
-              </defs>
-              <rect x="1" y="1" width="98" height="138" className="tc-line" />
-              <path d="M1 70H99" className="tc-line" />
-              <circle cx="50" cy="70" r="11" className="tc-line" />
-              <rect x="26" y="1" width="48" height="18" className="tc-line" />
-              <rect x="26" y="121" width="48" height="18" className="tc-line" />
-              {play.zone && <rect x="1" y={play.zone[0]} width="98" height={play.zone[1]} className="tc-zone" />}
-              {play.paths.map((d, i) => (
-                <path key={i} d={d} className="tc-arrow" markerEnd="url(#tc-head)" style={{ animationDelay: `${i * 0.25}s` }} />
-              ))}
-              {dots.map((d) => (
-                <g key={d.id} className="tc-dot" style={{ transform: `translate(${d.x}px, ${d.y}px)` }}>
-                  <circle r="4.2" />
-                  <text y="8.6" textAnchor="middle">{d.name}</text>
-                </g>
-              ))}
-            </svg>
-          </section>
-
-          <aside className="tc-side">
-            <section className="tc-card gx-cut" aria-label="Match effect">
-              <div className="tc-effect">
-                <span>Match effect</span>
-                <strong className={bonus >= 0 ? "is-up" : "is-down"}>{bonus > 0 ? "+" : ""}{bonus.toFixed(1)}</strong>
-                <em>rating points from tactics</em>
-                {formation && <small className="tx-shape">{formation}: {shape > 0 ? `suits ${def.name.toLowerCase()} (+${shape})` : shape < 0 ? `works against ${def.name.toLowerCase()} (${shape})` : "a neutral shape for this style"}</small>}
-              </div>
-              <dl className="tc-meters">
+          {/* right: the effect, the opponent and the instructions */}
+          <div className="tk-col">
+            <section className="tk-card tk-effect" aria-label="Match effect">
+              <small>Match effect</small>
+              <strong className={bonus >= 0 ? "is-up" : "is-down"}>{bonus > 0 ? "+" : ""}{bonus.toFixed(1)}</strong>
+              <em>rating points from tactics</em>
+              <dl className="tk-meters">
                 <div><dt>Suits your players</dt><dd><span><i style={{ width: `${fit.score}%` }} /></span>{fit.score}</dd></div>
                 <div><dt>Plan is coherent</dt><dd><span><i style={{ width: `${coh}%` }} /></span>{coh}</dd></div>
               </dl>
-              <ul className="tc-parts">
-                {fit.parts.map((p) => <li key={p.label}>{p.label} <b>{p.value}</b></li>)}
-              </ul>
+              {formation && <p className="tk-note">{formation}: {shape > 0 ? `suits ${def.name.toLowerCase()} (+${shape})` : shape < 0 ? `works against ${def.name.toLowerCase()} (${shape})` : "a neutral shape for this style"}</p>}
             </section>
 
             {oppClub && theirStyle && (
-              <section className="tc-card gx-cut tc-scout" aria-label="Next opponent">
-                <header>
-                  <img src={oppClub.logo} alt="" />
-                  <div><small>Next opponent</small><strong>{oppClub.name}</strong><em>Plays {styleOf(theirStyle).name.toLowerCase()}</em></div>
-                </header>
-                <p className={edge > 0 ? "is-up" : edge < 0 ? "is-down" : ""}>
-                  {edge > 0 ? `Your ${def.name.toLowerCase()} beats their ${styleOf(theirStyle).name.toLowerCase()} (+${edge})` : edge < 0 ? `Their ${styleOf(theirStyle).name.toLowerCase()} is strong against your ${def.name.toLowerCase()} (${edge})` : "An even match-up on style."}
-                </p>
+              <section className="tk-card tk-scout" aria-label="Next opponent">
+                <img src={oppClub.logo} alt="" />
+                <div>
+                  <small>Next opponent</small>
+                  <strong>{oppClub.name}</strong>
+                  <p className={edge > 0 ? "is-up" : edge < 0 ? "is-down" : ""}>
+                    {edge > 0 ? `Your ${def.name.toLowerCase()} beats their ${styleOf(theirStyle).name.toLowerCase()} (+${edge})` : edge < 0 ? `Their ${styleOf(theirStyle).name.toLowerCase()} is strong against your ${def.name.toLowerCase()} (${edge})` : `They play ${styleOf(theirStyle).name.toLowerCase()}: an even match-up.`}
+                  </p>
+                </div>
               </section>
             )}
 
-            <section className="tc-card gx-cut" aria-label="Sliders">
-              {(["tempo", "width", "press", "line"] as const).map((k) => (
-                <label key={k} className="tc-slider">
-                  <span>{{ tempo: "Tempo", width: "Width", press: "Pressing", line: "Defensive line" }[k]}<b>{label(k, tactic[k])}</b></span>
-                  <input type="range" min={0} max={100} value={tactic[k]} onChange={(e) => slide(k, Number(e.target.value))} />
-                  <i style={{ left: `${def.ideal[k]}%` }} aria-hidden="true" title="What this style wants" />
-                </label>
-              ))}
-            </section>
+            <ul className="tk-opts" aria-label="Team instructions">
+              {OPTIONS.map((o) => {
+                const on = !!tactic.opts[o.id];
+                const fits = def.synergy.includes(o.id);
+                return (
+                  <li key={o.id}>
+                    <button type="button" role="switch" aria-checked={on} className={`tk-card ${on ? "is-on" : ""}`} onClick={() => toggle(o.id)} title={o.note}>
+                      <small>{fits ? "Fits your style" : "Instruction"}</small>
+                      <strong>{o.name}</strong>
+                      <b>{on ? "On" : "Off"}</b>
+                    </button>
+                  </li>
+                );
+              })}
+            </ul>
 
-            <section className="tc-card gx-cut" aria-label="Team instructions">
-              <h3>Team instructions</h3>
-              <ul className="tc-opts">
-                {OPTIONS.map((o) => {
-                  const on = !!tactic.opts[o.id];
-                  const fits = def.synergy.includes(o.id);
-                  return (
-                    <li key={o.id}>
-                      <button type="button" role="switch" aria-checked={on} className={on ? "is-on" : ""} onClick={() => toggle(o.id)}>
-                        <span><strong>{o.name}</strong><small>{o.note}</small></span>
-                        <em>{fits ? "Fits" : ""}</em>
-                        <i aria-hidden="true" />
-                      </button>
-                    </li>
-                  );
-                })}
-              </ul>
-            </section>
-
-            <button type="button" className="gx-btn tc-save" onClick={save} disabled={!dirty && !flash}>
+            <button type="button" className="tk-save" onClick={save} disabled={!dirty && !flash}>
               {flash ? "Tactics saved" : dirty ? "Save tactics" : "Saved"}
             </button>
-          </aside>
+          </div>
         </div>
       </div>
     </main>

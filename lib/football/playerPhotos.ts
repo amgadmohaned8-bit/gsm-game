@@ -8,6 +8,7 @@
 import { allClubs } from "@/lib/football/leagueClubs";
 import { PHOTO_FILES } from "@/lib/football/playerPhotos.generated";
 import { squads, type Player } from "@/lib/football/squads";
+import { marketPlayers, realClubOf } from "@/lib/football/market";
 
 export const PHOTO_DIR = "/players/";
 
@@ -42,8 +43,13 @@ function build() {
 
   const claimed = new Set<string>();
   const clubKeys = new Map(allClubs.map((c) => [c.id, [slug(c.name).split("-"), c.id.split("-")]] as [string, string[][]]));
-  const all: { p: Player; words: string[] }[] = [];
+  const all: { p: Player; words: string[]; keys?: string[][] }[] = [];
   for (const [club, list] of Object.entries(squads)) for (const p of list) all.push({ p: { ...p, club }, words: slug(p.name).split("-").filter(Boolean) });
+  // the world market too: players of other leagues, matched by the club they really play for
+  for (const p of marketPlayers) {
+    const real = realClubOf(p.id);
+    all.push({ p, words: slug(p.name).split("-").filter(Boolean), keys: real ? [slug(real).split("-")] : undefined });
+  }
   // the names with the most words choose first: "Gabriel Jesus" before "Gabriel"
   all.sort((a, b) => b.words.length - a.words.length || b.p.rating - a.p.rating);
 
@@ -51,8 +57,8 @@ function build() {
   const pick = (list: Entry[], words: string[]) => list.filter((e) => !claimed.has(e.file) && hasWords(e.words, words)).sort((a, b) => a.words.length - b.words.length)[0];
 
   // 1. the right name at the right club
-  for (const { p, words } of all) {
-    const keys = clubKeys.get(p.club) ?? [p.club.split("-")];
+  for (const { p, words, keys: own } of all) {
+    const keys = own ?? clubKeys.get(p.club) ?? [p.club.split("-")];
     const mine = entries.filter((e) => keys.some((k) => hasWords(e.words, k)));
     const hit = pick(mine, words);
     if (hit) take(p.id, hit);
@@ -63,6 +69,10 @@ function build() {
     const fits = entries.filter((e) => !claimed.has(e.file) && hasWords(e.words, words));
     if (fits.length === 1) take(p.id, fits[0]);
   }
+  // 3. the same player listed twice (a club squad and the world market): one picture serves both
+  const bySlug = new Map<string, string>();
+  for (const { p, words } of all) { const f = out.get(p.id); if (f) bySlug.set(words.join("-"), f); }
+  for (const { p, words } of all) { const f = bySlug.get(words.join("-")); if (f && !out.has(p.id) && words.length >= 2) out.set(p.id, f); }
   return out;
 }
 
