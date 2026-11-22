@@ -1,14 +1,14 @@
 /** Friendly matches: up to three before every league matchday, a small gate income each. */
 
 /** friendlies that can be played in one round */
-export const FRIENDLIES_PER_ROUND = 3;
+export const FRIENDLIES_PER_ROUND = 5;
 
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { getTier } from "@/lib/football/finance";
 
 export const friendlyIncome = (opponent: string) => {
   const t = getTier(opponent);
-  return t === "elite" ? 0.5 : t === "mid" ? 0.35 : 0.2;
+  return t === "elite" ? 3.5 : t === "mid" ? 0.35 : 0.2;
 };
 
 export type Friendly = {
