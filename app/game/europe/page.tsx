@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
@@ -8,7 +9,9 @@ import { seasonLabel } from "@/lib/football/season";
 import { resetCareerData } from "@/lib/football/careerReset";
 import { loadCareers, switchCareer } from "@/lib/football/careers";
 import { baseLeague } from "@/lib/football/leagueIds";
-import { squadOf } from "@/lib/football/squads";
+import { squadOf, type Player } from "@/lib/football/squads";
+import { loadSim } from "@/lib/football/strength";
+import { loadTransferState } from "@/lib/football/transfers";
 import { euroLogo } from "@/lib/football/europeClubs";
 import {
   EURO_STAGES,
@@ -99,6 +102,17 @@ export default function EuropePage() {
     return () => { cancelled = true; };
   }, [router, settle]);
 
+  // the squad as it is today, signings included
+  const [live, setLive] = useState<Player[] | null>(null);
+  useEffect(() => {
+    if (!userId || !setup?.club_id) return;
+    let off = false;
+    void loadTransferState(supabase, userId, setup.club_id, setup.season, null, manager?.selected_league)
+      .then((st) => { if (!off) setLive(st.squads[setup.club_id] ?? null); })
+      .catch(() => undefined);
+    return () => { off = true; };
+  }, [userId, setup?.club_id, setup?.season, manager?.selected_league]);
+
   const myClub = setup?.club_id ?? "";
   const comp = setup ? euroComp(setup.comp_id) : undefined;
   const entrants = useMemo(() => (setup ? entrantsOf(setup.comp_id, setup.english) : []), [setup]);
@@ -108,14 +122,15 @@ export default function EuropePage() {
   const standalone = setup?.source === "standalone";
   const ready = !!next && (standalone || progress >= unlockAt);
   const finished = !!status?.final;
-  const mySquad = useMemo(() => [...squadOf(myClub)].sort((a, b) => b.rating - a.rating), [myClub]);
+  const mySquad = useMemo(() => [...(live && live.length ? live : squadOf(myClub))].sort((a, b) => b.rating - a.rating), [myClub, live]);
 
   async function startMatch() {
     if (!next || !ready || saving) return;
     setSaving(true);
     setError("");
     try {
-      setPlaying(await playEuroRound(supabase, rows, next.round_no, myClub, userId));
+      const sim = await loadSim(supabase, { userId, clubId: myClub, roomId: null, season: setup!.season, matchday: null, leagueId: manager?.selected_league });
+      setPlaying(await playEuroRound(supabase, rows, next.round_no, myClub, userId, sim));
     } catch (err) {
       console.error("Europe match error:", err);
       setError("The match could not start. Check your connection and try again.");
@@ -260,6 +275,11 @@ export default function EuropePage() {
             </article>
           )}
         </section>
+
+        <nav className="cn-tools" aria-label="Your team">
+          <Link href="/game/squad">Lineup</Link>
+          <Link href="/game/tactics">Tactics</Link>
+        </nav>
 
         <nav className="cn-tabs" role="tablist" aria-label="Competition views">
           {([["table", "League phase"], ["knockout", "Knockout"], ["squad", "Your squad"]] as [Tab, string][]).map(([id, label]) => (

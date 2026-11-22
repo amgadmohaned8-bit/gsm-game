@@ -57,6 +57,8 @@ export default function TacticsPage() {
   const [tactic, setTactic] = useState<Tactic>(defaultTactic());
   const [saved, setSaved] = useState<Tactic | null>(null);
   const [opponent, setOpponent] = useState<string | null>(null);
+  /** which match the opponent belongs to: the league matchday, or 200 / 300 + the round of a continental cup */
+  const [slot, setSlot] = useState<number | null>(null);
   const [flash, setFlash] = useState(false);
 
   const uid = ctx?.userId;
@@ -76,7 +78,21 @@ export default function TacticsPage() {
           .order("matchday", { ascending: true })
           .limit(40);
         const next = (data ?? []).find((m) => m.home_club === clubId || m.away_club === clubId);
-        if (next) setOpponent(next.home_club === clubId ? next.away_club : next.home_club);
+        if (next) {
+          setOpponent(next.home_club === clubId ? next.away_club : next.home_club);
+          setSlot(next.matchday);
+          return;
+        }
+        // a cup career (Africa or Europe): the next tie of the competition
+        for (const [table, base] of [["continental_matches", 200], ["euro_matches", 300]] as const) {
+          const { data: ties } = await supabase.from(table).select("home_club, away_club, round_no").eq("user_id", uid).eq("status", "scheduled").order("round_no", { ascending: true }).limit(40);
+          const tie = (ties ?? []).find((m) => m.home_club === clubId || m.away_club === clubId);
+          if (tie) {
+            setOpponent(tie.home_club === clubId ? tie.away_club : tie.home_club);
+            setSlot(base + tie.round_no);
+            return;
+          }
+        }
       } catch {
         /* scouting is optional */
       }
@@ -92,7 +108,7 @@ export default function TacticsPage() {
   const lineup = useMemo(() => (ctx ? currentLineup(ctx.userId, ctx.clubId, squad, day) : null), [ctx, squad, day]);
   const eleven = useMemo(() => lineup?.starters ?? [], [lineup]);
   const formation = lineup?.formation;
-  const hired = !!ctx && ctx.matchday !== null && !!opponent && hires.some((h) => h.club_id === ctx.clubId && h.season === ctx.season && h.matchday === ctx.matchday);
+  const hired = !!ctx && slot !== null && !!opponent && hires.some((h) => h.club_id === ctx.clubId && h.season === ctx.season && h.matchday === slot);
   const report = useMemo(() => {
     if (!hired || !ctx || !opponent) return null;
     const theirs = ctx.state.squads[opponent] ?? [];
@@ -127,11 +143,11 @@ export default function TacticsPage() {
   const toggle = (id: (typeof OPTIONS)[number]["id"]) => setTactic((t) => ({ ...t, opts: { ...t.opts, [id]: !t.opts[id] } }));
 
   async function hire() {
-    if (!ctx || !opponent || ctx.matchday === null) return;
+    if (!ctx || !opponent || slot === null) return;
     setHiring(true);
     setHireError("");
     try {
-      await hireAnalyst(supabase, { userId: ctx.userId, clubId: ctx.clubId, season: ctx.season, matchday: ctx.matchday, opponent });
+      await hireAnalyst(supabase, { userId: ctx.userId, clubId: ctx.clubId, season: ctx.season, matchday: slot, opponent });
       setHires(await loadHires(supabase, ctx.userId));
       await reload();
     } catch (e) {
@@ -270,7 +286,7 @@ export default function TacticsPage() {
               </section>
             )}
 
-            {oppClub && ctx.matchday !== null && (
+            {oppClub && slot !== null && (
               <section className="tk-card tk-analyst" aria-label="Performance analyst">
                 <img src="/staff/analyst.webp" alt="" />
                 <small>Performance analyst</small>

@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
@@ -8,7 +9,9 @@ import { seasonLabel } from "@/lib/football/season";
 import { resetCareerData } from "@/lib/football/careerReset";
 import { loadCareers, switchCareer } from "@/lib/football/careers";
 import { isCafCup } from "@/lib/football/africa";
-import { squadOf } from "@/lib/football/squads";
+import { squadOf, type Player } from "@/lib/football/squads";
+import { loadSim } from "@/lib/football/strength";
+import { loadTransferState } from "@/lib/football/transfers";
 import {
   CONT_ROUNDS,
   CONT_UNLOCK,
@@ -102,6 +105,17 @@ export default function ContinentalPage() {
     return () => { cancelled = true; };
   }, [router, settle]);
 
+  // the squad as it is today, signings included
+  const [live, setLive] = useState<Player[] | null>(null);
+  useEffect(() => {
+    if (!userId || !setup?.club_id) return;
+    let off = false;
+    void loadTransferState(supabase, userId, setup.club_id, setup.season, null, manager?.selected_league)
+      .then((st) => { if (!off) setLive(st.squads[setup.club_id] ?? null); })
+      .catch(() => undefined);
+    return () => { off = true; };
+  }, [userId, setup?.club_id, setup?.season, manager?.selected_league]);
+
   const myClub = setup?.club_id ?? "";
   const cup = setup ? cafCup(setup.comp_id) : undefined;
   const standalone = setup?.source === "standalone";
@@ -111,14 +125,15 @@ export default function ContinentalPage() {
   const unlockAt = next ? CONT_UNLOCK[next.round_no] : 0;
   const ready = !!next && (standalone || progress >= unlockAt);
   const finished = !!status?.final;
-  const mySquad = useMemo(() => [...squadOf(myClub)].sort((a, b) => b.rating - a.rating), [myClub]);
+  const mySquad = useMemo(() => [...(live && live.length ? live : squadOf(myClub))].sort((a, b) => b.rating - a.rating), [myClub, live]);
 
   async function startMatch() {
     if (!next || !ready || saving) return;
     setSaving(true);
     setError("");
     try {
-      const res = await playContRound(supabase, rows, next.round_no, myClub, userId);
+      const sim = await loadSim(supabase, { userId, clubId: myClub, roomId: null, season: setup!.season, matchday: null, leagueId: manager?.selected_league });
+      const res = await playContRound(supabase, rows, next.round_no, myClub, userId, sim);
       setPlaying(res);
     } catch (err) {
       console.error("Continental match error:", err);
@@ -263,6 +278,11 @@ export default function ContinentalPage() {
             </article>
           )}
         </section>
+
+        <nav className="cn-tools" aria-label="Your team">
+          <Link href="/game/squad">Lineup</Link>
+          <Link href="/game/tactics">Tactics</Link>
+        </nav>
 
         <nav className="cn-tabs" role="tablist" aria-label="Competition views">
           {([["groups", "Groups"], ["knockout", "Knockout"], ["squad", "Your squad"]] as [Tab, string][]).map(([id, label]) => (
