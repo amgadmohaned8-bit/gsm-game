@@ -10,10 +10,12 @@ export type PitchEvent = {
   stage: "build" | "result";
   pen?: boolean;
   card?: "yellow" | "red";
+  /** the VAR took the goal away */
+  cancel?: boolean;
 };
 
 /** the VAR is looking at a goal or a red card */
-export type VarCheck = { kind: "goal" | "card"; pen?: boolean };
+export type VarCheck = { kind: "goal" | "card"; pen?: boolean; cancel?: boolean };
 type Props = { homeColor: string; awayColor: string; ev: PitchEvent | null; seed: string; check?: VarCheck | null };
 
 // 4-3-3, attacking to the right. x 0-105, y 0-68
@@ -64,7 +66,7 @@ export default function PitchView({ homeColor, awayColor, ev, seed, check }: Pro
     return (attacking ? 9 : -3) * (side === "home" ? 1 : -1);
   };
 
-  const label = !ev || !res ? null : ev.kind === "goal" ? (ev.pen ? "PENALTY GOAL!" : "GOAL!") : ev.kind === "save" ? "SAVED!" : ev.kind === "foul" ? "FOUL" : ev.pen ? "PENALTY MISSED" : missWay === "over" ? "OVER THE BAR" : "OFF TARGET";
+  const label = !ev || !res ? null : ev.cancel ? "GOAL DISALLOWED" : ev.kind === "goal" ? (ev.pen ? "PENALTY GOAL!" : "GOAL!") : ev.kind === "save" ? "SAVED!" : ev.kind === "foul" ? "FOUL" : ev.pen ? "PENALTY MISSED" : missWay === "over" ? "OVER THE BAR" : "OFF TARGET";
   const buildLabel = ev && !res ? (ev.kind === "foul" ? "CONTACT…" : ev.pen ? "PENALTY!" : "ATTACK") : null;
   const color = atk === "home" ? homeColor : awayColor;
 
@@ -83,8 +85,8 @@ export default function PitchView({ homeColor, awayColor, ev, seed, check }: Pro
         </g>
         <circle cx="52.5" cy="34" r=".6" fill="rgba(255,255,255,.8)" />
         {/* goals */}
-        <rect x="-2.2" y="30.3" width="2.5" height="7.4" className={`pv-net ${res && ev?.kind === "goal" && atk === "away" ? "is-on" : ""}`} />
-        <rect x="104.7" y="30.3" width="2.5" height="7.4" className={`pv-net ${res && ev?.kind === "goal" && atk === "home" ? "is-on" : ""}`} />
+        <rect x="-2.2" y="30.3" width="2.5" height="7.4" className={`pv-net ${res && !ev?.cancel && ev?.kind === "goal" && atk === "away" ? "is-on" : ""}`} />
+        <rect x="104.7" y="30.3" width="2.5" height="7.4" className={`pv-net ${res && !ev?.cancel && ev?.kind === "goal" && atk === "home" ? "is-on" : ""}`} />
 
         {/* teams */}
         <g style={{ transform: `translateX(${shift("home")}px)` }} className="pv-team">
@@ -136,7 +138,7 @@ export default function PitchView({ homeColor, awayColor, ev, seed, check }: Pro
           <i className="pv-var-scan" />
           <b className="pv-var-logo">VAR</b>
           <span className="pv-var-wait">CHECKING<em>.</em><em>.</em><em>.</em></span>
-          <span className="pv-var-ok">{check.kind === "goal" ? (check.pen ? "PENALTY CONFIRMED" : "GOAL CONFIRMED") : "RED CARD CONFIRMED"}</span>
+          <span className={`pv-var-ok ${check.cancel ? "is-no" : ""}`}>{check.cancel ? "NO GOAL" : check.kind === "goal" ? (check.pen ? "PENALTY CONFIRMED" : "GOAL CONFIRMED") : "RED CARD CONFIRMED"}</span>
         </div>
       )}
       {(label || buildLabel) && (

@@ -19,6 +19,7 @@ import {
   recordDeal,
   windowStatus,
   MIN_BY_POSITION,
+  worldBuyers,
 } from "@/lib/football/transfers";
 import { useTransfers } from "@/lib/football/useTransfers";
 import { BidModal, OfferModal, SellModal, money, sellerLabel } from "@/components/TransferModals";
@@ -275,8 +276,9 @@ export default function TransfersPage() {
     const why = canSell(mine, player);
     if (why) return setNotice(why);
     if (!window.open) return setNotice("The transfer window is closed.");
-    const buyers = otherClubs.filter((c) => (squads![c.id] ?? []).length < 33 && !humans.has(c.id));
-    const buyer = buyers[(player.rating + player.age) % Math.max(1, buyers.length)] ?? otherClubs.find((c) => !humans.has(c.id)) ?? otherClubs[0];
+    // any club in the world can be the buyer, not only the clubs of this league
+    const buyers = worldBuyers(ctx!.clubId).filter((c) => !humans.has(c.id));
+    const buyer = buyers[Math.floor(Math.random() * buyers.length)] ?? buyers[0];
     const fee = Math.round(marketValue(player) * QUICK * 10) / 10;
     void run(player.id, async () => {
       await recordDeal(supabase, { league_id: ctx!.leagueId, user_id: ctx!.userId, season: ctx!.season, player_id: player.id, from_club: ctx!.clubId, to_club: buyer.id, fee, kind: "sell", matchday: ctx!.matchday ?? 0 });
@@ -482,7 +484,7 @@ export default function TransfersPage() {
             {view === "mine" && (
               <>
                 <p className="tx-hint">
-                  <b>List</b> sets your asking price: {roomId ? "every manager of the league sees it, can buy at that price at once, or send you an offer" : "a club that meets your price pays it the same day"}. <b>Sell now</b> pays {Math.round(QUICK * 100)}% of the value at once. A listed player stays in your squad until a deal is done.
+                  <b>List</b> sets your asking price: {roomId ? "every manager of the league sees it, can buy at that price at once, or send you an offer" : "a club from anywhere in the world buys him the same day"}. <b>Sell now</b> pays {Math.round(QUICK * 100)}% of the value at once. A listed player stays in your squad until a deal is done.
                   {!window.open && <> The window is closed, so players can only be listed.</>}
                 </p>
                 {ctx.state.offers.length > 0 && (

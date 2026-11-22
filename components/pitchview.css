@@ -40,3 +40,5 @@
 .pv-var-ok { position: absolute; bottom: 22%; padding: 6px 18px; font: 900 clamp(14px, 3vw, 22px) var(--font-display); letter-spacing: 0.12em; color: #05070d; background: #5cf0b0; border-radius: 999px; opacity: 0; animation: pv-ok 0.35s 1.9s var(--ease-out, ease) forwards; }
 @keyframes pv-ok { from { opacity: 0; transform: scale(0.8); } to { opacity: 1; transform: none; } }
 @media (prefers-reduced-motion: reduce) { .pv-p, .pv-glow, .pv-ball.is-idle, .pv-var-scan { animation: none !important; } .pv-ball, .pv-team, .pv-gk { transition: none; } }
+
+.pv-var-ok.is-no { background: #ff4d5e; color: #fff; }

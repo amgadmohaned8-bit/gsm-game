@@ -259,15 +259,22 @@ export function canBuy(args: {
 /* ---------- listings: bids from AI clubs ---------- */
 
 /** Bids for a listed player, one per matchday from the day he is listed (the first one is the same day). */
+/** Every club of the world that can buy a player of the manager: his own league and all the others. */
+export function worldBuyers(myClub: string) {
+  return allClubs.filter((c) => c.id !== myClub);
+}
+
 export function bidsFor(userId: string, listing: Listing, player: Player, myClub: string, matchday: number): Offer[] {
   const value = marketValue(player);
-  const buyers = clubsOfLeague(leagueOfClub(myClub)).filter((c) => c.id !== myClub);
+  const buyers = worldBuyers(myClub);
   const out: Offer[] = [];
 
   for (let d = listing.listed_matchday; d <= matchday; d++) {
     const rnd = unit(`${userId}|${listing.player_id}|${d}|bid`);
     const club = buyers[Math.floor(unit(`${userId}|${listing.player_id}|${d}|who`) * buyers.length)].id;
-    out.push({ player_id: listing.player_id, matchday: d, club, amount: round1(value * (0.78 + 0.34 * rnd)) });
+    // a club from anywhere in the world: the first day somebody pays 1.25-1.7 times his value, later days 0.95-1.7
+    const factor = d === listing.listed_matchday ? 1.25 + 0.45 * rnd : 0.95 + 0.75 * rnd;
+    out.push({ player_id: listing.player_id, matchday: d, club, amount: round1(value * factor) });
   }
   return out;
 }
@@ -302,7 +309,7 @@ export function resolveListings(
       sales.push({ listing, player, club: hit.club, fee: listing.asking, matchday: hit.matchday });
     } else if (matchday >= listing.listed_matchday + LISTING_DAYS) {
       const last = bids[bids.length - 1];
-      sales.push({ listing, player, club: last?.club ?? clubsOfLeague(leagueOfClub(myClub)).find((c) => c.id !== myClub)!.id, fee: fairPrice(player), matchday });
+      sales.push({ listing, player, club: last?.club ?? worldBuyers(myClub)[0].id, fee: fairPrice(player), matchday });
     } else {
       offers.push(...bids.filter((b) => b.amount >= listing.asking * 0.8));
     }
@@ -377,7 +384,15 @@ export async function loadTransferState(
   } catch {
     /* no renewals yet */
   }
-  const renewalFees = renewals.filter((r) => r.club_id === myClub).reduce((sum, r) => sum + Number(r.fee), 0);
+  // the performance analyst is paid for every match report this club ordered
+  let analystFees = 0;
+  try {
+    const { data: a } = await client.from("analyst_reports").select("fee").eq("user_id", userId).eq("club_id", myClub);
+    analystFees = (a ?? []).reduce((sum: number, r: { fee: number }) => sum + Number(r.fee), 0);
+  } catch {
+    /* no analyst yet */
+  }
+  const renewalFees = renewals.filter((r) => r.club_id === myClub).reduce((sum, r) => sum + Number(r.fee), 0) + analystFees;
   const league = leagueId || leagueOfClub(myClub);
   // the other managers of a shared league: their clubs do not trade by themselves, and their deals count
   let human: string[] = [];

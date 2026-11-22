@@ -96,7 +96,7 @@ export async function resetCareerData(client: SupabaseClient, userId: string, le
 
   const own = clubId ? [clubId] : clubIds; // lineups, renewals and press belong to the club itself
   if (own.length) {
-    for (const table of ["match_lineups", "contract_renewals", "press_quotes"]) {
+    for (const table of ["match_lineups", "contract_renewals", "press_quotes", "analyst_reports"]) {
       await step(() => client.from(table).delete().eq("user_id", userId).in("club_id", own));
     }
   }

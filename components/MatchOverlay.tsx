@@ -59,7 +59,7 @@ function clubOf(id: string) {
   return clubs.find((club) => club.id === id);
 }
 
-type Moment = { minute: number; kind: "goal" | "chance" | "save" | "half" | "foul" | "sub"; out?: string; outPid?: string; team: "home" | "away"; player?: string; pid?: string; assist?: string; /** a penalty (shown on the pitch only) */ pen?: boolean; card?: "yellow" | "red"; by?: string };
+type Moment = { minute: number; kind: "goal" | "chance" | "save" | "half" | "foul" | "sub" | "disallowed"; out?: string; outPid?: string; team: "home" | "away"; player?: string; pid?: string; assist?: string; /** a penalty (shown on the pitch only) */ pen?: boolean; card?: "yellow" | "red"; by?: string };
 type Said = { id: number; text: string; tone: "plain" | "goal" | "miss" };
 
 /** How the manager wants matches to run (see the settings page). */
@@ -303,8 +303,9 @@ function Match({
     let extras = 0;
     data.events.forEach((e, idx) => {
       if (e.type === "goal" && e.team) list.push({ minute: e.minute, kind: "goal", team: e.team, player: e.player, pid: e.playerId, assist: e.assist, pen: !!e.pen });
+      else if (e.type === "disallowed" && e.team) list.push({ minute: e.minute, kind: "disallowed", team: e.team, player: e.player, pid: e.playerId });
       else if (e.type === "pen_miss" && e.team) list.push({ minute: e.minute, kind: e.saved ? "save" : "chance", team: e.team, pen: true });
-      else if (e.type === "foul" && e.team) list.push({ minute: e.minute + 0.2, kind: "foul", team: e.team, card: e.card, by: e.player, pid: e.playerId });
+      else if (e.type === "foul" && e.team) list.push({ minute: e.minute + 0.2, kind: "foul", team: e.team === "home" ? "away" : "home", card: e.card, by: e.player, pid: e.playerId });
       else if ((e.type === "chance" || e.type === "save") && extras < 4) {
         extras++;
         list.push({ minute: e.minute, kind: e.type, team: pick(["home", "away"] as const, `${seedBase}|${idx}`) });
@@ -323,6 +324,7 @@ function Match({
   const [minute, setMinute] = useState(reduced ? 90 : 0);
   const [cursor, setCursor] = useState(reduced ? moments.length : 0);
   const [varCheck, setVarCheck] = useState<VarCheck | null>(null);
+  const [voided, setVoided] = useState(false);
   const [stage, setStage] = useState<"kick" | "run" | "build" | "break" | "result" | "end">(reduced ? "end" : "kick");
   const [skipped, setSkipped] = useState(reduced);
   const [subs, setSubs] = useState<Moment[]>([]);
@@ -375,7 +377,8 @@ function Match({
         }
       }, 100);
     } else if (stage === "build" && current) {
-      const name = current.team === "home" ? homeName : awayName;
+      // a foul moment belongs to the side of the player who committed it: the commentary talks about the side that was fouled
+      const name = (current.kind === "foul" ? current.team !== "home" : current.team === "home") ? homeName : awayName;
       if (current.kind === "half") {
         const h = moments.slice(0, cursor).filter((m) => m.kind === "goal" && m.team === "home").length;
         const a = moments.slice(0, cursor).filter((m) => m.kind === "goal" && m.team === "away").length;
@@ -390,8 +393,8 @@ function Match({
         if (current.kind === "foul") sfx("foul");
         else { sfx("kick"); setTimeout(() => sfx("chance"), 250); }
         say(current.kind === "foul" ? foulBuildLine(name, `${seedBase}|${cursor}|b`) : current.pen ? penBuildLine(name, `${seedBase}|${cursor}|b`) : buildLine(name, `${seedBase}|${cursor}|b`));
-        // the VAR looks at a part of the goals, at every penalty and at every red card before the decision comes
-        const looks = !fast && (current.kind === "goal" && (current.pen || pick([true, false, false, true, false], `${seedBase}|${cursor}|var`))) || (!fast && current.kind === "foul" && current.card === "red");
+        // the VAR looks at a few goals, at every penalty and at every red card before the decision comes
+        const looks = !fast && ((current.kind === "goal" && (current.pen || pick([true, false, false, false, false, false, false, false], `${seedBase}|${cursor}|var`))) || (current.kind === "foul" && current.card === "red"));
         if (looks) {
           const check: VarCheck = { kind: current.kind === "goal" ? "goal" : "card", pen: current.pen };
           timers.push(setTimeout(() => {
@@ -404,8 +407,28 @@ function Match({
         }
       }
     } else if (stage === "result" && current) {
-      const name = current.team === "home" ? homeName : awayName;
-      if (current.kind === "goal") {
+      // a foul moment belongs to the side of the player who committed it: the commentary talks about the side that was fouled
+      const name = (current.kind === "foul" ? current.team !== "home" : current.team === "home") ? homeName : awayName;
+      if (current.kind === "disallowed") {
+        // the ball is in the net, the crowd goes off, then the VAR takes it away
+        const mineTeam = mineInvolved ? (current.team === "home") === myIsHome : null;
+        const who = current.player ? ` ${current.player}` : "";
+        sfx(mineTeam === false ? "goalAgainst" : "goal");
+        say(mineTeam === false ? `جوووون…${who} بيسجل لـ${name}!` : `جوووووون!${who} بيهز الشباك لـ${name}!`, "goal");
+        timers.push(setTimeout(() => {
+          setVarCheck({ kind: "goal", cancel: true });
+          say(pick(["استنوا… الفار بيراجع الهدف!", "الحكم بيشاور بإيده على الفار… في مراجعة!", "لحظة… في شك في الهدف، الفار بيشوف اللقطة"], `${seedBase}|${cursor}|dv`));
+          timers.push(setTimeout(() => {
+            setVoided(true);
+            sfx(mineTeam === false ? "whistle" : "groan");
+            say(mineTeam === false
+              ? pick(["الفار بيلغي الهدف! تسلل واضح، الحمد لله!", "الهدف اتلغى! الحكم بيرجع بالإشارة… مفيش جون!"], `${seedBase}|${cursor}|dn`)
+              : pick(["ياااه! الفار بيلغي الهدف! كان ملعوب تسلل بسنتيمترات!", "لا لا لا! الهدف اتلغى! مفيش جون… ده ظلم!"], `${seedBase}|${cursor}|dn`), "miss");
+            timers.push(setTimeout(() => { setVarCheck(null); }, gap(900)));
+          }, gap(3000)));
+        }, gap(2200)));
+        timers.push(setTimeout(() => { setVoided(false); setCursor((c) => c + 1); setStage("run"); }, gap(7600)));
+      } else if (current.kind === "goal") {
         const mineScored = mineInvolved ? (current.team === "home") === myIsHome : true;
         sfx(mineScored ? "goal" : "goalAgainst");
         const upTo = moments.slice(0, cursor + 1).filter((m) => m.kind === "goal");
@@ -420,7 +443,7 @@ function Match({
         sfx("groan");
         say(current.pen ? penMissLine(name, current.kind === "save", `${seedBase}|${cursor}|m`) : missLine(name, current.kind === "save", `${seedBase}|${cursor}|m`), "miss");
       }
-      timers.push(setTimeout(() => { setCursor((c) => c + 1); setStage("run"); }, gap(current.kind === "goal" ? 3600 : 2800)));
+      if (current.kind !== "disallowed") timers.push(setTimeout(() => { setCursor((c) => c + 1); setStage("run"); }, gap(current.kind === "goal" ? 3600 : 2800)));
     } else if ((stage as string) === "end") {
       setMinute(90);
     }
@@ -566,7 +589,7 @@ function Match({
           homeColor={kits.home}
           awayColor={kits.away}
           seed={seedBase}
-          ev={!done && current && current.kind !== "half" && current.kind !== "sub" && (stage === "build" || stage === "result") ? { id: cursor, kind: current.kind, team: current.team, stage: stage === "build" ? "build" : "result", pen: current.pen, card: current.card } : null}
+          ev={!done && current && current.kind !== "half" && current.kind !== "sub" && (stage === "build" || stage === "result") ? { id: cursor, kind: current.kind === "disallowed" ? "goal" : current.kind, cancel: current.kind === "disallowed" && voided, team: current.kind === "foul" ? (current.team === "home" ? "away" : "home") : current.team, stage: stage === "build" ? "build" : "result", pen: current.pen, card: current.card } : null}
         />
 
         <section className="bc-booth" aria-label="Commentary">

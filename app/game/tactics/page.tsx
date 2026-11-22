@@ -22,6 +22,8 @@ import {
 } from "@/lib/football/tactics";
 import { currentLineup } from "@/lib/football/strength";
 import { useTransfers } from "@/lib/football/useTransfers";
+import { ANALYST_FEE, analyze, hireAnalyst, loadHires, type Hire } from "@/lib/football/analyst";
+import { formations } from "@/lib/football/squads";
 import GsmMark from "@/components/GsmMark";
 import GameHud from "@/components/GameHud";
 import "./tactics.css";
@@ -48,7 +50,10 @@ const label = (k: keyof typeof LABELS, v: number) => LABELS[k][v < 34 ? 0 : v < 
 
 export default function TacticsPage() {
   const router = useRouter();
-  const { ctx, loading, error } = useTransfers();
+  const { ctx, loading, error, reload } = useTransfers();
+  const [hires, setHires] = useState<Hire[]>([]);
+  const [hiring, setHiring] = useState(false);
+  const [hireError, setHireError] = useState("");
   const [tactic, setTactic] = useState<Tactic>(defaultTactic());
   const [saved, setSaved] = useState<Tactic | null>(null);
   const [opponent, setOpponent] = useState<string | null>(null);
@@ -78,11 +83,22 @@ export default function TacticsPage() {
     })();
   }, [uid, clubId]);
 
+  useEffect(() => {
+    if (uid) void loadHires(supabase, uid).then(setHires);
+  }, [uid]);
+
   const squad = ctx?.state.squads[ctx.clubId] ?? [];
   const day = ctx && ctx.matchday !== null ? { key: ctx.userId, season: ctx.season, matchday: ctx.matchday } : undefined;
   const lineup = useMemo(() => (ctx ? currentLineup(ctx.userId, ctx.clubId, squad, day) : null), [ctx, squad, day]);
   const eleven = useMemo(() => lineup?.starters ?? [], [lineup]);
   const formation = lineup?.formation;
+  const hired = !!ctx && ctx.matchday !== null && !!opponent && hires.some((h) => h.club_id === ctx.clubId && h.season === ctx.season && h.matchday === ctx.matchday);
+  const report = useMemo(() => {
+    if (!hired || !ctx || !opponent) return null;
+    const theirs = ctx.state.squads[opponent] ?? [];
+    if (!theirs.length) return null;
+    return analyze({ myClub: ctx.clubId, opponent, mySquad: squad, theirSquad: theirs, currentTactic: saved, currentFormation: formation ?? "4-3-3" });
+  }, [hired, ctx, opponent, squad, saved, formation]);
 
   if (loading || !ctx) {
     return (
@@ -109,6 +125,26 @@ export default function TacticsPage() {
   }
   const slide = (k: "tempo" | "width" | "press" | "line", v: number) => setTactic((t) => ({ ...t, [k]: v }));
   const toggle = (id: (typeof OPTIONS)[number]["id"]) => setTactic((t) => ({ ...t, opts: { ...t.opts, [id]: !t.opts[id] } }));
+
+  async function hire() {
+    if (!ctx || !opponent || ctx.matchday === null) return;
+    setHiring(true);
+    setHireError("");
+    try {
+      await hireAnalyst(supabase, { userId: ctx.userId, clubId: ctx.clubId, season: ctx.season, matchday: ctx.matchday, opponent });
+      setHires(await loadHires(supabase, ctx.userId));
+      await reload();
+    } catch (e) {
+      setHireError(e instanceof Error ? e.message : "Could not hire the analyst.");
+    } finally {
+      setHiring(false);
+    }
+  }
+
+  function applyPlan() {
+    if (!report) return;
+    setTactic(report.plan.tactic);
+  }
 
   function save() {
     saveTactic(ctx!.userId, ctx!.clubId, tactic);
@@ -231,6 +267,42 @@ export default function TacticsPage() {
                     {edge > 0 ? `Your ${def.name.toLowerCase()} beats their ${styleOf(theirStyle).name.toLowerCase()} (+${edge})` : edge < 0 ? `Their ${styleOf(theirStyle).name.toLowerCase()} is strong against your ${def.name.toLowerCase()} (${edge})` : `They play ${styleOf(theirStyle).name.toLowerCase()}: an even match-up.`}
                   </p>
                 </div>
+              </section>
+            )}
+
+            {oppClub && ctx.matchday !== null && (
+              <section className="tk-card tk-analyst" aria-label="Performance analyst">
+                <img src="/staff/analyst.webp" alt="" />
+                <small>Performance analyst</small>
+                {!hired ? (
+                  <>
+                    <strong>Report on {oppClub.name}</strong>
+                    <p>He studies how they play, where they are weak, and gives you the plan that suits your players best. One match, {ANALYST_FEE}M.</p>
+                    <button type="button" className="tk-hire" onClick={hire} disabled={hiring || ctx.spendM < ANALYST_FEE}>
+                      {hiring ? "Hiring..." : ctx.spendM < ANALYST_FEE ? `Not enough money (${ANALYST_FEE}M)` : `Hire for ${ANALYST_FEE}M`}
+                    </button>
+                    {hireError && <p className="is-down">{hireError}</p>}
+                  </>
+                ) : report ? (
+                  <>
+                    <strong>{oppClub.name} play {styleOf(report.theirStyle).name.toLowerCase()}</strong>
+                    <dl className="tk-lines">
+                      {report.lines.map((l) => (
+                        <div key={l.line}>
+                          <dt>{l.name}{l.line === report.weakest ? " (weak)" : l.line === report.strongest ? " (strong)" : ""}</dt>
+                          <dd><b>{l.mine}</b> vs {l.theirs}</dd>
+                        </div>
+                      ))}
+                    </dl>
+                    <p className="tk-plan"><b>The plan: {styleOf(report.plan.style).name}, {report.plan.formation}</b><br />{report.plan.why.join(" ")}</p>
+                    <p className={report.plan.gain >= report.current ? "is-up" : "is-down"}>Plan: {report.plan.gain > 0 ? "+" : ""}{report.plan.gain.toFixed(1)} rating points. Your saved tactic: {report.current > 0 ? "+" : ""}{report.current.toFixed(1)}.</p>
+                    <ul className="tk-tips">{report.tips.map((t) => <li key={t}>{t}</li>)}</ul>
+                    <p className="tk-note">Their best players: {report.threats.map((p) => `${p.name} (${p.rating})`).join(", ")}. {formations[report.plan.formation] ? `Set the shape to ${report.plan.formation} in Lineups.` : ""}</p>
+                    <button type="button" className="tk-hire" onClick={applyPlan}>Use this plan</button>
+                  </>
+                ) : (
+                  <p>The report is not ready yet. Try again in a moment.</p>
+                )}
               </section>
             )}
 

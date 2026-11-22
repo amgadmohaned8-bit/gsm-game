@@ -19,7 +19,7 @@ import { availableSquad, injuryBonus } from "@/lib/football/availability";
 export type MatchEvent = {
   minute: number;
   text: string;
-  type: "goal" | "chance" | "save" | "whistle" | "foul" | "pen_miss";
+  type: "goal" | "chance" | "save" | "whistle" | "foul" | "pen_miss" | "disallowed";
   /** goals, chances: who attacks. fouls: the side that was fouled */
   team?: "home" | "away";
   /** a goal scored from the penalty spot */
@@ -72,11 +72,11 @@ const clubRatings: Record<string, number> = {
  */
 export function formOf(clubId: string, season: string): number {
   const r = seedFromString(`${clubId}|${season}|form`) / 4294967296;
-  return Math.round((r * 2 - 1) * 7 * 10) / 10;
+  return Math.round((r * 2 - 1) * 4 * 10) / 10;
 }
 
 /** How much of the gap between two ratings counts in a match (the rest is football being football). */
-const GAP = 0.8;
+const GAP = 1.6;
 
 export function getRating(clubId: string) {
   return clubRatings[clubId] ?? egyptRatings[clubId] ?? africaRatings[clubId] ?? europeRatings[clubId] ?? 72;
@@ -156,7 +156,7 @@ export function simulateFixture(key: FixtureKey): SimulationResult {
   const awayBonus = key.awayBonus ?? injuryBonus(key.awayClub, pool[key.awayClub] ?? [], key.leagueKey, key.season, key.matchday);
   const homeForm = key.homeBonus === undefined ? formOf(key.homeClub, key.season) : 0;
   const awayForm = key.awayBonus === undefined ? formOf(key.awayClub, key.season) : 0;
-  const homeRating = getRating(key.homeClub) + 3 + homeBonus + homeForm; // home advantage
+  const homeRating = getRating(key.homeClub) + 2 + homeBonus + homeForm; // home advantage
   const awayRating = getRating(key.awayClub) + awayBonus + awayForm;
   const difference = ((homeRating - awayRating) * GAP) / 20;
 
@@ -278,6 +278,17 @@ export function simulateFixture(key: FixtureKey): SimulationResult {
       text: extra[Math.floor(rng() * extra.length)],
       type: rng() > 0.5 ? "chance" : "save",
     });
+  }
+
+  // now and then the VAR takes a goal away (offside, a foul in the build-up). It never touches the score:
+  // the goal was never counted. Its own random stream, so the scores of every fixture stay what they were.
+  const vr = createRng(seedFromString([key.leagueKey, key.season, key.matchday, key.homeClub, key.awayClub, "var"].join("|")));
+  if (vr() < 0.14) {
+    const s: Side = vr() < 0.5 ? "home" : "away";
+    const attackers = availableSquad(pool[s === "home" ? key.homeClub : key.awayClub] ?? [], key.leagueKey, key.season, key.matchday).filter((p) => p.position === "FW" || p.position === "MF");
+    const who = attackers.length ? attackers[Math.floor(vr() * attackers.length)] : undefined;
+    const why = vr() < 0.7 ? "offside" : "a foul in the build-up";
+    events.push({ minute: 8 + Math.floor(vr() * 78), type: "disallowed", team: s, player: who?.name, playerId: who?.id, text: `Goal disallowed by VAR for ${why}${who ? `: ${who.name}` : ""} (${nameOfSide(s)}).` });
   }
 
   events.sort((a, b) => a.minute - b.minute);
