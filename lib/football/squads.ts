@@ -188,7 +188,7 @@ const raw: Record<string, string> = {
 8 Watson MF XX 16 55
 10 Palmer MF ENG 24 86
 14 Henderson MF ENG 36 74
-17 Rogers MF ENG 24 76
+17 Rogers MF ENG 24 87
 23 Quenda MF GW 19 76
 25 Caicedo MF EC 25 83
 41 Estêvão MF BR 19 82
@@ -261,7 +261,7 @@ const raw: Record<string, string> = {
 22 Larsen FW NO 26 75
 29 Guessand FW FR 25 72`,
   everton: `
-1 Pickford GK ENG 32 80
+1 Pickford GK ENG 32 85
 12 Travers GK IE 27 70
 31 King GK WAL 31 68
 4 Branthwaite DF ENG 24 81

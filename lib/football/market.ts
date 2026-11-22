@@ -177,7 +177,7 @@ Zaïre-Emery MF FR 20 83 Ligue1 Paris_Saint-Germain
 Lucas_Chevalier GK FR 24 80 Ligue1 Paris_Saint-Germain
 Mason_Greenwood FW ENG 24 82 Ligue1 Marseille
 Ben_Seghir FW MA 21 78 Ligue1 Monaco
-Cristiano_Ronaldo FW PT 41 99 Saudi Al_Nassr
+Cristiano_Ronaldo FW PT 41 80 Saudi Al_Nassr
 Kingsley_Coman FW FR 30 80 Saudi Al_Nassr
 João_Félix FW PT 26 79 Saudi Al_Nassr
 Sadio_Mané FW SN 34 78 Saudi Al_Nassr
@@ -202,7 +202,7 @@ Sané FW DE 30 80 Turkey Galatasaray
 Icardi FW AR 33 77 Turkey Galatasaray
 Rafa_Silva FW PT 33 76 Turkey Beşiktaş
 İsmail_Yüksek MF TR 27 76 Turkey Fenerbahçe
-Messi FW AR 39 99 MLS Inter_Miami
+Messi FW AR 39 83 MLS Inter_Miami
 Son_Heung-min FW KR 34 80 MLS LAFC
 Bouanga FW FR 31 79 MLS LAFC
 Luis_Suárez FW UY 39 74 MLS Inter_Miami
