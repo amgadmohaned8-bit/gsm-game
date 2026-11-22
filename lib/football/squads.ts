@@ -443,7 +443,7 @@ const raw: Record<string, string> = {
 7 Ndiaye MF SN 26 80
 8 Kovačić MF HR 32 82
 10 Cherki MF FR 23 82
-17 Fernández MF AR 25 79
+17 Fernández MF AR 25 86
 32 Bouaddi MF FR 19 74
 47 Foden MF ENG 26 85
 9 Haaland FW NO 26 91

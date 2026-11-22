@@ -116,7 +116,7 @@ Camavinga MF FR 23 82 LaLiga Real_Madrid
 Huijsen DF ES 21 83 LaLiga Real_Madrid
 Endrick FW BR 20 78 LaLiga Real_Madrid
 Fran_García DF ES 26 77 LaLiga Real_Madrid
-Frenkie_de_Jong MF NL 29 82 LaLiga Barcelona
+Frenkie_de_Jong MF NL 29 87 LaLiga Barcelona
 Pau_Cubarsí DF ES 19 82 LaLiga Barcelona
 Araújo DF UY 27 82 LaLiga Barcelona
 Balde DF ES 22 80 LaLiga Barcelona
@@ -139,10 +139,10 @@ Isco MF ES 34 76 LaLiga Real_Betis
 Antony FW BR 26 77 LaLiga Real_Betis
 Luis_Díaz FW CO 29 85 Bundesliga Bayern_Munich
 Upamecano DF FR 27 88 Bundesliga Bayern_Munich
-Davies DF CA 25 81 Bundesliga Bayern_Munich
+Davies DF CA 25 82 Bundesliga Bayern_Munich
 Neuer GK DE 40 80 Bundesliga Bayern_Munich
 Gnabry FW DE 31 80 Bundesliga Bayern_Munich
-Guirassy FW GN 30 82 Bundesliga Borussia_Dortmund
+Guirassy FW GN 30 85 Bundesliga Borussia_Dortmund
 Schlotterbeck DF DE 26 87 Bundesliga Borussia_Dortmund
 Kobel GK CH 28 83 Bundesliga Borussia_Dortmund
 Julian_Brandt MF DE 30 80 Bundesliga Borussia_Dortmund
@@ -161,7 +161,7 @@ Pulisic FW US 27 82 SerieA AC_Milan
 Modrić MF HR 40 80 SerieA AC_Milan
 Kenan_Yıldız FW TR 21 82 SerieA Juventus
 Bremer DF BR 29 83 SerieA Juventus
-Vlahović FW RS 26 79 SerieA Juventus
+Vlahović FW RS 26 81 SerieA Juventus
 McTominay MF SCO 29 83 SerieA Napoli
 De_Bruyne MF BE 35 84 SerieA Napoli
 Buongiorno DF IT 26 81 SerieA Napoli
@@ -177,7 +177,7 @@ Zaïre-Emery MF FR 20 83 Ligue1 Paris_Saint-Germain
 Lucas_Chevalier GK FR 24 80 Ligue1 Paris_Saint-Germain
 Mason_Greenwood FW ENG 24 82 Ligue1 Marseille
 Ben_Seghir FW MA 21 78 Ligue1 Monaco
-Cristiano_Ronaldo FW PT 41 80 Saudi Al_Nassr
+Cristiano_Ronaldo FW PT 41 99 Saudi Al_Nassr
 Kingsley_Coman FW FR 30 80 Saudi Al_Nassr
 João_Félix FW PT 26 79 Saudi Al_Nassr
 Sadio_Mané FW SN 34 78 Saudi Al_Nassr
@@ -202,7 +202,7 @@ Sané FW DE 30 80 Turkey Galatasaray
 Icardi FW AR 33 77 Turkey Galatasaray
 Rafa_Silva FW PT 33 76 Turkey Beşiktaş
 İsmail_Yüksek MF TR 27 76 Turkey Fenerbahçe
-Messi FW AR 39 83 MLS Inter_Miami
+Messi FW AR 39 99 MLS Inter_Miami
 Son_Heung-min FW KR 34 80 MLS LAFC
 Bouanga FW FR 31 79 MLS LAFC
 Luis_Suárez FW UY 39 74 MLS Inter_Miami
