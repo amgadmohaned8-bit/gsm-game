@@ -128,6 +128,8 @@ export default function DashboardPage() {
   const [hasEuro, setHasEuro] = useState(false);
   /** the shared game menu sends "?open=press" or "?open=room" to the hub */
   const [wanted, setWanted] = useState<string | null>(null);
+  const [nextMatch, setNextMatch] = useState<{ matchday: number; opponent: string; home: boolean; kickoff: string | null } | null>(null);
+
   useEffect(() => {
     try {
       const w = new URLSearchParams(window.location.search).get("open");
@@ -151,7 +153,6 @@ export default function DashboardPage() {
   const [userId, setUserId] = useState("");
   const [summary, setSummary] = useState<SeasonSummary | null>(null);
   const [, setCounts] = useState<TrophyCounts>({ league: 0, league_cup: 0, objective: 0 });
-  const [nextMatch, setNextMatch] = useState<{ matchday: number; opponent: string; home: boolean; kickoff: string | null } | null>(null);
 
   useEffect(() => {
     if (!menuOpen) return;

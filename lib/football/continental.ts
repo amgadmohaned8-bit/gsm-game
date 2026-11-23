@@ -52,6 +52,7 @@ export type ContMatch = {
   pens_away: number | null;
   winner: string | null;
   status: "scheduled" | "completed";
+  played_at?: string | null;
 };
 
 export type ContSetup = { comp_id: string; season: string; club_id: string; egypt: string[]; source: "standalone" | "league" };
@@ -207,7 +208,7 @@ async function saveMatch(client: SupabaseClient, m: ContMatch, userId: string, p
     .eq("id", m.id);
   if (error) throw error;
   return {
-    match: { ...m, home_score: result.home_score, away_score: result.away_score, pens_home: result.pens_home, pens_away: result.pens_away, winner: result.winner, status: "completed" as const },
+    match: { ...m, home_score: result.home_score, away_score: result.away_score, pens_home: result.pens_home, pens_away: result.pens_away, winner: result.winner, status: "completed" as const, played_at: playedAt },
     result,
   };
 }
