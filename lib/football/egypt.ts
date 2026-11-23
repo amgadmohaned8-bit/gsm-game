@@ -87,42 +87,37 @@ export const egyptTiers: Record<string, "elite" | "mid" | "small"> = {
 export const egyptColors: Record<string, string> = Object.fromEntries(egyptClubs.map((c) => [c.id, c.colors[0] === "#ffffff" ? c.colors[1] : c.colors[0]]));
 
 export const egyptRaw: Record<string, string> = {
- "alahly": `
-1 Mohamed_El_Shenawy GK EG 37 82
-31 Mostafa_Shobeir GK EG 26 76
-33 Hamza_Alaa GK EG 24 68
-2 Yassin_Marei DF EG 25 70
-3 Achraf_Dari DF MA 27 74
-4 Ahmed_Eid DF EG 25 70
-5 Hady_Reyad DF EG 27 68
-6 Yasser_Ibrahim DF EG 33 76
-11 Karim_El_Debes DF EG 22 70
-20 Youssef_Belammari DF MA 27 74
-26 Amr_El_Gazar DF EG 25 68
-30 Mohamed_Hany DF EG 30 76
-36 Ahmed_Koka MF EG 25 70
-8 Ahmed_Reda MF EG 24 68
-12 Akram_Tawfik MF EG 28 74
-13 Marwan_Attia MF EG 27 78
-15 Omar_El_Saaiy MF EG 23 68
-19 Afsha MF EG 30 74
-21 Ali_Mahmoud MF EG 21 66
-22 Emam_Ashour MF EG 28 82
-24 Tawfik_Mohamed MF EG 23 66
-34 Kabaka MF EG 20 64
-39 Mahmoud_Salah MF EG 18 62
-7 Taher_Mohamed FW EG 29 74
-9 Soufiane_Benjdida FW MA 25 72
-10 Monsef_Bakrar FW DZ 25 76
-14 Hussein_El_Shahat FW EG 34 76
-17 Achraf_Bencharki FW MA 32 78
-18 Omar_Moawad FW EG 19 66
-25 Ahmed_Zizo FW EG 30 80
-27 Aqtay_Abdallah FW EG 21 64
-28 Karim_Fouad FW EG 27 70
-29 Reda_Slim FW MA 26 72
-32 Mohamed_Rafat FW EG 20 62
-38 Mohamed_Abdallah FW EG 21 66
+  "al-ahly": `
+1 Shenawy GK EG 37 76
+31 Shobeir GK EG 27 72
+33 Hamza_Alaa GK EG 21 60
+2 Yassin_Marei DF EG 23 70
+3 Achraf_Dari DF MA 27 75
+4 Ahmed_Eid DF EG 25 66
+5 Hady_Reyad DF EG 24 66
+6 Yasser_Ibrahim DF EG 32 72
+20 Youssef_Belammari DF MA 28 71
+24 Tawfik_Mohamed DF EG 21 62
+26 Amr_El_Gazar DF EG 24 62
+30 Mohamed_Hany DF EG 30 72
+8 Ahmed_Reda MF EG 23 67
+12 Akram_Tawfik MF EG 29 72
+13 Marwan_Attia MF EG 27 73
+15 Omar_El_Saaiy MF EG 29 68
+21 Ali_Mahmoud MF EG 21 60
+22 Imam_Ashour MF EG 28 76
+34 Kabaka MF EG 21 60
+36 Ahmed_Nabil_Koka MF EG 31 72
+7 Taher_Mohamed FW EG 29 72
+9 Soufiane_Benjdida FW MA 24 70
+10 Monsef_Bakrar FW DZ 27 73
+14 Hussein_El_Shahat FW EG 34 75
+17 Achraf_Bencharki FW MA 32 76
+18 Omar_Moawad FW EG 25 68
+19 Afsha FW EG 29 70
+25 Zizo FW EG 30 74
+27 Aqtay_Abdallah FW EG 23 64
+29 Reda_Slim FW MA 27 66
 `,
   "pyramids": `
 1 Ahmed_El_Shenawy GK EG 35 76
