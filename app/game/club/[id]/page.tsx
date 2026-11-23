@@ -6,13 +6,12 @@ import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import { allClubs as clubs } from "@/lib/football/leagueClubs";
-import { getTier } from "@/lib/football/finance";
-import { marketValue, teamRating, type Player, type Position } from "@/lib/football/squads";
-import { askingPrice, canBuy, MIN_BY_POSITION, windowStatus } from "@/lib/football/transfers";
-import { signFromClub } from "@/lib/football/dealing";
+import { marketValue, type Player, type Position } from "@/lib/football/squads";
+import { askingPrice, canBuy, canSell, MIN_BY_POSITION, windowStatus } from "@/lib/football/transfers";
+import { listPlayer, signFromClub } from "@/lib/football/dealing";
 import { useTransfers } from "@/lib/football/useTransfers";
 import { myRoom } from "@/lib/football/rooms";
-import { BidModal, money } from "@/components/TransferModals";
+import { BidModal, SellModal, money } from "@/components/TransferModals";
 import GsmMark from "@/components/GsmMark";
 import GameHud from "@/components/GameHud";
 import "../../transfers/transfers.css";
@@ -25,14 +24,13 @@ const groups: { key: Position; label: string }[] = [
   { key: "FW", label: "Forwards" },
 ];
 
-const tierLabel = { elite: "Big club", mid: "Mid-table club", small: "Smaller club" } as const;
-
 export default function ClubPage() {
   const router = useRouter();
   const params = useParams<{ id: string }>();
   const clubId = String(params?.id ?? "");
   const { ctx, loading, error, reload } = useTransfers();
   const [bid, setBid] = useState<Player | null>(null);
+  const [sell, setSell] = useState<Player | null>(null);
 
   // a club run by a friend answers offers itself: those go through Negotiations
   const [managed, setManaged] = useState<string | null>(null);
@@ -77,9 +75,21 @@ export default function ClubPage() {
   const window = windowStatus(ctx.matchday);
   const mine = ctx.state.squads[ctx.clubId] ?? [];
   const blocked = canBuy({ ban: signingBan(ctx.state.bank), balance: ctx.spendM, fee: 0, squadSize: mine.length, windowOpen: window.open });
-  const tier = getTier(club.id);
   const sorted = squad.slice().sort((a, b) => b.rating - a.rating);
   const stars = sorted.slice(0, 3);
+
+  /** put one of my players on the market, as the Transfers page does */
+  async function listForSale(player: Player, asking: number) {
+    if (ctx!.roomId) {
+      await listPlayer(supabase, ctx!.roomId, player.id, asking);
+    } else {
+      const { error: e } = await supabase.from("transfer_listings").insert({ league_id: ctx!.leagueId, user_id: ctx!.userId, season: ctx!.season, player_id: player.id, asking, listed_matchday: ctx!.matchday ?? 0 });
+      if (e) throw e;
+    }
+    await reload();
+  }
+
+  const listedIds = new Set(ctx.state.listings.filter((l) => l.status === "open").map((l) => l.player_id));
 
   async function sign(player: Player, fee: number) {
     await signFromClub(supabase, { roomId: ctx!.roomId, userId: ctx!.userId, clubId: ctx!.clubId, leagueId: ctx!.leagueId, season: ctx!.season, matchday: ctx!.matchday, spendM: ctx!.spendM, squadSize: mine.length }, player, fee);
@@ -97,20 +107,18 @@ export default function ClubPage() {
         <header className="cl-hero gx-cut">
           <img src={club.logo} alt="" />
           <div>
-            <p>{tierLabel[tier]} · {club.city}</p>
+            <p>{club.city}</p>
             <h1><span className="gx-slant">{club.name}</span></h1>
             <small>{club.stadium}</small>
           </div>
           <dl>
-            <div><dt>Team rating</dt><dd>{teamRating(squad)}</dd></div>
             <div><dt>Players</dt><dd>{squad.length}</dd></div>
             <div><dt>Transfers</dt><dd className={window.open ? "is-open" : "is-shut"}>{window.open ? "Open" : "Shut"}</dd></div>
           </dl>
         </header>
 
         {own ? (
-          <p className="cl-note">This is your club. Manage the squad and the lineup from the squad page.
-            {" "}<Link href="/game/squad">Open squad</Link> · <Link href="/game/transfers">Sell players</Link></p>
+          <p className="cl-note">This is your squad. Tap <b>Sell</b> next to a player to put him on the market. Formation and tactics are in <Link href="/game/squad">Lineups</Link>.</p>
         ) : (
           <p className="cl-note">
             {managed
@@ -153,7 +161,9 @@ export default function ClubPage() {
                         <small>{p.position} · {p.age} · {p.nationality || "-"}</small>
                       </span>
                       <span className="tr-val">{money(marketValue(p))}</span>
-                      {own || managed ? <span /> : (
+                      {own ? (
+                        listedIds.has(p.id) ? <span className="tr-val">On sale</span> : <button type="button" className="tr-offer" onClick={() => setSell(p)}>Sell</button>
+                      ) : managed ? <span /> : (
                         <button
                           type="button"
                           className="tr-offer"
@@ -170,6 +180,10 @@ export default function ClubPage() {
           );
         })}
       </div>
+
+      {sell && (
+        <SellModal player={sell} warning={canSell(mine, sell)} onClose={() => setSell(null)} onList={(price) => listForSale(sell, price)} />
+      )}
 
       {bid && (
         <BidModal

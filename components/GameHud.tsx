@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import GsmMark from "./GsmMark";
 import Icon from "./Icon";
+import GameMenu from "./GameMenu";
 
 const steps = ["Contract", "League", "Club", "Appointment"];
 
@@ -19,7 +20,7 @@ export default function GameHud({ step, onBack, menu, right, season }: Props) {
   return (
     <header className="gx-hud">
       <div className="gx-hud-left">
-        {menu}
+        {menu ?? (step ? null : <GameMenu />)}
         {onBack && (
           <button type="button" className="gx-hud-back" onClick={onBack} aria-label="Go back">
             <Icon name="arrow-left" size={20} />

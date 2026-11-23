@@ -35,6 +35,7 @@ import GameHud from "@/components/GameHud";
 import Icon from "@/components/Icon";
 import "./transfers.css";
 
+import { nowMs } from "@/lib/serverTime";
 type Tab = "market" | "talks" | "clubs" | "windows";
 type MView = "sale" | "world" | "mine";
 type Pos = "ALL" | Position;
@@ -108,10 +109,10 @@ export default function TransfersPage() {
   }, [roomId]);
 
   // the world market is a different selection every two days
-  const [now, setNow] = useState(0); // set after mount: Date.now() during the first render breaks static prerendering
+  const [now, setNow] = useState(0); // set after mount: nowMs() during the first render breaks static prerendering
   useEffect(() => {
-    setNow(Date.now());
-    const t = setInterval(() => setNow(Date.now()), 60_000);
+    setNow(nowMs());
+    const t = setInterval(() => setNow(nowMs()), 60_000);
     return () => clearInterval(t);
   }, []);
 
@@ -119,6 +120,13 @@ export default function TransfersPage() {
   const mine = useMemo(() => (ctx && squads ? (squads[ctx.clubId] ?? []) : []), [ctx, squads]);
   const window = windowStatus(ctx?.matchday ?? null);
   const leagueId = ctx ? leagueOfClub(ctx.clubId) : "";
+  // Egypt: transfers stay between its clubs, so open on Clubs and never on the world market
+  const egyptOnly = leagueId === "egyptian-premier-league";
+  useEffect(() => {
+    if (!egyptOnly) return;
+    setTab((t) => (t === "market" ? "clubs" : t));
+    setView((v) => (v === "world" || v === "sale" ? "mine" : v));
+  }, [egyptOnly]);
   /** clubs another person manages: they answer offers themselves */
   const humans = useMemo(() => new Map<string, RoomMember>(members.filter((m) => m.user_id !== ctx?.userId).map((m) => [m.club_id, m] as [string, RoomMember])), [members, ctx?.userId]);
   const myName = members.find((m) => m.user_id === ctx?.userId)?.name || "A manager";
@@ -129,7 +137,8 @@ export default function TransfersPage() {
     if (!ctx || !squads) return { list: [] as Player[], isNew: new Set<string>(), leaving: new Set<string>() };
     const stock = new Map((squads[MARKET] ?? []).map((p) => [p.id, p]));
     const hide = hiddenOrigin(leagueId);
-    const entries = (now ? visibleMarket(now) : []).filter((e) => stock.has(e.player.id) && e.player.origin !== hide);
+    // the Egyptian league has no world market: players move between its clubs only
+    const entries = (now && leagueId !== "egyptian-premier-league" ? visibleMarket(now) : []).filter((e) => stock.has(e.player.id) && e.player.origin !== hide);
     return {
       list: entries.map((e) => stock.get(e.player.id)!),
       isNew: new Set(entries.filter((e) => e.isNew).map((e) => e.player.id)),
@@ -331,9 +340,10 @@ export default function TransfersPage() {
     ["clubs", "Clubs"],
     ["windows", "Transfer Windows"],
   ];
+  const internal = leagueId === "egyptian-premier-league";
   const views: [MView, string][] = [
     ["sale", `For sale (${mlist.length})`],
-    ["world", "World market"],
+    ...(internal ? [] : [["world", "World market"] as [MView, string]]),
     ["mine", "My players"],
   ];
   const posChips = (

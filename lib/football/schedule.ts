@@ -8,6 +8,7 @@
 
 import { clubsOfLeague } from "@/lib/football/leagueClubs";
 
+import { nowMs } from "@/lib/serverTime";
 export const KICKOFF_TIME_ZONE = "Africa/Cairo";
 export const KICKOFF_HOUR = 20;
 export const MATCHDAYS = 38;
@@ -72,7 +73,7 @@ export function zonedTimeToUtc(
 }
 
 /** The next 8 PM (Cairo) that is at least five minutes away. */
-export function firstKickoff(now = new Date()): Date {
+export function firstKickoff(now = new Date(nowMs())): Date {
   const p = zoneParts(now, KICKOFF_TIME_ZONE);
   const today = zonedTimeToUtc(p.y, p.m, p.d, KICKOFF_HOUR, 0);
 

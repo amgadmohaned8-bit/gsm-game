@@ -261,6 +261,8 @@ export function canBuy(args: {
 /** Bids for a listed player, one per matchday from the day he is listed (the first one is the same day). */
 /** Every club of the world that can buy a player of the manager: his own league and all the others. */
 export function worldBuyers(myClub: string) {
+  // the Egyptian league is internal: its players are only sold to the other clubs of the league
+  if (leagueOfClub(myClub) === "egyptian-premier-league") return clubsOfLeague("egyptian-premier-league").filter((c) => c.id !== myClub);
   return allClubs.filter((c) => c.id !== myClub);
 }
 

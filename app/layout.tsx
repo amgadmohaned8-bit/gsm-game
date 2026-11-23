@@ -4,6 +4,7 @@ import "./landscape.css";
 import "./lite.css";
 import OrientationGate from "@/components/OrientationGate";
 import PwaRegister from "@/components/PwaRegister";
+import TimeSync from "@/components/TimeSync";
 
 export const metadata: Metadata = {
   title: "GSM | Global Soccer Manager",
@@ -53,6 +54,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
         {children}
         <OrientationGate />
         <PwaRegister />
+        <TimeSync />
       </body>
     </html>
   );

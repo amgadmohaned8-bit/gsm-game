@@ -59,7 +59,7 @@ export const tierProfiles: Record<ClubTier, TierProfile> = {
   elite: {
     label: "Elite budget",
     note: "Global brand and a packed stadium, but the wage bill is huge. Sell before you buy.",
-    openingBalance: 45_000_000,
+    openingBalance: 80_000_000,
     tv: 3_000_000,
     sponsors: 2_000_000,
     gate: 2_500_000,
@@ -71,7 +71,7 @@ export const tierProfiles: Record<ClubTier, TierProfile> = {
   mid: {
     label: "Mid budget",
     note: "A solid club with room to grow, if you spend carefully.",
-    openingBalance: 20_000_000,
+    openingBalance: 150_000_000,
     tv: 2_000_000,
     sponsors: 1_000_000,
     gate: 1_200_000,
@@ -83,7 +83,7 @@ export const tierProfiles: Record<ClubTier, TierProfile> = {
   small: {
     label: "Tight budget",
     note: "Little money. Every pound has to count.",
-    openingBalance: 8_000_000,
+    openingBalance: 100_000_000,
     tv: 1_500_000,
     sponsors: 500_000,
     gate: 600_000,
@@ -99,18 +99,19 @@ export const openingBonusAll = 100_000_000;
 
 /** Extra money for one club on top of the tier and the bonus for everybody (euros). Change a number here to change that club's budget. */
 export const openingExtra: Record<string, number> = {
-  arsenal: 910_000_000, // elite 45M + 100M for everybody + 100M = 245M
-  "man-united": 650_000_000, // elite 45M + 100M for everybody + 205M = 350M
-liverpool : 400_000_000,
- "hull-city" : 792_000_000,
-"man-city" : 150_000_000,
-newcastle : 510_000_000,
-tottenham : 300_000_000,
-chelsea : 200_000_000,
+ 
 };
 
 export function getTier(clubId: string | null | undefined): ClubTier {
   return (clubId && (clubTiers[clubId] ?? egyptTiers[clubId])) || "mid";
+}
+
+/** What every league match pays the club, whatever its size: win 3M, draw 2M, loss 1M. A win by three goals or more adds 1M, a clean sheet adds 0.5M. */
+export function matchPrize(result: "win" | "draw" | "loss", goalsFor: number, goalsAgainst: number): number {
+  const base = result === "win" ? 3_000_000 : result === "draw" ? 2_000_000 : 1_000_000;
+  const big = result === "win" && goalsFor - goalsAgainst >= 3 ? 1_000_000 : 0;
+  const clean = goalsAgainst === 0 ? 500_000 : 0;
+  return base + big + clean;
 }
 
 export type FinanceMatch = {
@@ -189,7 +190,7 @@ export function buildFinance(
       tv: p.tv,
       sponsors: p.sponsors,
       gate: home ? p.gate : 0,
-      prize: result === "win" ? p.prize : result === "draw" ? Math.round(p.prize / 3) : 0,
+      prize: matchPrize(result, goalsFor, goalsAgainst),
     };
     const expenses = {
       wages: p.wages,

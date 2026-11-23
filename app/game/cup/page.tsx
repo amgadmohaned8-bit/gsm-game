@@ -29,6 +29,7 @@ import MatchOverlay from "@/components/MatchOverlay";
 import "../fixtures/fixtures.css";
 import "./cup.css";
 
+import { nowMs } from "@/lib/serverTime";
 type ManagerData = { manager_name?: string | null; selected_club: string; selected_league: string; room_id?: string | null };
 
 const pad = (n: number) => String(n).padStart(2, "0");
@@ -46,14 +47,14 @@ export default function CupPage() {
   const [season, setSeason] = useState("");
   const [first, setFirst] = useState<Date>(() => firstKickoff());
   const [rows, setRows] = useState<CupMatch[]>([]);
-  const [now, setNow] = useState(0); // set after mount: Date.now() during the first render breaks static prerendering
+  const [now, setNow] = useState(0); // set after mount: nowMs() during the first render breaks static prerendering
   const [saving, setSaving] = useState(false);
   const [playing, setPlaying] = useState<PlayedCupRound | null>(null);
 
   const refresh = useCallback(
     async (uid: string, seasonName: string, club: string, start: Date, seed?: string | null, leagueId = "premier-league") => {
       const sim = await loadSim(supabase, { userId: uid, clubId: club, roomId: seed, season: seasonName, matchday: null, leagueId });
-      const next = await settleCup(supabase, uid, seasonName, club, start, Date.now(), seed ?? uid, sim, leagueId);
+      const next = await settleCup(supabase, uid, seasonName, club, start, nowMs(), seed ?? uid, sim, leagueId);
       await recordCupWin(supabase, uid, seasonName, club, next, leagueId);
       setRows(next);
     },
@@ -128,8 +129,8 @@ export default function CupPage() {
   }, [router, refresh]);
 
   useEffect(() => {
-    setNow(Date.now());
-    const timer = setInterval(() => setNow(Date.now()), 1000);
+    setNow(nowMs());
+    const timer = setInterval(() => setNow(nowMs()), 1000);
     return () => clearInterval(timer);
   }, []);
 

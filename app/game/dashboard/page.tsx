@@ -5,6 +5,7 @@ import { baseLeague } from "@/lib/football/leagueIds";
 import { egyptClubs } from "@/lib/football/egypt";
 import { useEffect, useState, useRef } from "react";
 import { useRouter } from "next/navigation";
+import { GAME_NAV } from "@/lib/gameNav";
 import { supabase } from "@/lib/supabase";
 import GsmMark from "@/components/GsmMark";
 import CompBackdrop from "@/components/CompBackdrop";
@@ -82,29 +83,7 @@ const leagueNames: Record<string, string> = {
   bundesliga: "Bundesliga",
 };
 
-const navigation: {
-  icon: IconName;
-  label: string;
-  note: string;
-  active: boolean;
-  href?: string;
-  action?: "room" | "press";
-}[] = [
-  { icon: "user", label: "Manager", note: "Your office and the manager", active: false, href: "/game/management" },
-  { icon: "table", label: "League", note: "Table and form", active: false, href: "/game/standings" },
-  { icon: "calendar", label: "Fixtures", note: "Every matchday", active: false, href: "/game/fixtures" },
-  { icon: "squad", label: "Lineups", note: "Players, formation and tactics", active: false, href: "/game/squad" },
-  { icon: "contract", label: "Contracts", note: "Renew and wages", active: false, href: "/game/contracts" },
-  { icon: "training", label: "Training", note: "Develop your players", active: false, href: "/game/training" },
-  { icon: "ball", label: "Friendlies", note: "Warm-up matches", active: false, href: "/game/friendlies" },
-  { icon: "transfer", label: "Transfers", note: "Buy and sell", active: false, href: "/game/transfers" },
-  { icon: "wallet", label: "Bank", note: "Loans, debts and credit", active: false, href: "/game/bank" },
-  { icon: "star", label: "League Cup", note: "Knockout cup", active: false, href: "/game/cup" },
-  { icon: "chat", label: "Social", note: "Feed, stories and coaches", active: false, href: "/game/social" },
-  { icon: "news", label: "Press conference", note: "Face the journalists", active: false, action: "press" },
-  { icon: "user", label: "Friends league", note: "Invite with a code", active: false, action: "room" },
-  { icon: "sliders", label: "Settings", note: "Game options", active: false, href: "/game/settings" },
-];
+const navigation = GAME_NAV.map((n) => ({ ...n, active: false }));
 
 
 type Row = { clubId: string; name: string; logo: string; played: number; gd: number; points: number };
@@ -147,6 +126,22 @@ export default function DashboardPage() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [hasCont, setHasCont] = useState(false);
   const [hasEuro, setHasEuro] = useState(false);
+  /** the shared game menu sends "?open=press" or "?open=room" to the hub */
+  const [wanted, setWanted] = useState<string | null>(null);
+  useEffect(() => {
+    try {
+      const w = new URLSearchParams(window.location.search).get("open");
+      if (w === "press" || w === "room") setWanted(w);
+    } catch { /* no panel */ }
+  }, []);
+  useEffect(() => {
+    if (!wanted || !club || !manager) return;
+    if (wanted === "room") setRoomOpen(true);
+    else if (nextMatch) setPressOpen(true);
+    else return;
+    setWanted(null);
+    try { window.history.replaceState(null, "", "/game/dashboard"); } catch { /* fine */ }
+  }, [wanted, club, manager, nextMatch]);
   const [table, setTable] = useState<Row[]>([]);
   const [form, setForm] = useState<("W" | "D" | "L")[]>([]);
   const closeRef = useRef<HTMLButtonElement>(null);
@@ -594,13 +589,7 @@ export default function DashboardPage() {
           <button type="button" ref={closeRef} onClick={() => setMenuOpen(false)} aria-label="Close menu"><Icon name="close" size={22} /></button>
         </header>
         <nav>
-          {[{ icon: "home" as IconName, label: "My teams", note: "Your four teams in one place", active: false, href: "/game/myteams" }, ...((hasCont || hasEuro)
-            ? [...navigation.slice(0, navigation.findIndex((n) => n.label === "League Cup") + 1),
-                ...(hasCont ? [{ icon: "star" as IconName, label: "CAF Cup", note: "Champions League and Confederation Cup", active: false, href: "/game/continental" }] : []),
-                ...(hasEuro ? [{ icon: "star" as IconName, label: "Europe", note: "Champions League and Europa League", active: false, href: "/game/europe" }] : []),
-                ...navigation.slice(navigation.findIndex((n) => n.label === "League Cup") + 1)]
-            : navigation
-          )].map((item) => {
+          {navigation.map((item) => {
             const open = Boolean(item.href || (item.action === "press" ? nextMatch : item.action));
             return (
               <button

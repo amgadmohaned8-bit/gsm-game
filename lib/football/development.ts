@@ -12,6 +12,7 @@
 
 import type { Player } from "@/lib/football/squads";
 
+import { nowMs } from "@/lib/serverTime";
 export const FIRST_YEAR = 2026;
 export const SLOTS = 4;
 /** a session of up to three players takes this long to finish; the gains count once it is done */
@@ -90,7 +91,7 @@ export function progressOf(total: number) {
 export function gainsAt(rows: TrainingRow[], season: string, matchday: number, players?: Player[]) {
   const ageOf = new Map((players ?? []).map((p) => [p.id, p.age]));
   const perSeason = new Map<string, number>();
-  const now = Date.now();
+  const now = nowMs();
   for (const r of rows) {
     const end = finishesAt(r);
     if (end !== null && end > now) continue; // still training: no gain yet

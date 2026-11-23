@@ -7,7 +7,7 @@ import { allClubs as clubs, clubsOfLeague } from "@/lib/football/leagueClubs";
 import { getTier } from "@/lib/football/finance";
 import { activeSeason, seasonLabel } from "@/lib/football/season";
 import { simulateFixture, type SimulationResult } from "@/lib/football/matchSim";
-import { FRIENDLIES_PER_ROUND, friendlyIncome, loadFriendlies, sendFriendNotice, type Friendly } from "@/lib/football/friendlies";
+import { FRIENDLIES_PER_ROUND, loadFriendlies, sendFriendNotice, type Friendly } from "@/lib/football/friendlies";
 import { myRoom } from "@/lib/football/rooms";
 import { loadSim, withTimeout } from "@/lib/football/strength";
 import GsmMark from "@/components/GsmMark";
@@ -67,8 +67,12 @@ export default function FriendliesPage() {
         .eq("season", s);
       const list = (rows ?? []) as { home_club: string; away_club: string; matchday: number; status: string }[];
       const open = list.filter((m) => m.status === "scheduled").map((m) => m.matchday);
-      const ids = [...new Set(list.flatMap((m) => [m.home_club, m.away_club]))].filter((id) => id !== contract.selected_club);
-      const fallback = clubsOfLeague(leagueId).filter((c) => c.id !== contract.selected_club).map((c) => c.id);
+      // the club of the next league match is not a friendly opponent
+      const nextDay = open.length ? Math.min(...open) : null;
+      const nextMatch = nextDay === null ? undefined : list.find((m) => m.matchday === nextDay && (m.home_club === contract.selected_club || m.away_club === contract.selected_club));
+      const nextOpp = nextMatch ? (nextMatch.home_club === contract.selected_club ? nextMatch.away_club : nextMatch.home_club) : "";
+      const ids = [...new Set(list.flatMap((m) => [m.home_club, m.away_club]))].filter((id) => id !== contract.selected_club && id !== nextOpp);
+      const fallback = clubsOfLeague(leagueId).filter((c) => c.id !== contract.selected_club && c.id !== nextOpp).map((c) => c.id);
       if (cancelled) return;
       roomRef.current = contract.room_id ?? null;
       const pals: Record<string, { user_id: string; name: string }> = {};
@@ -101,7 +105,6 @@ export default function FriendliesPage() {
   const used = slot !== null && count >= FRIENDLIES_PER_ROUND;
   /** a club already played in this round is not offered again */
   const metClubs = new Set(inRound.flatMap((f) => [f.home_club, f.away_club]));
-  const earned = history.reduce((sum, f) => sum + Number(f.income), 0);
   const list = useMemo(
     () => (opponents.filter((id) => !metClubs.has(id)).map((id) => clubs.find((c) => c.id === id)).filter(Boolean) as NonNullable<ReturnType<typeof clubs.find>>[])
       .sort((a, b) => Number(!!friends[b.id]) - Number(!!friends[a.id])),
@@ -119,6 +122,7 @@ export default function FriendliesPage() {
         squads: undefined,
       }));
       const home = Math.random() < 0.5; // only the venue is random
+      const shine = 4 + Math.floor(Math.random() * 4);
       const homeClub = home ? myClub : target;
       const awayClub = home ? target : myClub;
       const result = simulateFixture({
@@ -127,11 +131,12 @@ export default function FriendliesPage() {
         matchday: 100 + slot + count * 1000,
         homeClub,
         awayClub,
-        homeBonus: sim.bonus[homeClub],
-        awayBonus: sim.bonus[awayClub],
+        // in a friendly my players shine: a few rating points more than usual, like a team in top form
+        homeBonus: (sim.bonus[homeClub] ?? 0) + (homeClub === myClub ? shine : 0),
+        awayBonus: (sim.bonus[awayClub] ?? 0) + (awayClub === myClub ? shine : 0),
         squads: sim.squads,
       });
-      const income = friendlyIncome(target);
+      const income = 0; // friendlies pay nothing
       const { error: insertError } = await supabase.from("friendlies").insert({
         user_id: userId,
         season,
@@ -193,9 +198,8 @@ export default function FriendliesPage() {
           <Icon name="ball" size={44} />
           <div>
             <h1>Friendly Matches</h1>
-            <p>Up to {FRIENDLIES_PER_ROUND} warm-up matches before each league matchday, each against a different club. Gate money for every one, and your table is not affected.</p>
+            <p>Up to {FRIENDLIES_PER_ROUND} warm-up matches before each league matchday, each against a different club. You play with your saved lineup and tactics, your players shine a little more than usual, and there is no money in them. The club of your next league match is not on the list. Your table is not affected.</p>
           </div>
-          <span className="ff-earned">Earned this season <b>{earned.toFixed(2)}M</b></span>
         </header>
 
         <div className="ff-top">
@@ -219,7 +223,7 @@ export default function FriendliesPage() {
             <p className="ff-meta">
               <span><Icon name="calendar" size={18} /> {slot === null ? "Season over" : `Before matchday ${slot + 1}`}</span>
               <i aria-hidden="true" />
-              <span><Icon name="pin" size={18} /> {count} of {FRIENDLIES_PER_ROUND} played{opp ? ` · +${friendlyIncome(opp.id).toFixed(2)}M` : ""}</span>
+              <span><Icon name="pin" size={18} /> {count} of {FRIENDLIES_PER_ROUND} played</span>
             </p>
           </section>
 
@@ -247,7 +251,6 @@ export default function FriendliesPage() {
                   <img src={c.logo} alt="" />
                   <strong>{c.name}</strong>
                   <small>{friends[c.id] ? `Friend: ${friends[c.id].name}` : tierLabel(c.id)}</small>
-                  <em>+{friendlyIncome(c.id).toFixed(2)}M</em>
                 </button>
               ))}
             </div>
@@ -269,7 +272,6 @@ export default function FriendliesPage() {
                     <b className="ff-sc">{f.home_score} - {f.away_score}</b>
                     <span className="ff-a">{a && <img src={a.logo} alt="" />}{name(f.away_club)}{f.opp_manager ? <em> · vs {f.opp_manager}</em> : null}</span>
                     <small className="ff-when">Before matchday {f.after_matchday + 1}</small>
-                    <em className="ff-inc">+{Number(f.income).toFixed(2)}M</em>
                     <i className={`ff-res is-${o}`}>{o === "win" ? "Win" : o === "loss" ? "Loss" : "Draw"}</i>
                   </li>
                 );
@@ -290,7 +292,7 @@ export default function FriendliesPage() {
           label="Friendly match"
           othersTitle=""
           others={[]}
-          closeLabel={`Back to friendlies (+${played.income.toFixed(2)}M)`}
+          closeLabel="Back to friendlies"
           onClose={() => {
             setPlayed(null);
             refresh(userId, season);

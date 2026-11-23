@@ -10,7 +10,10 @@ import { myRoom, seasonRows } from "@/lib/football/rooms";
 import { sendFriendNotice } from "@/lib/football/friendlies";
 import { bonusFor, currentLineup, loadSim, withTimeout } from "@/lib/football/strength";
 import { activeSeason, nextSeason, seasonLabel } from "@/lib/football/season";
-import { cupForPosition, cafCup } from "@/lib/football/continental";
+import { isCafCup } from "@/lib/football/africa";
+import { cupForPosition, cafCup, fetchCont, fetchContSetup, roundLabel as contRoundLabel } from "@/lib/football/continental";
+import { fetchCup } from "@/lib/football/cup";
+import { euroRoundLabel, fetchEuro, fetchEuroSetups } from "@/lib/football/europe";
 import { recordSeasonTrophies, summarizeSeason } from "@/lib/football/achievements";
 import { evaluateBoard, type BoardMatch } from "@/lib/football/board";
 import { calculateStandings } from "@/lib/football/table";
@@ -39,8 +42,11 @@ import MatchOverlay from "@/components/MatchOverlay";
 import "./fixtures.css";
 
 
+import { nowMs } from "@/lib/serverTime";
 type ManagerData = { manager_name?: string | null; selected_club: string; selected_league: string; room_id?: string | null; club_appointed_at?: string | null };
 type Tab = "upcoming" | "results" | "all" | "round";
+/** a match of mine in a cup, shown in the calendar next to the league matches */
+type CupRow = { id: string; code: string; label: string; href: string; home_club: string; away_club: string; home_score: number | null; away_score: number | null; pens_home: number | null; pens_away: number | null; status: "scheduled" | "completed"; at: number | null };
 
 function clubOf(id: string) {
   return clubs.find((club) => club.id === id);
@@ -65,10 +71,11 @@ export default function FixturesPage() {
   const [matches, setMatches] = useState<StoredMatch[]>([]);
   const [cut, setCut] = useState(0);
   const [season, setSeason] = useState("");
+  const [cupRows, setCupRows] = useState<CupRow[]>([]);
   const [confirmRestart, setConfirmRestart] = useState(false);
   const [restarting, setRestarting] = useState(false);
   const [error, setError] = useState("");
-  const [now, setNow] = useState(0); // set after mount: Date.now() during the first render breaks static prerendering
+  const [now, setNow] = useState(0); // set after mount: nowMs() during the first render breaks static prerendering
   const [tab, setTab] = useState<Tab>("upcoming");
   const [pickedRound, setPickedRound] = useState(0); // 0 = the latest round that was played
   const [saving, setSaving] = useState(false);
@@ -118,6 +125,12 @@ export default function FixturesPage() {
 
         if (!contract?.selected_club || !contract?.selected_league) {
           router.replace("/game/leagues");
+          return;
+        }
+
+        // a career inside one of the CAF cups keeps all its matches on the cup page
+        if (isCafCup(contract.selected_league)) {
+          router.replace("/game/continental");
           return;
         }
 
@@ -201,8 +214,8 @@ export default function FixturesPage() {
   const watching = !!playing;
   useEffect(() => {
     if (watching) return;
-    setNow(Date.now());
-    const timer = setInterval(() => setNow(Date.now()), 1000);
+    setNow(nowMs());
+    const timer = setInterval(() => setNow(nowMs()), 1000);
     return () => clearInterval(timer);
   }, [watching]);
 
@@ -211,6 +224,39 @@ export default function FixturesPage() {
   }, []);
 
   const myClub = manager?.selected_club ?? "";
+
+  // my cup matches (league cup, CAF cups, Europe) join the calendar
+  useEffect(() => {
+    if (!userId || !manager || !season) return;
+    let off = false;
+    (async () => {
+      const out: CupRow[] = [];
+      const mineIn = (h: string, a: string) => h === manager.selected_club || a === manager.selected_club;
+      try {
+        for (const c of await fetchCup(supabase, userId, season, manager.selected_league)) {
+          if (mineIn(c.home_club, c.away_club)) out.push({ id: `cup-${c.id}`, code: "CUP", label: "League Cup", href: "/game/cup", home_club: c.home_club, away_club: c.away_club, home_score: c.home_score, away_score: c.away_score, pens_home: c.pens_home, pens_away: c.pens_away, status: c.status, at: c.kickoff_at ? new Date(c.kickoff_at).getTime() : null });
+        }
+      } catch { /* no league cup yet */ }
+      try {
+        for (const comp of ["caf-champions-league", "caf-confederation-cup"]) {
+          const setup = await fetchContSetup(supabase, userId, comp);
+          if (!setup) continue;
+          for (const c of await fetchCont(supabase, userId, comp, setup.season)) {
+            if (mineIn(c.home_club, c.away_club)) out.push({ id: `cont-${c.id}`, code: "CAF", label: `${cafCup(comp)?.name ?? "CAF"} · ${contRoundLabel(c.round_no)}`, href: "/game/continental", home_club: c.home_club, away_club: c.away_club, home_score: c.home_score, away_score: c.away_score, pens_home: c.pens_home, pens_away: c.pens_away, status: c.status, at: c.played_at ? new Date(c.played_at).getTime() : null });
+          }
+        }
+      } catch { /* no CAF cup */ }
+      try {
+        for (const setup of await fetchEuroSetups(supabase, userId)) {
+          for (const c of await fetchEuro(supabase, userId, setup.comp_id, setup.season)) {
+            if (mineIn(c.home_club, c.away_club)) out.push({ id: `euro-${c.id}`, code: setup.comp_id.toUpperCase(), label: `${setup.comp_id === "ucl" ? "Champions League" : "Europa League"} · ${euroRoundLabel(c.round_no)}`, href: "/game/europe", home_club: c.home_club, away_club: c.away_club, home_score: c.home_score, away_score: c.away_score, pens_home: c.pens_home, pens_away: c.pens_away, status: c.status, at: c.played_at ? new Date(c.played_at).getTime() : null });
+          }
+        }
+      } catch { /* no European cup */ }
+      if (!off) setCupRows(out);
+    })();
+    return () => { off = true; };
+  }, [userId, manager, season, matches]);
 
   const mine = useMemo(
     () =>
@@ -236,7 +282,14 @@ export default function FixturesPage() {
         ? m.status === "scheduled"
         : m.status === "completed"
   );
+  type CalItem = { at: number; league?: StoredMatch; cup?: CupRow };
+  const cupVisible = cupRows.filter((c) => (tab === "all" ? true : tab === "upcoming" ? c.status === "scheduled" : c.status === "completed"));
+  const calendar: CalItem[] = [
+    ...visible.map((m) => ({ at: m.kickoff_at ? new Date(m.kickoff_at).getTime() : Number.MAX_SAFE_INTEGER - m.matchday, league: m })),
+    ...cupVisible.map((c) => ({ at: c.at ?? Number.MAX_SAFE_INTEGER, cup: c })),
+  ].sort((x, y) => x.at - y.at);
   const rows = tab === "results" ? [...visible].reverse() : visible;
+  const items = tab === "results" ? [...calendar].reverse() : calendar;
 
   // every match of one matchday, all clubs: the arrows move between rounds
   const lastRound = useMemo(() => matches.reduce((n, m) => Math.max(n, m.matchday), 0), [matches]);
@@ -613,7 +666,7 @@ export default function FixturesPage() {
                 {roundMatches.length === 0 && <li className="fx-empty">No matches in this round.</li>}
               </ul>
             </div>
-          ) : rows.length === 0 ? (
+          ) : items.length === 0 ? (
             <p className="fx-empty">
               {tab === "results"
                 ? "No matches played yet. Your results will appear here."
@@ -621,7 +674,35 @@ export default function FixturesPage() {
             </p>
           ) : (
             <ul className="fx-rows">
-              {rows.map((m) => {
+              {items.map((item) => {
+                if (item.cup) {
+                  const c = item.cup;
+                  const isHome = c.home_club === myClub;
+                  const opp = clubOf(isHome ? c.away_club : c.home_club);
+                  const mineGoals = (isHome ? c.home_score : c.away_score) ?? 0;
+                  const theirGoals = (isHome ? c.away_score : c.home_score) ?? 0;
+                  const res = c.status === "completed" ? (mineGoals > theirGoals ? "win" : mineGoals < theirGoals ? "loss" : (c.pens_home ?? 0) !== (c.pens_away ?? 0) ? ((isHome ? (c.pens_home ?? 0) > (c.pens_away ?? 0) : (c.pens_away ?? 0) > (c.pens_home ?? 0)) ? "win" : "loss") : "draw") : null;
+                  return (
+                    <li key={c.id} className="fx-cuprow">
+                      <span className="fx-md">{c.code}</span>
+                      <span className="fx-date">
+                        {c.at ? formatKickoffDay(new Date(c.at).toISOString()) : "-"}
+                        <small>{c.label}</small>
+                      </span>
+                      <span className="fx-ha">{isHome ? "Home" : "Away"}</span>
+                      <span className="fx-opp">
+                        {opp && <img src={opp.logo} alt="" />}
+                        {opp?.name}
+                      </span>
+                      {res ? (
+                        <span className="fx-score" data-result={res}>{c.home_score}-{c.away_score}</span>
+                      ) : (
+                        <button type="button" className="fx-state" onClick={() => router.push(c.href)}>Open</button>
+                      )}
+                    </li>
+                  );
+                }
+                const m = item.league!;
                 const isHome = m.home_club === myClub;
                 const opp = clubOf(isHome ? m.away_club : m.home_club);
                 const result = outcome(m, myClub);

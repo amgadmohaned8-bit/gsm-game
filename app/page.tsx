@@ -31,8 +31,14 @@ export default function Home() {
       try {
         const { data: { session } } = await supabase.auth.getSession();
         if (session?.user && !off) {
-          router.replace(await nextRoute(supabase, session.user.id));
-          return;
+          // the saved session can belong to an account that was deleted: ask the server before trusting it
+          const { data: check, error: checkError } = await supabase.auth.getUser();
+          if (checkError || !check.user) {
+            await supabase.auth.signOut({ scope: "local" });
+          } else {
+            router.replace(await nextRoute(supabase, session.user.id));
+            return;
+          }
         }
       } catch { /* show the form */ }
       if (!off) setChecking(false);

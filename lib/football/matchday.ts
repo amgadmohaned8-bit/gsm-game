@@ -9,6 +9,7 @@ import { aiStyle, matchup, recordStyle } from "@/lib/football/tactics";
 import { recordCards } from "@/lib/football/availability";
 import { scoreKey, sharedScores, shareScores, type SimContext } from "@/lib/football/strength";
 
+import { nowMs } from "@/lib/serverTime";
 export type StoredMatch = {
   id: string;
   user_id: string;
@@ -29,7 +30,7 @@ export type PlayedMatchday = {
   others: { match: StoredMatch; result: SimulationResult }[];
 };
 
-export function canKickOff(match: StoredMatch, now = Date.now()) {
+export function canKickOff(match: StoredMatch, now = nowMs()) {
   return !match.kickoff_at || new Date(match.kickoff_at).getTime() <= now;
 }
 

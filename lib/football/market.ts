@@ -14,6 +14,7 @@
 
 import type { Player, Position } from "@/lib/football/squads";
 
+import { nowMs } from "@/lib/serverTime";
 export type Origin = "LaLiga" | "Bundesliga" | "SerieA" | "Ligue1" | "Saudi" | "Portugal" | "Netherlands" | "Turkey" | "Brazil" | "MLS" | "England" | "Egypt" | "Belgium" | "Scotland" | "Austria" | "Greece" | "Ukraine" | "Czech" | "Croatia" | "Argentina" | "Mexico" | "Japan" | "Korea" | "Icon" | "Star" | "Prospect" | "Free";
 
 export const originLabel: Record<Origin, string> = {
@@ -116,7 +117,7 @@ Camavinga MF FR 23 82 LaLiga Real_Madrid
 Huijsen DF ES 21 83 LaLiga Real_Madrid
 Endrick FW BR 20 78 LaLiga Real_Madrid
 Fran_García DF ES 26 77 LaLiga Real_Madrid
-Frenkie_de_Jong MF NL 29 87 LaLiga Barcelona
+Frenkie_de_Jong MF NL 29 82 LaLiga Barcelona
 Pau_Cubarsí DF ES 19 82 LaLiga Barcelona
 Araújo DF UY 27 82 LaLiga Barcelona
 Balde DF ES 22 80 LaLiga Barcelona
@@ -139,10 +140,10 @@ Isco MF ES 34 76 LaLiga Real_Betis
 Antony FW BR 26 77 LaLiga Real_Betis
 Luis_Díaz FW CO 29 85 Bundesliga Bayern_Munich
 Upamecano DF FR 27 88 Bundesliga Bayern_Munich
-Davies DF CA 25 82 Bundesliga Bayern_Munich
+Davies DF CA 25 81 Bundesliga Bayern_Munich
 Neuer GK DE 40 80 Bundesliga Bayern_Munich
 Gnabry FW DE 31 80 Bundesliga Bayern_Munich
-Guirassy FW GN 30 85 Bundesliga Borussia_Dortmund
+Guirassy FW GN 30 82 Bundesliga Borussia_Dortmund
 Schlotterbeck DF DE 26 87 Bundesliga Borussia_Dortmund
 Kobel GK CH 28 83 Bundesliga Borussia_Dortmund
 Julian_Brandt MF DE 30 80 Bundesliga Borussia_Dortmund
@@ -161,7 +162,7 @@ Pulisic FW US 27 82 SerieA AC_Milan
 Modrić MF HR 40 80 SerieA AC_Milan
 Kenan_Yıldız FW TR 21 82 SerieA Juventus
 Bremer DF BR 29 83 SerieA Juventus
-Vlahović FW RS 26 81 SerieA Juventus
+Vlahović FW RS 26 79 SerieA Juventus
 McTominay MF SCO 29 83 SerieA Napoli
 De_Bruyne MF BE 35 84 SerieA Napoli
 Buongiorno DF IT 26 81 SerieA Napoli
@@ -1169,9 +1170,9 @@ const DAY = 86_400_000;
 const CAIRO = 2 * 3_600_000;
 
 /** The number of the current two-day period (days counted in Cairo time). */
-export const periodOf = (now: number = Date.now()) => Math.floor(Math.floor((now + CAIRO) / DAY) / REFRESH_DAYS);
+export const periodOf = (now: number = nowMs()) => Math.floor(Math.floor((now + CAIRO) / DAY) / REFRESH_DAYS);
 /** When the next selection arrives. */
-export const nextRefresh = (now: number = Date.now()) => ((periodOf(now) + 1) * REFRESH_DAYS * DAY) - CAIRO;
+export const nextRefresh = (now: number = nowMs()) => ((periodOf(now) + 1) * REFRESH_DAYS * DAY) - CAIRO;
 
 const EXTRA_FROM = marketPlayers.length - EXTRA.trim().split("\n").length;
 /** The period from which a player can be on the market (the new stars come a few at a time). */
@@ -1217,7 +1218,7 @@ const onSale = (p: Player & { origin: Origin }, period: number) => selection(per
 export type MarketEntry = { player: Player & { origin: Origin }; isNew: boolean; leaving: boolean };
 
 /** Who can be signed right now, and who just arrived or leaves at the next refresh. */
-export function visibleMarket(now: number = Date.now()): MarketEntry[] {
+export function visibleMarket(now: number = nowMs()): MarketEntry[] {
   const period = periodOf(now);
   return marketPlayers
     .filter((p) => onSale(p, period))

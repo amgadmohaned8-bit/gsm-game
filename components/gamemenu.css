@@ -1,0 +1,19 @@
+.gm-burger { display: grid; place-items: center; width: 44px; height: 44px; margin-right: 6px; background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.14); border-radius: 12px; color: var(--chalk); cursor: pointer; transition: background 0.2s, border-color 0.2s; }
+.gm-burger:hover { background: rgba(255, 255, 255, 0.1); border-color: var(--brass); }
+.gm-burger:focus-visible, .gm-drawer button:focus-visible { outline: 3px solid var(--brass-hi); outline-offset: 2px; }
+.gm-scrim { position: fixed; inset: 0; z-index: 90; background: rgba(0, 0, 0, 0.6); backdrop-filter: blur(3px); animation: gm-fade 0.25s both; }
+.gm-drawer { position: fixed; z-index: 100; top: 0; bottom: 0; left: 0; width: min(380px, 88vw); display: flex; flex-direction: column; background: linear-gradient(180deg, #0c0c10, #040405); border-right: 1px solid rgba(255, 255, 255, 0.1); box-shadow: 30px 0 80px rgba(0, 0, 0, 0.6); transform: translateX(-102%); visibility: hidden; transition: transform 0.4s var(--ease-out), visibility 0s 0.4s; }
+.gm-drawer.is-open { transform: none; visibility: visible; transition: transform 0.4s var(--ease-out); }
+.gm-drawer header { display: flex; align-items: center; justify-content: space-between; padding: 20px 20px 14px; }
+.gm-drawer h2 { margin: 0; font-family: var(--font-display); font-size: 28px; letter-spacing: 0.05em; text-transform: uppercase; }
+.gm-drawer header button { display: grid; place-items: center; width: 44px; height: 44px; background: none; border: 1px solid rgba(255, 255, 255, 0.14); border-radius: 12px; color: var(--chalk); cursor: pointer; }
+.gm-drawer nav { flex: 1; overflow-y: auto; display: grid; align-content: start; gap: 6px; padding: 6px 12px 24px; }
+.gm-drawer nav button { display: flex; align-items: center; gap: 14px; min-height: 60px; padding: 10px 14px; text-align: left; background: none; border: 1px solid transparent; border-radius: 14px; color: var(--chalk); font: inherit; cursor: pointer; transition: background 0.2s, border-color 0.2s; }
+.gm-drawer nav button > svg:first-child { flex: none; color: var(--brass); }
+.gm-drawer nav button > svg:last-child { flex: none; color: var(--chalk-3); }
+.gm-drawer nav button span { flex: 1; display: grid; min-width: 0; }
+.gm-drawer nav button strong { font-size: 17px; }
+.gm-drawer nav button small { color: var(--chalk-3); font-size: 13px; }
+.gm-drawer nav button:hover:not(:disabled) { background: rgba(255, 255, 255, 0.06); border-color: rgba(227, 178, 88, 0.35); }
+.gm-drawer
+@keyframes gm-fade { from { opacity: 0; } }

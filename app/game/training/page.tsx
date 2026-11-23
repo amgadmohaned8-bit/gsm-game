@@ -14,6 +14,7 @@ import PlayerFace from "@/components/PlayerFace";
 import { kitOf } from "@/lib/football/kits";
 import "./training.css";
 
+import { nowMs } from "@/lib/serverTime";
 type Filter = "ALL" | "YOUNG";
 
 export default function TrainingPage() {
@@ -40,8 +41,8 @@ export default function TrainingPage() {
 
   const [now, setNow] = useState(0);
   useEffect(() => {
-    setNow(Date.now());
-    const t = setInterval(() => setNow(Date.now()), 1000);
+    setNow(nowMs());
+    const t = setInterval(() => setNow(nowMs()), 1000);
     return () => clearInterval(t);
   }, []);
 
@@ -118,7 +119,7 @@ export default function TrainingPage() {
       });
       const { error: insertError } = await supabase.from("training_sessions").insert(rowsToSave);
       if (insertError) throw insertError;
-      void alertAt(4, Date.now() + TRAIN_MS, "Training finished", "Your players finished training. Start the next session.");
+      void alertAt(4, nowMs() + TRAIN_MS, "Training finished", "Your players finished training. Start the next session.");
       setResult(rowsToSave.map((r) => ({ name: byId.get(r.player_id)!.name, gain: r.gain })));
       setPicked([]);
       await reload();

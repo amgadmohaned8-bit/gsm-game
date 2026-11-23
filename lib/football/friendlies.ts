@@ -1,4 +1,4 @@
-/** Friendly matches: up to three before every league matchday, a small gate income each. */
+/** Friendly matches: up to five before every league matchday, no money in them. */
 
 /** friendlies that can be played in one round */
 export const FRIENDLIES_PER_ROUND = 5;
@@ -8,7 +8,7 @@ import { getTier } from "@/lib/football/finance";
 
 export const friendlyIncome = (opponent: string) => {
   const t = getTier(opponent);
-  return t === "elite" ? 3.5 : t === "mid" ? 0.35 : 0.2;
+  return t === "elite" ? 0.5 : t === "mid" ? 0.35 : 0.2;
 };
 
 export type Friendly = {

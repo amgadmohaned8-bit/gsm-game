@@ -16,6 +16,7 @@ import { sharedScores, shareScores, type SimContext } from "@/lib/football/stren
 import { simulateFixture, type SimOptions, type SimulationResult } from "@/lib/football/matchSim";
 import { cupKickoff } from "@/lib/football/schedule";
 
+import { nowMs } from "@/lib/serverTime";
 export const CUP_ROUNDS = [
   { no: 0, label: "Qualifying round", ties: 4 },
   { no: 1, label: "Round of 16", ties: 8 },
@@ -310,7 +311,7 @@ export async function settleCup(
   season: string,
   myClub: string,
   first: Date,
-  now = Date.now(),
+  now = nowMs(),
   seed: string = userId,
   sim?: SimContext,
   leagueId = "premier-league"

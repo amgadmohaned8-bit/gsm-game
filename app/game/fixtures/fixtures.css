@@ -169,3 +169,8 @@
 .fx-r-score { text-align: center; font-family: var(--font-display); font-size: 22px; font-variant-numeric: tabular-nums; color: var(--brass-hi); }
 @media (max-width: 520px) { .fx-round { padding: 0 12px 22px; } .fx-r-home, .fx-r-away { font-size: 13px; gap: 6px; } .fx-round-list li { grid-template-columns: minmax(0, 1fr) 56px minmax(0, 1fr); gap: 6px; padding: 6px 8px; } }
 @media (max-width: 560px) { .fx-tabs { width: 100%; } .fx-tabs button { flex: 1; padding: 0 6px; } }
+
+/* a cup match of mine among the league matches */
+.fx-cuprow .fx-md { color: var(--brass-hi); font-size: 12px; letter-spacing: 0.06em; }
+.fx-cuprow .fx-date small { color: var(--brass); }
+button.fx-state { cursor: pointer; background: none; border: 1px solid var(--brass); color: var(--brass-hi); border-radius: 8px; padding: 4px 10px; font: inherit; }
