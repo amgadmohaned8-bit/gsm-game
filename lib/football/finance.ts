@@ -59,7 +59,7 @@ export const tierProfiles: Record<ClubTier, TierProfile> = {
   elite: {
     label: "Elite budget",
     note: "Global brand and a packed stadium, but the wage bill is huge. Sell before you buy.",
-    openingBalance: 80_000_000,
+    openingBalance: 50_000_000,
     tv: 3_000_000,
     sponsors: 2_000_000,
     gate: 2_500_000,
@@ -71,7 +71,7 @@ export const tierProfiles: Record<ClubTier, TierProfile> = {
   mid: {
     label: "Mid budget",
     note: "A solid club with room to grow, if you spend carefully.",
-    openingBalance: 150_000_000,
+    openingBalance: 80_000_000,
     tv: 2_000_000,
     sponsors: 1_000_000,
     gate: 1_200_000,
@@ -83,7 +83,7 @@ export const tierProfiles: Record<ClubTier, TierProfile> = {
   small: {
     label: "Tight budget",
     note: "Little money. Every pound has to count.",
-    openingBalance: 100_000_000,
+    openingBalance: 20_000_000,
     tv: 1_500_000,
     sponsors: 500_000,
     gate: 600_000,

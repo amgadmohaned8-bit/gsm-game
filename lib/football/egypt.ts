@@ -89,7 +89,7 @@ export const egyptColors: Record<string, string> = Object.fromEntries(egyptClubs
 export const egyptRaw: Record<string, string> = {
   "al-ahly": `
 1 Shenawy GK EG 37 76
-31 Shobeir GK EG 27 68
+31 Shobeir GK EG 27 72
 33 Hamza_Alaa GK EG 21 60
 2 Yassin_Marei DF EG 23 70
 3 Achraf_Dari DF MA 27 75
@@ -416,9 +416,9 @@ export const egyptRaw: Record<string, string> = {
 25 Mamadou_Bah FW LR 26 66
 `,
   "al-masry": `
-1 Essam_Tharwat GK EG 27 68
-16 Mahmoud_Hamdy GK EG 26 60
-31 Mohamed_Shehata GK EG 23 56
+1 Essam_Tharwat GK EG 27 69
+16 Mahmoud_Hamdy GK EG 26 62
+31 Mohamed_Shehata GK EG 23 60
 - Mohamed_Seha GK EG 23 62
 2 Baher_El_Mohamady DF EG 31 70
 5 Khaled_Sobhi DF EG 33 67
@@ -442,7 +442,7 @@ export const egyptRaw: Record<string, string> = {
 25 Mounder_Temine FW DZ 31 67
 - Ali_Sulieman FW ER 28 66
 - Abdellah_Ziani FW MA 27 65
-24 Moustafa_Zeidan MF PS 25 60
+24 Moustafa_Zeidan MF PS 25 65
 `,
   "national-bank": `
 1 Ahmed_Sobhi GK EG 32 66
