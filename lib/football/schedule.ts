@@ -10,7 +10,7 @@ import { clubsOfLeague } from "@/lib/football/leagueClubs";
 
 import { nowMs } from "@/lib/serverTime";
 export const KICKOFF_TIME_ZONE = "Africa/Cairo";
-export const KICKOFF_HOUR = 20;
+export const KICKOFF_HOUR = 19;
 export const MATCHDAYS = 38;
 
 export type ScheduledFixture = {
