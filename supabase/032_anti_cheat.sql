@@ -203,11 +203,12 @@ create or replace function public.training_guard() returns trigger
   language plpgsql as $$
 begin
   if auth.uid() is null then return new; end if;
-  new.created_at := now();
+  -- the small practice gain of a friendly (negative matchday) is not a session: it is done at once
+  new.created_at := case when new.matchday < 0 then now() - interval '8 hours' else now() end;
   if new.gain < 0 or new.gain > 1 then
     raise exception 'Impossible training gain' using errcode = 'P0001';
   end if;
-  if (select count(*) from public.training_sessions where user_id = new.user_id and created_at > now() - interval '1 minute') >= 12 then
+  if (select count(*) from public.training_sessions where user_id = new.user_id and created_at > now() - interval '1 minute') >= 40 then
     raise exception 'Too many requests, wait a moment' using errcode = 'P0001';
   end if;
   return new;

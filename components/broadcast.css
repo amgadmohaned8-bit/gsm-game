@@ -26,6 +26,8 @@
 
 /* match booth */
 .bc-booth { position: relative; display: flex; align-items: flex-end; gap: 14px; min-height: 190px; padding: 6px 4px 0; }
+.bc-who { margin: 0; display: grid; justify-items: center; gap: 4px; flex: none; }
+.bc-who figcaption { padding: 2px 12px; border-radius: 999px; background: rgba(0, 0, 0, 0.7); border: 1px solid var(--brass); color: var(--brass-hi); font: 800 13px var(--font-text), "Noto Sans Arabic", Tahoma, sans-serif; white-space: nowrap; }
 .bc-man { width: clamp(120px, 22vw, 250px); height: auto; flex: none; transform-origin: 50% 100%; filter: drop-shadow(0 14px 22px rgba(0, 0, 0, 0.6)); }
 .bc-man.is-talking { animation: bc-talk 0.5s ease-in-out infinite alternate; }
 .bc-man.is-goal { animation: bc-jump 0.45s ease-in-out infinite alternate; }

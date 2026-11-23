@@ -9,7 +9,9 @@ import { activeSeason, seasonLabel } from "@/lib/football/season";
 import { simulateFixture, type SimulationResult } from "@/lib/football/matchSim";
 import { FRIENDLIES_PER_ROUND, loadFriendlies, sendFriendNotice, type Friendly } from "@/lib/football/friendlies";
 import { myRoom } from "@/lib/football/rooms";
-import { loadSim, withTimeout } from "@/lib/football/strength";
+import { currentLineup, loadSim, withTimeout } from "@/lib/football/strength";
+import { sessionGain } from "@/lib/football/development";
+import { squadOf } from "@/lib/football/squads";
 import GsmMark from "@/components/GsmMark";
 import GameHud from "@/components/GameHud";
 import Icon from "@/components/Icon";
@@ -150,6 +152,14 @@ export default function FriendliesPage() {
         opp_manager: friends[target]?.name ?? null,
       });
       if (insertError) throw insertError;
+
+      // a friendly is also a little match practice: the starters gain a small share of a training session
+      try {
+        const own = sim.squads?.[myClub] ?? squadOf(myClub);
+        const rows = currentLineup(userId, myClub, own).starters
+          .map((p) => ({ user_id: userId, league_id: leagueId, season, matchday: -(slot * 10 + count + 1), player_id: p.id, gain: Math.max(0.01, Math.round(sessionGain(p.age) * 0.2 * 100) / 100) }));
+        if (rows.length) await supabase.from("training_sessions").insert(rows);
+      } catch { /* the friendly still counts without the practice */ }
       const pal = friends[target];
       if (pal) {
         // the friend is told he was played

@@ -1,0 +1,56 @@
+/* Season awards: black and gold like the rest of the game */
+.aw { --gold: #d4af37; --gold-hi: #f7db96; --gold-lo: #7a5c0e; --edge: #4a3a12; --panel-2: #0a0907; position: relative; min-height: 100svh; isolation: isolate; overflow-x: clip; color: #fff; background: #060606; }
+.aw-bg { position: fixed; inset: 0; z-index: -2; background: radial-gradient(ellipse 60% 45% at 50% 0%, rgba(212, 175, 55, .22), transparent 70%), linear-gradient(180deg, #0d0c09, #060606 60%); }
+.aw-wrap { width: min(1100px, 100% - 32px); margin: 0 auto; padding: 14px 0 64px; display: grid; gap: 14px; }
+.aw-head { text-align: center; }
+.aw-head small { color: var(--gold); font: 800 12px var(--font-text); letter-spacing: .18em; text-transform: uppercase; }
+.aw-head h1 { margin: 2px 0 0; font: 900 clamp(38px, 6vw, 64px) var(--font-display); letter-spacing: .04em; color: var(--gold-hi); text-shadow: 0 3px 0 rgba(0, 0, 0, .7); }
+.aw-error { margin: 0; padding: 10px 14px; border: 1px solid #6b2b2b; border-radius: 10px; background: #2a1010; color: #ffb4b4; font-size: 14px; }
+
+.aw-seasons { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px; }
+.aw-seasons button { min-height: 40px; padding: 0 16px; cursor: pointer; color: #fff; font: 700 14px var(--font-text); border: 1px solid var(--edge); border-radius: 10px; background: #14120c; }
+.aw-seasons button.is-on { background: linear-gradient(180deg, var(--gold-hi), var(--gold)); border-color: var(--gold-hi); color: #1a1204; }
+
+.aw-empty { display: grid; gap: 8px; justify-items: start; padding: 18px; border: 1px solid var(--edge); border-radius: 12px; background: linear-gradient(160deg, #1c160a, var(--panel-2)); }
+.aw-empty strong { font: 800 20px var(--font-display); color: var(--gold-hi); }
+.aw-empty p { margin: 0; color: #cfc7b0; font-size: 14px; line-height: 1.5; }
+.aw-btn { display: inline-flex; align-items: center; min-height: 46px; padding: 0 18px; border-radius: 10px; background: linear-gradient(180deg, var(--gold-hi), var(--gold)); color: #1a1204; font: 800 15px var(--font-text); text-decoration: none; box-shadow: 0 4px 0 var(--gold-lo); }
+
+.aw-finish { display: grid; grid-template-columns: 1fr auto; gap: 14px; align-items: center; padding: 16px 18px; border: 1px solid var(--gold-lo); border-radius: 14px; background: linear-gradient(160deg, #2a210c, var(--panel-2)); box-shadow: 0 4px 0 #000; }
+.aw-finish-club { display: flex; align-items: center; gap: 14px; min-width: 0; }
+.aw-finish-club img { width: 64px; height: 64px; object-fit: contain; flex: none; }
+.aw-finish-club div, .aw-money { display: grid; gap: 2px; }
+.aw-finish small, .aw-prize small { color: var(--gold); font: 800 11px var(--font-text); letter-spacing: .12em; text-transform: uppercase; }
+.aw-finish-club strong { font: 900 clamp(22px, 3.4vw, 32px) var(--font-display); color: var(--gold-hi); }
+.aw-finish-club span { color: #cfc7b0; font-size: 14px; }
+.aw-money { text-align: right; justify-items: end; }
+.aw-money b { font: 900 clamp(34px, 5vw, 52px) var(--font-display); line-height: 1; color: #7be3a1; }
+.aw-money span { color: #b9b19a; font-size: 12.5px; }
+.aw-champ { margin: 0; display: flex; align-items: center; justify-content: center; gap: 8px; color: #cfc7b0; font-size: 14px; }
+.aw-champ img { width: 22px; height: 22px; object-fit: contain; }
+.aw-champ strong { color: var(--gold-hi); }
+
+.aw-prizes { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; }
+.aw-prize { display: grid; gap: 6px; align-content: start; padding: 14px 16px; border: 1px solid var(--edge); border-radius: 12px; background: linear-gradient(160deg, #1c160a, var(--panel-2)); box-shadow: 0 4px 0 #000; }
+.aw-who { display: flex; align-items: center; gap: 10px; min-width: 0; }
+.aw-who img { width: 34px; height: 34px; object-fit: contain; flex: none; }
+.aw-who div { display: grid; min-width: 0; }
+.aw-who strong { font: 800 16px var(--font-display); overflow-wrap: anywhere; }
+.aw-who span { color: #b9b19a; font-size: 12.5px; }
+.aw-prize b { font: 900 44px var(--font-display); line-height: 1; color: var(--gold-hi); }
+.aw-prize em { font-style: normal; color: #b9b19a; font-size: 12.5px; }
+.aw-prize p { margin: 0; color: #8c8470; font-size: 14px; }
+
+.aw-xi { display: grid; gap: 10px; padding: 16px; border: 1px solid var(--edge); border-radius: 14px; background: linear-gradient(180deg, rgba(20, 48, 31, .55), rgba(10, 9, 7, .9)); }
+.aw-xi h2 { margin: 0; text-align: center; font: 900 24px var(--font-display); color: var(--gold-hi); letter-spacing: .04em; }
+.aw-xi > p { margin: 0 0 4px; text-align: center; color: #b9b19a; font-size: 13px; }
+.aw-line { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; }
+.aw-pl { display: grid; justify-items: center; gap: 2px; width: 132px; padding: 10px 8px; text-align: center; border: 1px solid var(--edge); border-radius: 10px; background: rgba(0, 0, 0, .55); }
+.aw-pl img { width: 26px; height: 26px; object-fit: contain; }
+.aw-pl strong { font: 700 14px var(--font-text); overflow-wrap: anywhere; }
+.aw-pl small { color: #b9b19a; font-size: 12px; }
+.aw-pl.is-mine { border-color: var(--gold); background: rgba(212, 175, 55, .14); }
+
+.aw :is(a, button):focus-visible { outline: 3px solid var(--gold-hi); outline-offset: 2px; }
+@media (max-width: 900px) { .aw-prizes { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 560px) { .aw-finish { grid-template-columns: 1fr; } .aw-money { text-align: left; justify-items: start; } .aw-pl { width: calc(50% - 5px); } }

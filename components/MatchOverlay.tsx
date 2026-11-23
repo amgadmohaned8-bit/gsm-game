@@ -3,7 +3,8 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { allClubs as clubs } from "@/lib/football/leagueClubs";
 import type { MatchEvent } from "@/lib/football/matchSim";
-import { buildLine, foulBuildLine, foulLine, fullTimeLine, goalLine, halfLine, kickoffLine, missLine, penBuildLine, penGoalLine, penMissLine, pick, studioScript, type Line } from "@/lib/football/commentary";
+import { pick, studioScript, type Line } from "@/lib/football/commentary";
+import { commentatorFor, voiceOf } from "@/lib/football/commentators";
 import PitchView, { type VarCheck } from "@/components/PitchView";
 import { photoOf } from "@/lib/football/playerPhotos";
 import { matchKits } from "@/lib/football/kits";
@@ -295,6 +296,9 @@ function Match({
   const homeName = home?.name ?? homeClub;
   const awayName = away?.name ?? awayClub;
   const seedBase = `${homeClub}|${awayClub}`;
+  // one commentator calls the whole match
+  const com = useMemo(() => commentatorFor(homeClub, awayClub, seedBase), [homeClub, awayClub, seedBase]);
+  const said = useMemo(() => voiceOf(com.id), [com.id]);
   const kits = useMemo(() => matchKits(homeClub, awayClub), [homeClub, awayClub]);
 
   // the moments of the match, from the saved data.events
@@ -364,7 +368,7 @@ function Match({
       sfx("whistle");
       startCrowd();
       duckMusic(true);
-      say(kickoffLine(homeName, awayName, seedBase));
+      say(said.kickoff(homeName, awayName, seedBase));
       timers.push(setTimeout(() => setStage("run"), gap(2600)));
     } else if (stage === "run") {
       const target = current ? current.minute : 90;
@@ -383,7 +387,7 @@ function Match({
         const h = moments.slice(0, cursor).filter((m) => m.kind === "goal" && m.team === "home").length;
         const a = moments.slice(0, cursor).filter((m) => m.kind === "goal" && m.team === "away").length;
         sfx("whistle");
-        say(halfLine(h, a, seedBase));
+        say(said.half(h, a, seedBase));
         if (halftime && mineInvolved && !changed.current) {
           timers.push(setTimeout(() => setStage("break"), gap(1800)));
         } else {
@@ -392,7 +396,7 @@ function Match({
       } else {
         if (current.kind === "foul") sfx("foul");
         else { sfx("kick"); setTimeout(() => sfx("chance"), 250); }
-        say(current.kind === "foul" ? foulBuildLine(name, `${seedBase}|${cursor}|b`) : current.pen ? penBuildLine(name, `${seedBase}|${cursor}|b`) : buildLine(name, `${seedBase}|${cursor}|b`));
+        say(current.kind === "foul" ? said.foulBuild(name, `${seedBase}|${cursor}|b`) : current.pen ? said.penBuild(name, `${seedBase}|${cursor}|b`) : said.build(name, current.minute, `${seedBase}|${cursor}|b`));
         // the VAR looks at a few goals, at every penalty and at every red card before the decision comes
         const looks = !fast && ((current.kind === "goal" && (current.pen || pick([true, false, false, false, false, false, false, false], `${seedBase}|${cursor}|var`))) || (current.kind === "foul" && current.card === "red"));
         if (looks) {
@@ -435,13 +439,13 @@ function Match({
         const h = upTo.filter((m) => m.team === "home").length;
         const a = upTo.filter((m) => m.team === "away").length;
         const scoredMine = mineInvolved ? (current.team === "home") === myIsHome : null;
-        say(current.pen ? penGoalLine(name, h, a, scoredMine, `${seedBase}|${cursor}|g`, { player: current.player }) : goalLine(name, h, a, scoredMine, `${seedBase}|${cursor}|g`, { player: current.player, assist: current.assist }), "goal");
+        say(current.pen ? said.penGoal(name, h, a, scoredMine, `${seedBase}|${cursor}|g`, { player: current.player }) : said.goal(name, h, a, scoredMine, current.minute, `${seedBase}|${cursor}|g`, { player: current.player, assist: current.assist }), "goal");
       } else if (current.kind === "foul") {
         if (current.card) sfx("card");
-        say(foulLine(name, current.card ?? false, `${seedBase}|${cursor}|m`, current.by), "miss");
+        say(said.foul(name, current.card ?? false, current.by, `${seedBase}|${cursor}|m`), "miss");
       } else {
         sfx("groan");
-        say(current.pen ? penMissLine(name, current.kind === "save", `${seedBase}|${cursor}|m`) : missLine(name, current.kind === "save", `${seedBase}|${cursor}|m`), "miss");
+        say(current.pen ? said.penMiss(name, current.kind === "save", `${seedBase}|${cursor}|m`) : said.miss(name, current.kind === "save", `${seedBase}|${cursor}|m`), "miss");
       }
       if (current.kind !== "disallowed") timers.push(setTimeout(() => { setCursor((c) => c + 1); setStage("run"); }, gap(current.kind === "goal" ? 3600 : 2800)));
     } else if ((stage as string) === "end") {
@@ -474,7 +478,7 @@ function Match({
     sfx("whistleEnd");
     stopCrowd();
     duckMusic(false);
-    say(fullTimeLine(result, data.homeScore, data.awayScore, seedBase) + extra);
+    say(said.full(result, data.homeScore, data.awayScore, seedBase) + extra);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [done]);
 
@@ -593,7 +597,10 @@ function Match({
         />
 
         <section className="bc-booth" aria-label="Commentary">
-          <img className={`bc-man ${now ? "is-talking" : ""} ${now?.tone === "goal" ? "is-goal" : ""}`} src="/studio/commentator.webp" alt="" />
+          <figure className="bc-who">
+            <img className={`bc-man ${now ? "is-talking" : ""} ${now?.tone === "goal" ? "is-goal" : ""}`} src={com.photo} alt="" />
+            <figcaption lang="ar" dir="rtl">{com.name}</figcaption>
+          </figure>
           {now && (
             <div className={`bc-bubble is-${now.tone}`} key={now.id} dir="rtl" lang="ar" role="status">
               {goalNow && <b className="bc-goal-word" aria-hidden="true">GOAL!</b>}

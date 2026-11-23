@@ -394,6 +394,14 @@ export async function loadTransferState(
   } catch {
     /* no analyst yet */
   }
+  // the prize money of each finished season
+  let awardMoney = 0;
+  try {
+    const { data: w } = await client.from("season_awards").select("prize, league_id").eq("user_id", userId).eq("club_id", myClub);
+    awardMoney = mineOnly((w ?? []) as { prize: number; league_id?: string | null }[]).reduce((sum, r) => sum + Number(r.prize), 0);
+  } catch {
+    /* no awards yet */
+  }
   const renewalFees = renewals.filter((r) => r.club_id === myClub).reduce((sum, r) => sum + Number(r.fee), 0) + analystFees;
   const league = leagueId || leagueOfClub(myClub);
   // the other managers of a shared league: their clubs do not trade by themselves, and their deals count
@@ -489,8 +497,8 @@ export async function loadTransferState(
       listings = mineOnly(l2 as Listing[] | null);
       squads = view(deals);
     }
-    return { deals, listings, squads, training, renewals, offers: resolveListings(userId, listings, squads, myClub, matchday).offers, aiDeals: others, net: transfersNet(deals, myClub) + friendlyMoney - renewalFees + bank.cash, matchday, bank };
+    return { deals, listings, squads, training, renewals, offers: resolveListings(userId, listings, squads, myClub, matchday).offers, aiDeals: others, net: transfersNet(deals, myClub) + friendlyMoney + awardMoney - renewalFees + bank.cash, matchday, bank };
   }
 
-  return { deals, listings, squads, training, renewals, offers: [], aiDeals: others, net: transfersNet(deals, myClub) + friendlyMoney - renewalFees + bank.cash, matchday, bank };
+  return { deals, listings, squads, training, renewals, offers: [], aiDeals: others, net: transfersNet(deals, myClub) + friendlyMoney + awardMoney - renewalFees + bank.cash, matchday, bank };
 }

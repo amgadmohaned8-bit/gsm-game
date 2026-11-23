@@ -579,6 +579,9 @@ export default function FixturesPage() {
               )}
               {!confirmRestart ? (
                 <div className="fx-done-actions">
+                  <button type="button" className="fx-ghost" onClick={() => router.push("/game/awards")}>
+                    Season awards and prize money
+                  </button>
                   <button type="button" className="gx-btn" onClick={() => setConfirmRestart(true)}>
                     Play {seasonLabel(nextSeason(season))} with {clubOf(myClub)?.name ?? "your club"}
                   </button>

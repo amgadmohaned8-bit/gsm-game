@@ -17,6 +17,7 @@ export const GAME_NAV: NavItem[] = [
   { icon: "squad", label: "Lineups", note: "Formation and tactics", href: "/game/squad" },
   { icon: "calendar", label: "Fixtures", note: "League and cup matches", href: "/game/fixtures" },
   { icon: "table", label: "League", note: "Table and form", href: "/game/standings" },
+  { icon: "tactics", label: "Analyst", note: "Scout the next opponent", href: "/game/analyst" },
   { icon: "training", label: "Training", note: "Develop your players", href: "/game/training" },
   { icon: "ball", label: "Friendlies", note: "Five warm-up matches", href: "/game/friendlies" },
   { icon: "transfer", label: "Transfers", note: "Buy and sell", href: "/game/transfers" },

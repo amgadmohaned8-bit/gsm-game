@@ -210,6 +210,9 @@ export default function StandingsPage() {
               {label}
             </button>
           ))}
+          <button type="button" onClick={() => router.push("/game/awards")}>
+            Season awards
+          </button>
         </nav>
 
         {view !== "table" && (

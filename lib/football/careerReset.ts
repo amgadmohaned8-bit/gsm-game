@@ -78,6 +78,7 @@ export async function resetCareerData(client: SupabaseClient, userId: string, le
   await step(() => client.from("league_matches").delete().eq("user_id", userId).eq("league_id", leagueId));
   await step(() => client.from("cup_matches").delete().eq("user_id", userId).eq("league_id", leagueId));
   await step(() => client.from("friendlies").delete().eq("user_id", userId).eq("league_id", leagueId));
+  await step(() => client.from("season_awards").delete().eq("user_id", userId).eq("league_id", leagueId));
 
   // CAF competitions
   await step(async () => {
