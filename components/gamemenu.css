@@ -15,5 +15,18 @@
 .gm-drawer nav button strong { font-size: 17px; }
 .gm-drawer nav button small { color: var(--chalk-3); font-size: 13px; }
 .gm-drawer nav button:hover:not(:disabled) { background: rgba(255, 255, 255, 0.06); border-color: rgba(227, 178, 88, 0.35); }
-.gm-drawer
-@keyframes gm-fade { from { opacity: 0; } }
+
+.gm-drawer nav button:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(227, 178, 88, 0.35);
+}
+
+@keyframes gm-fade {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
