@@ -186,7 +186,7 @@ export function coherence(t: Tactic): number {
   return Math.max(0, Math.round(100 - d * 2));
 }
 
-export const MAX_TACTIC = 6;
+export const MAX_TACTIC = 14;
 
 /** Formations that suit a style (+1), and ones that work against it (-1). Everything else is neutral. */
 const SHAPES: Record<StyleId, { good: FormationName[]; bad: FormationName[] }> = {
@@ -202,7 +202,7 @@ const SHAPES: Record<StyleId, { good: FormationName[]; bad: FormationName[] }> =
 /** Rating points for playing this formation with this style: -1.5 to +1.5. */
 export function formationEdge(style: StyleId, formation: FormationName): number {
   const s = SHAPES[style] ?? SHAPES.balanced;
-  return s.good.includes(formation) ? 1.5 : s.bad.includes(formation) ? -1.5 : 0;
+  return s.good.includes(formation) ? 3 : s.bad.includes(formation) ? -3 : 0;
 }
 
 /** How a style changes the goals of a match: what it scores, and what the other side scores against it. */
@@ -228,7 +228,7 @@ export function tacticBonus(t: Tactic | null, eleven: Player[], formation?: Form
   const opts = (Object.entries(t.opts) as [OptId, boolean][])
     .filter(([, on]) => on)
     .reduce((sum, [id]) => sum + (syn.includes(id) ? 0.3 : -0.1), 0);
-  const total = (fitPart + coh + opts) * 1.6 + shape;
+  const total = (fitPart + coh + opts) * 3.5 + shape;
   return Math.max(-MAX_TACTIC, Math.min(MAX_TACTIC, Math.round(total * 10) / 10));
 }
 
@@ -283,10 +283,10 @@ export function aiStyle(clubId: string): StyleId {
   return pool[Math.floor(r * pool.length)];
 }
 
-/** Rating points for my style against theirs: +2.4, 0 or -2.4. */
+/** Rating points for my style against theirs: +6, 0 or -6. */
 export function matchup(mine: StyleId, theirs: StyleId): number {
   if (mine === theirs) return 0;
   const win = styleOf(mine).beats.includes(theirs);
   const lose = styleOf(theirs).beats.includes(mine);
-  return win && !lose ? 2.4 : lose && !win ? -2.4 : 0;
+  return win && !lose ? 6 : lose && !win ? -6 : 0;
 }

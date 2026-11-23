@@ -9,8 +9,10 @@
  * All fees and prices in this file are in millions.
  */
 
+import { egyptTiers } from "@/lib/football/egypt";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { allClubs, clubsOfLeague, leagueOfClub } from "@/lib/football/leagueClubs";
+import { africanClubs } from "@/lib/football/africa";
 import { getTier } from "@/lib/football/finance";
 import { marketValue, squads as baseSquads, type Player, type Position } from "@/lib/football/squads";
 import { marketPlayers, originOf } from "@/lib/football/market";
@@ -241,6 +243,14 @@ export function canSell(squad: Player[], player: Player): string | null {
   return left < need ? `You need at least ${need} ${player.position} players.` : null;
 }
 
+/** Egyptian league: at most 5 foreign (non-Egyptian) players per club. */
+export const MAX_FOREIGN = 5;
+export function foreignBlock(clubId: string, squad: { id: string; nationality: string }[], player: { nationality: string } | undefined | null): string | null {
+  if (!player || player.nationality === "EG" || !(clubId in egyptTiers)) return null;
+  const n = squad.filter((p) => p.nationality !== "EG").length;
+  return n >= MAX_FOREIGN ? `Foreign players limit: a club can have only ${MAX_FOREIGN} non-Egyptian players.` : null;
+}
+
 export function canBuy(args: {
   balance: number;
   fee: number;
@@ -261,8 +271,8 @@ export function canBuy(args: {
 /** Bids for a listed player, one per matchday from the day he is listed (the first one is the same day). */
 /** Every club of the world that can buy a player of the manager: his own league and all the others. */
 export function worldBuyers(myClub: string) {
-  // the Egyptian league is internal: its players are only sold to the other clubs of the league
-  if (leagueOfClub(myClub) === "egyptian-premier-league") return clubsOfLeague("egyptian-premier-league").filter((c) => c.id !== myClub);
+  // the Egyptian league sells inside the league and to the African clubs
+  if (leagueOfClub(myClub) === "egyptian-premier-league") return [...clubsOfLeague("egyptian-premier-league").filter((c) => c.id !== myClub), ...africanClubs];
   return allClubs.filter((c) => c.id !== myClub);
 }
 

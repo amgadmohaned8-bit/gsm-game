@@ -59,7 +59,7 @@ export const tierProfiles: Record<ClubTier, TierProfile> = {
   elite: {
     label: "Elite budget",
     note: "Global brand and a packed stadium, but the wage bill is huge. Sell before you buy.",
-    openingBalance: 50_000_000,
+    openingBalance: 45_000_000,
     tv: 3_000_000,
     sponsors: 2_000_000,
     gate: 2_500_000,
@@ -71,7 +71,7 @@ export const tierProfiles: Record<ClubTier, TierProfile> = {
   mid: {
     label: "Mid budget",
     note: "A solid club with room to grow, if you spend carefully.",
-    openingBalance: 80_000_000,
+    openingBalance: 20_000_000,
     tv: 2_000_000,
     sponsors: 1_000_000,
     gate: 1_200_000,
@@ -83,7 +83,7 @@ export const tierProfiles: Record<ClubTier, TierProfile> = {
   small: {
     label: "Tight budget",
     note: "Little money. Every pound has to count.",
-    openingBalance: 20_000_000,
+    openingBalance: 8_000_000,
     tv: 1_500_000,
     sponsors: 500_000,
     gate: 600_000,
@@ -99,7 +99,8 @@ export const openingBonusAll = 100_000_000;
 
 /** Extra money for one club on top of the tier and the bonus for everybody (euros). Change a number here to change that club's budget. */
 export const openingExtra: Record<string, number> = {
- 
+  arsenal: 100_000_000, // elite 45M + 100M for everybody + 100M = 245M
+  "man-united": 205_000_000, // elite 45M + 100M for everybody + 205M = 350M
 };
 
 export function getTier(clubId: string | null | undefined): ClubTier {
@@ -174,7 +175,11 @@ export function buildFinance(
     )
     .sort((a, b) => a.matchday - b.matchday);
 
-  const opening = p.openingBalance + openingBonusAll + (openingExtra[clubId] ?? 0);
+  // Egyptian league: no gift, small 8M / mid 5M / big 3M. Other leagues are unchanged.
+  const egyptOpening = { small: 8_000_000, mid: 5_000_000, elite: 3_000_000 } as const;
+  const opening = clubId && clubId in egyptTiers
+    ? egyptOpening[egyptTiers[clubId]]
+    : p.openingBalance + openingBonusAll + (openingExtra[clubId] ?? 0);
   let balance = opening + transfersNet;
   const incomeByType = { tv: 0, sponsors: 0, gate: 0, prize: 0 };
   const expensesByType = { wages: 0, operations: 0, bonuses: 0 };

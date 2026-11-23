@@ -15,9 +15,14 @@
 import type { Player, Position } from "@/lib/football/squads";
 
 import { nowMs } from "@/lib/serverTime";
-export type Origin = "LaLiga" | "Bundesliga" | "SerieA" | "Ligue1" | "Saudi" | "Portugal" | "Netherlands" | "Turkey" | "Brazil" | "MLS" | "England" | "Egypt" | "Belgium" | "Scotland" | "Austria" | "Greece" | "Ukraine" | "Czech" | "Croatia" | "Argentina" | "Mexico" | "Japan" | "Korea" | "Icon" | "Star" | "Prospect" | "Free";
+import { REGIONAL_LINES } from "@/lib/football/marketRegional";
+export type Origin = "LaLiga" | "Bundesliga" | "SerieA" | "Ligue1" | "Saudi" | "Portugal" | "Netherlands" | "Turkey" | "Brazil" | "MLS" | "England" | "Egypt" | "Belgium" | "Scotland" | "Austria" | "Greece" | "Ukraine" | "Czech" | "Croatia" | "Argentina" | "Mexico" | "Japan" | "Korea" | "Icon" | "Star" | "Prospect" | "Free" | "CAFCL" | "CAFCC" | "Arab" | "Africa";
 
 export const originLabel: Record<Origin, string> = {
+  CAFCL: "CAF Champions League",
+  CAFCC: "CAF Confederation Cup",
+  Arab: "Arab leagues",
+  Africa: "African league",
   LaLiga: "La Liga",
   Bundesliga: "Bundesliga",
   SerieA: "Serie A",
@@ -1131,7 +1136,11 @@ const EXTRA_PER_PERIOD = 2;
 
 const clubByPlayer = new Map<string, string>();
 
-export const marketPlayers: (Player & { origin: Origin })[] = (raw.trim() + "\n" + generated() + "\n" + EXTRA.trim())
+/** the lines before the regional market: the world pool, the invented players and the new stars (ids follow the line order) */
+const WORLD_LINES = raw.trim() + "\n" + generated() + "\n" + EXTRA.trim();
+const WORLD_COUNT = WORLD_LINES.split("\n").length;
+
+export const marketPlayers: (Player & { origin: Origin })[] = (WORLD_LINES + "\n" + REGIONAL_LINES)
   .split("\n")
   .map((line, i) => {
     const [name, position, nationality, age, rating, origin, club] = line.trim().split(/\s+/);
@@ -1150,6 +1159,9 @@ export const marketPlayers: (Player & { origin: Origin })[] = (raw.trim() + "\n"
       origin: origin as Origin,
     };
   });
+
+/** The African and Arab players only the Egyptian league can sign. */
+export const isRegional = (o: Origin) => o === "CAFCL" || o === "CAFCC" || o === "Arab" || o === "Africa";
 
 export function originOf(playerId: string): Origin | null {
   return marketPlayers.find((p) => p.id === playerId)?.origin ?? null;
@@ -1174,11 +1186,11 @@ export const periodOf = (now: number = nowMs()) => Math.floor(Math.floor((now + 
 /** When the next selection arrives. */
 export const nextRefresh = (now: number = nowMs()) => ((periodOf(now) + 1) * REFRESH_DAYS * DAY) - CAIRO;
 
-const EXTRA_FROM = marketPlayers.length - EXTRA.trim().split("\n").length;
+const EXTRA_FROM = WORLD_COUNT - EXTRA.trim().split("\n").length;
 /** The period from which a player can be on the market (the new stars come a few at a time). */
 const unlockOf = (id: string) => {
   const n = Number(id.slice(3));
-  if (n < EXTRA_FROM) return 0;
+  if (n < EXTRA_FROM || n >= WORLD_COUNT) return 0; // the regional market is always there
   const k = n - EXTRA_FROM;
   return k < 20 ? EXTRA_FIRST_PERIOD + Math.floor(k / EXTRA_PER_PERIOD) : EXTRA_FIRST_PERIOD; // the second batch is all on sale right away
 };
@@ -1201,7 +1213,7 @@ function selection(period: number): Set<string> {
   const hit = periodCache.get(k);
   if (hit) return hit;
   const groups = new Map<string, (Player & { origin: Origin })[]>();
-  for (const p of marketPlayers) if (p.origin !== "Star" && p.origin !== "Icon" && unlockOf(p.id) <= period) (groups.get(tierOf(p)) ?? groups.set(tierOf(p), []).get(tierOf(p))!).push(p);
+  for (const p of marketPlayers) if (p.origin !== "Star" && p.origin !== "Icon" && !isRegional(p.origin) && unlockOf(p.id) <= period) (groups.get(tierOf(p)) ?? groups.set(tierOf(p), []).get(tierOf(p))!).push(p);
   const out = new Set<string>();
   for (const list of groups.values()) {
     const take = Math.max(1, Math.round(chance(list[0]) * list.length));
@@ -1223,4 +1235,38 @@ export function visibleMarket(now: number = nowMs()): MarketEntry[] {
   return marketPlayers
     .filter((p) => onSale(p, period))
     .map((player) => ({ player, isNew: !onSale(player, period - 1), leaving: !onSale(player, period + 1) }));
+}
+
+/* ---------- the market of the Egyptian league: African and Arab players, a new selection every two days ---------- */
+
+const regionalCache = new Map<number, Set<string>>();
+/** Seven of every ten players of each position and level are on sale, a different seven each period. */
+function regionalSelection(period: number): Set<string> {
+  const hit = regionalCache.get(period);
+  if (hit) return hit;
+  const groups = new Map<string, (Player & { origin: Origin })[]>();
+  for (const p of marketPlayers) {
+    if (!isRegional(p.origin)) continue;
+    const key = `${p.rating >= 75 ? "a" : p.rating >= 70 ? "b" : "c"}${p.position}`;
+    (groups.get(key) ?? groups.set(key, []).get(key)!).push(p);
+  }
+  const out = new Set<string>();
+  for (const list of groups.values()) {
+    const take = Math.max(1, Math.round(0.7 * list.length));
+    list.sort((x, y) => hashOf(`regional|${period}|${x.id}`) - hashOf(`regional|${period}|${y.id}`)).slice(0, take).forEach((p) => out.add(p.id));
+  }
+  if (regionalCache.size > 20) regionalCache.clear();
+  regionalCache.set(period, out);
+  return out;
+}
+
+/** Who the Egyptian league can sign right now, and who just arrived or leaves at the next refresh. */
+export function visibleRegional(now: number = nowMs()): MarketEntry[] {
+  const period = periodOf(now);
+  const now_ = regionalSelection(period);
+  const before = regionalSelection(period - 1);
+  const after = regionalSelection(period + 1);
+  return marketPlayers
+    .filter((p) => now_.has(p.id))
+    .map((player) => ({ player, isNew: !before.has(player.id), leaving: !after.has(player.id) }));
 }

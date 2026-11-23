@@ -76,7 +76,7 @@ export function formOf(clubId: string, season: string): number {
 }
 
 /** How much of the gap between two ratings counts in a match (the rest is football being football). */
-const GAP = 1.6;
+const GAP = 0.8;
 
 export function getRating(clubId: string) {
   return clubRatings[clubId] ?? egyptRatings[clubId] ?? africaRatings[clubId] ?? europeRatings[clubId] ?? 72;

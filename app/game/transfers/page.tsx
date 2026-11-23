@@ -8,12 +8,13 @@ import { supabase } from "@/lib/supabase";
 import { allClubs as clubs, clubsOfLeague, leagueOfClub } from "@/lib/football/leagueClubs";
 import { getTier } from "@/lib/football/finance";
 import { marketValue, teamRating, type Player, type Position } from "@/lib/football/squads";
-import { hiddenOrigin, nextRefresh, originOf, visibleMarket } from "@/lib/football/market";
+import { hiddenOrigin, nextRefresh, originOf, visibleMarket, visibleRegional } from "@/lib/football/market";
 import {
   MARKET,
   askingPrice,
   worldPrice,
   canBuy,
+  foreignBlock,
   canSell,
   findPlayer,
   recordDeal,
@@ -120,13 +121,12 @@ export default function TransfersPage() {
   const mine = useMemo(() => (ctx && squads ? (squads[ctx.clubId] ?? []) : []), [ctx, squads]);
   const window = windowStatus(ctx?.matchday ?? null);
   const leagueId = ctx ? leagueOfClub(ctx.clubId) : "";
-  // Egypt: transfers stay between its clubs, so open on Clubs and never on the world market
+  // Egypt: its clubs trade between themselves, and the market is African and Arab players only
   const egyptOnly = leagueId === "egyptian-premier-league";
   useEffect(() => {
-    if (!egyptOnly) return;
-    setTab((t) => (t === "market" ? "clubs" : t));
-    setView((v) => (v === "world" || v === "sale" ? "mine" : v));
-  }, [egyptOnly]);
+    if (!egyptOnly || roomId) return;
+    setView((v) => (v === "sale" ? "world" : v));
+  }, [egyptOnly, roomId]);
   /** clubs another person manages: they answer offers themselves */
   const humans = useMemo(() => new Map<string, RoomMember>(members.filter((m) => m.user_id !== ctx?.userId).map((m) => [m.club_id, m] as [string, RoomMember])), [members, ctx?.userId]);
   const myName = members.find((m) => m.user_id === ctx?.userId)?.name || "A manager";
@@ -137,8 +137,8 @@ export default function TransfersPage() {
     if (!ctx || !squads) return { list: [] as Player[], isNew: new Set<string>(), leaving: new Set<string>() };
     const stock = new Map((squads[MARKET] ?? []).map((p) => [p.id, p]));
     const hide = hiddenOrigin(leagueId);
-    // the Egyptian league has no world market: players move between its clubs only
-    const entries = (now && leagueId !== "egyptian-premier-league" ? visibleMarket(now) : []).filter((e) => stock.has(e.player.id) && e.player.origin !== hide);
+    // the Egyptian league signs African and Arab players only (and trades inside the league)
+    const entries = (now ? (leagueId === "egyptian-premier-league" ? visibleRegional(now) : visibleMarket(now)) : []).filter((e) => stock.has(e.player.id) && e.player.origin !== hide);
     return {
       list: entries.map((e) => stock.get(e.player.id)!),
       isNew: new Set(entries.filter((e) => e.isNew).map((e) => e.player.id)),
@@ -220,6 +220,8 @@ export default function TransfersPage() {
   }
 
   async function sign(player: Player, fee: number) {
+    const fb = foreignBlock(ctx!.clubId, mine, player);
+    if (fb) throw new Error(fb);
     await signFromClub(supabase, dctx, player, fee);
     await reload();
     await refreshShared(ctx!.userId, roomId);
@@ -230,6 +232,8 @@ export default function TransfersPage() {
     const fee = worldPrice(ctx!.userId, ctx!.season, player);
     const why = canBuy({ ban: signingBan(ctx!.state.bank), balance: ctx!.spendM, fee, squadSize: mine.length, windowOpen: window.open });
     if (why) return setNotice(why);
+    const fb = foreignBlock(ctx!.clubId, mine, player);
+    if (fb) return setNotice(fb);
     void run(player.id, async () => {
       await sign(player, fee);
       return `${player.name} is yours. ${money(fee)} paid.`;
@@ -240,6 +244,8 @@ export default function TransfersPage() {
     const p = findPlayer(squads!, l.player_id);
     const why = canBuy({ ban: signingBan(ctx!.state.bank), balance: ctx!.spendM, fee: l.asking, squadSize: mine.length, windowOpen: window.open });
     if (why) return setNotice(why);
+    const fb = foreignBlock(ctx!.clubId, mine, p);
+    if (fb) return setNotice(fb);
     if (confirm !== l.id) return setConfirm(l.id);
     void run(l.id, async () => {
       await buyNow(supabase, dctx, l);
@@ -302,6 +308,8 @@ export default function TransfersPage() {
   async function sendOffer(player: Player, amount: number) {
     const m = humans.get(player.club);
     if (!m) throw new Error("That club is run by the computer: use a normal offer.");
+    const fb = foreignBlock(ctx!.clubId, mine, player);
+    if (fb) throw new Error(fb);
     await makeOffer(supabase, dctx, player.id, amount);
     await tellAbout(supabase, m.user_id, ctx!.userId, myName, ctx!.season, `${myName} offers ${money(amount)} for ${player.name}. Answer in Transfers, Negotiations.`);
     await refreshShared(ctx!.userId, roomId);
@@ -327,6 +335,8 @@ export default function TransfersPage() {
       ? (mine.some((x) => x.id === p.id) ? canSell(mine, p) : "He is no longer in your squad.")
       : canBuy({ ban: signingBan(ctx!.state.bank), balance: ctx!.spendM, fee: price, squadSize: mine.length, windowOpen: window.open });
     if (why) return setNotice(why);
+    const fb = selling ? null : foreignBlock(ctx!.clubId, mine, p);
+    if (fb) return setNotice(fb);
     void run(o.id, async () => {
       await dbAccept(supabase, dctx, o.id, o.room_id, o.player_id, o.buyer_club);
       await tellAbout(supabase, selling ? o.buyer_id : o.seller_id, ctx!.userId, myName, ctx!.season, `${myName} accepted ${money(price)} for ${p.name}. The deal is done.`);
@@ -343,7 +353,7 @@ export default function TransfersPage() {
   const internal = leagueId === "egyptian-premier-league";
   const views: [MView, string][] = [
     ["sale", `For sale (${mlist.length})`],
-    ...(internal ? [] : [["world", "World market"] as [MView, string]]),
+    ["world", internal ? "Africa & Arab market" : "World market"],
     ["mine", "My players"],
   ];
   const posChips = (
@@ -468,7 +478,7 @@ export default function TransfersPage() {
             {view === "world" && (
               <>
                 <p className="tx-hint">
-                  Free agents and players from abroad. New selection in <b>{untilRefresh(nextRefresh(now) - now)}</b>. Buy a player at his base price: he is yours at once and leaves the market for everyone.
+                  {internal ? "Players of the African clubs and Arab professionals." : "Free agents and players from abroad."} New selection in <b>{untilRefresh(nextRefresh(now) - now)}</b>. Buy a player at his base price: he is yours at once and leaves the market for everyone.
                   {ctx.balanceM < 5 && <> Your balance is low: sell a player first.</>}
                 </p>
                 <ul className="tx-list">

@@ -9,6 +9,7 @@ import { allClubs as clubs } from "@/lib/football/leagueClubs";
 import { myRoom, seasonRows } from "@/lib/football/rooms";
 import { sendFriendNotice } from "@/lib/football/friendlies";
 import { bonusFor, currentLineup, loadSim, withTimeout } from "@/lib/football/strength";
+import { playOnServer } from "@/lib/football/serverPlay";
 import { activeSeason, nextSeason, seasonLabel } from "@/lib/football/season";
 import { isCafCup } from "@/lib/football/africa";
 import { cupForPosition, cafCup, fetchCont, fetchContSetup, roundLabel as contRoundLabel } from "@/lib/football/continental";
@@ -318,8 +319,17 @@ export default function FixturesPage() {
 
     try {
       const sim = await withTimeout(loadSim(supabase, { userId, clubId: myClub, roomId: manager.room_id, season, matchday: next.matchday, leagueId: manager.selected_league }), 8000).catch(() => ({ bonus: {} as Record<string, number>, roomId: manager.room_id, squads: undefined }));
+      // the server decides the scores (it reads the same lineup and tactic): the page only shows them
+      const prefs: Record<string, string> = {};
+      try {
+        for (let i = 0; i < localStorage.length; i++) {
+          const k = localStorage.key(i);
+          if (k && (k.startsWith(`gsm-lineup:${userId}:`) || k.startsWith(`gsm-tactic:${userId}:`))) prefs[k] = localStorage.getItem(k) ?? "";
+        }
+      } catch { /* the saved ones are used */ }
+      const served = await withTimeout(playOnServer(supabase, season, next.matchday, prefs), 25000);
       const result = await withTimeout(
-        playMatchday(supabase, matches, next.matchday, myClub, manager.room_id ?? userId, sim),
+        playMatchday(supabase, matches, next.matchday, myClub, manager.room_id ?? userId, sim, served ?? undefined),
         20000
       );
       liveSquad.current = sim.squads?.[myClub] ?? squadOf(myClub);

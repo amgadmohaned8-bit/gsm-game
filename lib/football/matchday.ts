@@ -40,13 +40,15 @@ export async function playMatchday(
   matchday: number,
   myClub: string,
   leagueKey: string,
-  sim?: SimContext
+  sim?: SimContext,
+  /** scores the server already decided and saved: they are shown, nothing is rolled or written here */
+  authority?: { scores: Map<string, { home: number; away: number }>; playedAt: string }
 ): Promise<PlayedMatchday> {
   const round = all.filter(
     (match) => match.matchday === matchday && match.status === "scheduled"
   );
 
-  const playedAt = new Date().toISOString();
+  const playedAt = authority?.playedAt ?? new Date().toISOString();
   const out: PlayedMatchday = { mine: null, others: [] };
   const bonus = sim?.bonus ?? {};
 
@@ -76,7 +78,12 @@ export async function playMatchday(
 
   // results: a score another manager of this shared league already saved wins
   const results = new Map<string, SimulationResult>();
-  if (round.length) {
+  if (authority) {
+    for (const match of round) {
+      const fixed = authority.scores.get(scoreKey(match.home_club, match.away_club));
+      if (fixed) results.set(match.id, run(match, fixed));
+    }
+  } else if (round.length) {
     const season = round[0].season;
     const stored = sim?.roomId ? await sharedScores(client, sim.roomId, season, matchday) : new Map();
     const fresh: StoredMatch[] = [];
@@ -106,9 +113,10 @@ export async function playMatchday(
 
   await Promise.all(
     round.map(async (match) => {
-      const result = results.get(match.id)!;
+      const result = results.get(match.id);
+      if (!result) return;
 
-      const { error } = await client
+      const { error } = authority ? { error: null } : await client
         .from("league_matches")
         .update({
           home_score: result.home_score,
