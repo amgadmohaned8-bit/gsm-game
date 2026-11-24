@@ -235,7 +235,7 @@ export default function FixturesPage() {
       const mineIn = (h: string, a: string) => h === manager.selected_club || a === manager.selected_club;
       try {
         for (const c of await fetchCup(supabase, userId, season, manager.selected_league)) {
-          if (mineIn(c.home_club, c.away_club)) out.push({ id: `cup-${c.id}`, code: "CUP", label: "League Cup", href: "/game/cup", home_club: c.home_club, away_club: c.away_club, home_score: c.home_score, away_score: c.away_score, pens_home: c.pens_home, pens_away: c.pens_away, status: c.status, at: c.kickoff_at ? new Date(c.kickoff_at).getTime() : null });
+          if (mineIn(c.home_club, c.away_club)) out.push({ id: `cup-${c.id}`, code: "CUP", label: "League Cup", href: "/game/cup", home_club: c.home_club, away_club: c.away_club, home_score: c.home_score, away_score: c.away_score, pens_home: c.pens_home, pens_away: c.pens_away, status: c.status, at: null });
         }
       } catch { /* no league cup yet */ }
       try {
@@ -243,14 +243,14 @@ export default function FixturesPage() {
           const setup = await fetchContSetup(supabase, userId, comp);
           if (!setup) continue;
           for (const c of await fetchCont(supabase, userId, comp, setup.season)) {
-            if (mineIn(c.home_club, c.away_club)) out.push({ id: `cont-${c.id}`, code: "CAF", label: `${cafCup(comp)?.name ?? "CAF"} · ${contRoundLabel(c.round_no)}`, href: "/game/continental", home_club: c.home_club, away_club: c.away_club, home_score: c.home_score, away_score: c.away_score, pens_home: c.pens_home, pens_away: c.pens_away, status: c.status, at: c.played_at ? new Date(c.played_at).getTime() : null });
+            if (mineIn(c.home_club, c.away_club)) out.push({ id: `cont-${c.id}`, code: "CAF", label: `${cafCup(comp)?.name ?? "CAF"} · ${contRoundLabel(c.round_no)}`, href: "/game/continental", home_club: c.home_club, away_club: c.away_club, home_score: c.home_score, away_score: c.away_score, pens_home: c.pens_home, pens_away: c.pens_away, status: c.status, at: null });
           }
         }
       } catch { /* no CAF cup */ }
       try {
         for (const setup of await fetchEuroSetups(supabase, userId)) {
           for (const c of await fetchEuro(supabase, userId, setup.comp_id, setup.season)) {
-            if (mineIn(c.home_club, c.away_club)) out.push({ id: `euro-${c.id}`, code: setup.comp_id.toUpperCase(), label: `${setup.comp_id === "ucl" ? "Champions League" : "Europa League"} · ${euroRoundLabel(c.round_no)}`, href: "/game/europe", home_club: c.home_club, away_club: c.away_club, home_score: c.home_score, away_score: c.away_score, pens_home: c.pens_home, pens_away: c.pens_away, status: c.status, at: c.played_at ? new Date(c.played_at).getTime() : null });
+            if (mineIn(c.home_club, c.away_club)) out.push({ id: `euro-${c.id}`, code: setup.comp_id.toUpperCase(), label: `${setup.comp_id === "ucl" ? "Champions League" : "Europa League"} · ${euroRoundLabel(c.round_no)}`, href: "/game/europe", home_club: c.home_club, away_club: c.away_club, home_score: c.home_score, away_score: c.away_score, pens_home: c.pens_home, pens_away: c.pens_away, status: c.status, at: null });
           }
         }
       } catch { /* no European cup */ }

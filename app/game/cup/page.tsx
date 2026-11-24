@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
-import { loadSim } from "@/lib/football/strength";
+import { loadSim, withTimeout } from "@/lib/football/strength";
 import { playRoundOnServer, ownPrefs } from "@/lib/football/serverPlay";
 import { allClubs as clubs } from "@/lib/football/leagueClubs";
 import { activeSeason, seasonLabel } from "@/lib/football/season";

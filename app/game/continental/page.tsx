@@ -10,7 +10,7 @@ import { resetCareerData } from "@/lib/football/careerReset";
 import { loadCareers, switchCareer } from "@/lib/football/careers";
 import { isCafCup } from "@/lib/football/africa";
 import { squadOf, type Player } from "@/lib/football/squads";
-import { loadSim } from "@/lib/football/strength";
+import { loadSim, withTimeout } from "@/lib/football/strength";
 import { playRoundOnServer, ownPrefs } from "@/lib/football/serverPlay";
 import { loadTransferState } from "@/lib/football/transfers";
 import {
