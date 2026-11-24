@@ -22,12 +22,11 @@ export default function TrainingPage() {
   const router = useRouter();
   const { ctx, loading, error, reload } = useTransfers();
   const [level, setLevel] = useState(1);
-  const [picked, setPicked] = useState<string[]>([]);
   const [filter, setFilter] = useState<Filter>("ALL");
   const [pos, setPos] = useState<Position>("FW");
   const [busy, setBusy] = useState(false);
   const [problem, setProblem] = useState("");
-  const [result, setResult] = useState<{ name: string; gain: number }[] | null>(null);
+  const [result, setResult] = useState<{ name: string; gain: number } | null>(null);
 
   const uid = ctx?.userId;
   useEffect(() => {
@@ -52,16 +51,21 @@ export default function TrainingPage() {
     () => (now ? training.filter((t) => { const end = finishesAt(t); return end !== null && end > now; }) : []),
     [now, training]
   );
-  const endsAt = useMemo(() => doneToday.reduce((m, t) => Math.max(m, finishesAt(t) ?? 0), 0), [doneToday]);
-  const wasTraining = useRef(false);
+  const running = useMemo(() => doneToday.slice().sort((a, b) => (finishesAt(a) ?? 0) - (finishesAt(b) ?? 0)), [doneToday]);
+  const wasCount = useRef(0);
   useEffect(() => {
-    // the session just finished while the page is open: load the new ratings
-    if (wasTraining.current && !endsAt) void reload();
-    wasTraining.current = endsAt > 0;
-  }, [endsAt, reload]);
+    // someone just finished while the page is open: load the new ratings
+    if (running.length < wasCount.current) void reload();
+    wasCount.current = running.length;
+  }, [running.length, reload]);
+  const runKey = running.map((t) => `${t.player_id}:${t.created_at}`).join("|");
   useEffect(() => {
-    if (endsAt) void alertAt(4, endsAt, "Training finished", "Your players finished training. Start the next session.");
-  }, [endsAt]);
+    running.forEach((t, i) => {
+      const end = finishesAt(t);
+      if (end) void alertAt(40 + i, end, "Training finished", "A player finished training. Start the next one.");
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [runKey]);
   const seasonGain = useMemo(() => {
     const out: Record<string, number> = {};
     if (!ctx) return out;
@@ -91,38 +95,37 @@ export default function TrainingPage() {
     );
   }
 
-  const locked = day === null || doneToday.length > 0;
   const byId = new Map(squad.map((p) => [p.id, p]));
+  const posOf = (id: string) => byId.get(id)?.position;
+  const runningBy = (k: Position) => running.filter((t) => posOf(t.player_id) === k).length;
+  const trainingIds = new Set(running.map((t) => t.player_id));
 
-  function toggle(p: Player) {
-    if (locked) return;
-    setProblem("");
-    setPicked((cur) => {
-      if (cur.includes(p.id)) return cur.filter((id) => id !== p.id);
-      if (cur.length >= SLOTS) {
-        setProblem(`Three players per session. Remove one first.`);
-        return cur;
-      }
-      return [...cur, p.id];
-    });
+  /** four sessions at a time, and every position keeps a place: nobody can fill the board with one position */
+  function slotProblem(k: Position): string {
+    if (day === null) return "The season is over.";
+    const others = (["GK", "DF", "MF", "FW"] as Position[]).filter((x) => x !== k && runningBy(x) === 0).length;
+    const reserved = runningBy(k) === 0 ? 0 : others;
+    if (running.length + reserved >= SLOTS) {
+      return running.length >= SLOTS ? "All four training places are busy. Wait for a player to finish." : "Keep a place free for the other positions: train a goalkeeper, defender, midfielder and forward first.";
+    }
+    return "";
   }
 
-  async function train() {
-    if (!ctx || day === null || !picked.length || busy) return;
+  /** one tap starts that player's own 8 hour countdown */
+  async function train(p: Player) {
+    if (!ctx || day === null || busy || trainingIds.has(p.id)) return;
+    const why = slotProblem(p.position);
+    if (why) { setProblem(why); return; }
     setBusy(true);
     setProblem("");
     try {
-      const rowsToSave = picked.map((id) => {
-        const p = byId.get(id)!;
-        const spent = seasonGain[id] ?? 0;
-        const gain = Math.max(0, Math.min(sessionGain(p.age) * boost, cap(p.age) - spent));
-        return { user_id: ctx.userId, league_id: ctx.leagueId, season: ctx.season, matchday: day, player_id: id, gain: Math.round(gain * 100) / 100 };
-      });
-      const { error: insertError } = await supabase.from("training_sessions").insert(rowsToSave);
+      const spent = seasonGain[p.id] ?? 0;
+      const gain = Math.max(0, Math.min(sessionGain(p.age) * boost, cap(p.age) - spent));
+      const row = { user_id: ctx.userId, league_id: ctx.leagueId, season: ctx.season, matchday: day, player_id: p.id, gain: Math.round(gain * 100) / 100 };
+      const { error: insertError } = await supabase.from("training_sessions").insert(row);
       if (insertError) throw insertError;
-      void alertAt(4, nowMs() + TRAIN_MS, "Training finished", "Your players finished training. Start the next session.");
-      setResult(rowsToSave.map((r) => ({ name: byId.get(r.player_id)!.name, gain: r.gain })));
-      setPicked([]);
+      void alertAt(40 + running.length, nowMs() + TRAIN_MS, "Training finished", `${p.name} finished training.`);
+      setResult({ name: p.name, gain: row.gain });
       await reload();
     } catch (err) {
       console.error("Training error:", err);
@@ -155,11 +158,10 @@ export default function TrainingPage() {
     <g fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="8" /><circle cx="12" cy="12" r="3" /><path d="M12 1v5M12 18v5M1 12h5M18 12h5" /></g>;
   /** the cards of the session: four slots, each with the player's picture, rating and countdown */
   const slotRows = Array.from({ length: SLOTS }).map((_, i) => {
-    const run = doneToday[i];
-    const id = run?.player_id ?? picked[i];
-    const p = id ? byId.get(id) : undefined;
+    const run = running[i];
+    const p = run ? byId.get(run.player_id) : undefined;
     const end = run ? finishesAt(run) : null;
-    const gain = run ? Number(run.gain) : p ? sessionGain(p.age) * boost : 0;
+    const gain = run ? Number(run.gain) : 0;
     const share = end && now ? Math.min(1, Math.max(0, 1 - (end - now) / TRAIN_MS)) : 0;
     return { p, run: !!run, end, gain, share };
   });
@@ -172,7 +174,7 @@ export default function TrainingPage() {
       <div className="tc-wrap">
         <header className="tc-title">
           <h1><svg width="46" height="46" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 9v6M6 7v10M18 7v10M21 9v6M6 12h12" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" /></svg> Player training</h1>
-          <p>Pick a position, then up to four players. Young players build rating much faster than veterans.</p>
+          <p>Choose a position, then tap a player: his own countdown starts at once. Train at least one player in every position. Young players build rating much faster than veterans.</p>
           <small>Coach level {level}: training works {Math.round((boost - 1) * 100)}% better. A session takes {TRAIN_HOURS} hours.</small>
         </header>
 
@@ -193,7 +195,7 @@ export default function TrainingPage() {
         {problem && <p className="tc-problem" role="alert">{problem}</p>}
         {result && (
           <p className="tc-result" role="status">
-            Session started: {result.map((r) => `${r.name} +${r.gain.toFixed(2)}`).join(", ")}. It finishes in {TRAIN_HOURS} hours and we will notify you. When a player's green bar is full, his rating goes up by one.
+            {result.name} started training: +{result.gain.toFixed(2)}. It finishes in {TRAIN_HOURS} hours and we will notify you. When his green bar is full, his rating goes up by one.
           </p>
         )}
 
@@ -211,13 +213,13 @@ export default function TrainingPage() {
                   <strong>{r.p.name}</strong>
                   <small>{r.p.age} yrs · +{r.gain.toFixed(2)} per session</small>
                   <span className="tc-count" role="timer" aria-label="Time until the training ends">
-                    {r.run && r.end ? clock(r.end - now) : clock(TRAIN_MS)}
-                    <em>{r.run ? "until he improves" : "when you start"}</em>
+                    {r.end ? clock(r.end - now) : clock(TRAIN_MS)}
+                    <em>until he improves</em>
                   </span>
                   <span className="tc-meter"><i style={{ width: `${r.share * 100}%` }} /></span>
                 </>
               ) : (
-                <span className="tc-free">Free slot</span>
+                <span className="tc-free">Free place</span>
               )}
             </div>
           ))}
@@ -231,8 +233,7 @@ export default function TrainingPage() {
           </div>
           <ul className="tc-grid">
             {rows.map((p, i) => {
-              const on = picked.includes(p.id);
-              const trained = doneToday.some((t) => t.player_id === p.id);
+              const trained = trainingIds.has(p.id);
               const spent = seasonGain[p.id] ?? 0;
               const capNow = cap(p.age);
               const prog = progressOf(finished[p.id] ?? 0);
@@ -241,10 +242,10 @@ export default function TrainingPage() {
               const ph = phase(p.age);
               return (
                 <li key={p.id} style={{ animationDelay: `${Math.min(i, 20) * 18}ms` }}>
-                  <button type="button" className={`tc-card ph-${ph} ${on ? "is-on" : ""} ${trained ? "is-trained" : ""}`} onClick={() => toggle(p)} aria-pressed={on} disabled={locked && !trained}>
+                  <button type="button" className={`tc-card ph-${ph} ${trained ? "is-trained is-on" : ""}`} onClick={() => void train(p)} aria-pressed={trained} disabled={busy || trained || day === null}>
                     <b>{p.rating}</b>
                     <strong>{p.name}</strong>
-                    <small>{p.age} yrs · {ph === "rising" ? "Rising" : ph === "prime" ? "Prime" : "Declining"}</small>
+                    <small>{trained ? "Training now" : `${p.age} yrs`} · {ph === "rising" ? "Rising" : ph === "prime" ? "Prime" : "Declining"}</small>
                     <span className="tc-gain">+{(sessionGain(p.age) * boost).toFixed(2)} / session</span>
                     <span className="tc-prog" role="img" aria-label={`${Math.round(prog * 100)} percent of the way to rating ${p.rating + 1}`}>
                       <em className="is-done" style={{ width: `${prog * 100}%` }} />
@@ -259,12 +260,6 @@ export default function TrainingPage() {
           </ul>
         </section>
 
-        <div className="tc-cta">
-          <button type="button" disabled={locked || !picked.length || busy} onClick={train}>
-            <svg width="30" height="30" viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="8" r="3.2" fill="currentColor" /><circle cx="17" cy="9" r="2.6" fill="currentColor" /><path d="M2 20c0-3.5 3-5.5 7-5.5s7 2 7 5.5zM15.500 14.800c3.500-.3 6.500 1.200 6.500 4.200v1h-5" fill="currentColor" /></svg>
-            {day === null ? "Season over" : doneToday.length ? `Training · ${clock(endsAt - now)}` : busy ? "Starting..." : picked.length ? `Start training (${picked.length})` : "Select players"}
-          </button>
-        </div>
       </div>
     </main>
   );

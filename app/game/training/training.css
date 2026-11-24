@@ -1,5 +1,5 @@
 /* Training: four coach cards, the session, and the players to pick */
-.tc-wrap { max-width: 1180px; margin: 0 auto; padding: clamp(14px, 3vh, 28px) clamp(12px, 3vw, 28px) 110px; display: grid; gap: 16px; }
+.tc-wrap { max-width: 1180px; margin: 0 auto; padding: clamp(14px, 3vh, 28px) clamp(12px, 3vw, 28px) 40px; display: grid; gap: 16px; }
 .tc-title { display: grid; gap: 6px; }
 .tc-title h1 { margin: 0; display: flex; align-items: center; gap: 12px; font-size: clamp(22px, 3.6vw, 34px); font-weight: 800; }
 .tc-title h1 svg { width: 34px; height: 34px; color: var(--mint); flex: none; }

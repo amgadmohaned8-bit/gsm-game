@@ -13,6 +13,7 @@ import { careerStats, stashCareer, switchCareer, syncCareers, type Career } from
 import { MAX_LEVEL, levelOf, loadBadgeData, loadUnlocked, measure, progressOf, xpForLevel, xpOf } from "@/lib/football/badges";
 import GsmMark from "@/components/GsmMark";
 import Icon from "@/components/Icon";
+import "@/components/dx-theme.css";
 import "./myteams.css";
 
 type Manager = { manager_name?: string | null; avatar?: string | null; selected_club: string | null; selected_league: string | null; room_id?: string | null; club_appointed_at?: string | null };
@@ -183,8 +184,7 @@ export default function MyTeamsPage() {
   const empty = Math.max(0, MAX - slots.length);
 
   return (
-    <main className="mt">
-      <div className="mt-bg" aria-hidden="true" />
+    <main className="mt dxp">
       <header className="mt-top">
         <span className="mt-brand"><GsmMark size={34} /><b>GSM</b></span>
         <div className="mt-top-r">
@@ -263,7 +263,7 @@ export default function MyTeamsPage() {
                     >
                       <span className="mt-num">{i + 1}</span>
                       <img className="mt-comp" src={l.logo} alt="" />
-                      <span className="mt-kind">{s.kind === "league" ? "League" : "Continental"}</span>
+                      <span className="mt-kind">{active ? "Current" : s.kind === "league" ? "League" : "Continental"}</span>
                       <span className="mt-crest">{club?.logo ? <img src={club.logo} alt="" /> : <b>{(club?.name ?? s.club).slice(0, 2)}</b>}</span>
                       <strong className="mt-club">{club?.name ?? s.club}</strong>
                       <span className="mt-league">{l.name}</span>

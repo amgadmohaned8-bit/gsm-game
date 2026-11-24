@@ -28,8 +28,8 @@ export const MARKET = "market";
 export const ABROAD = "abroad";
 export const MAX_SQUAD = 35;
 export const MIN_BY_POSITION: Record<Position, number> = { GK: 2, DF: 5, MF: 5, FW: 3 };
-/** a listed player is sold on the day he is listed: no waiting */
-export const LISTING_DAYS = 0;
+/** a listed player stays on the market: nobody buys him on the day he is listed, and he waits up to this many matchdays for the asking price */
+export const LISTING_DAYS = 3;
 
 export type Deal = {
   id: string;
@@ -269,7 +269,7 @@ export function canBuy(args: {
 
 /* ---------- listings: bids from AI clubs ---------- */
 
-/** Bids for a listed player, one per matchday from the day he is listed (the first one is the same day). */
+/** Bids for a listed player, one per matchday from the day AFTER he is listed (he always stays on the market for at least one matchday). */
 /** Every club of the world that can buy a player of the manager: his own league and all the others. */
 export function worldBuyers(myClub: string) {
   // the Egyptian league sells inside the league and to the African clubs
@@ -282,11 +282,11 @@ export function bidsFor(userId: string, listing: Listing, player: Player, myClub
   const buyers = worldBuyers(myClub);
   const out: Offer[] = [];
 
-  for (let d = listing.listed_matchday; d <= matchday; d++) {
+  for (let d = listing.listed_matchday + 1; d <= matchday; d++) {
     const rnd = unit(`${userId}|${listing.player_id}|${d}|bid`);
     const club = buyers[Math.floor(unit(`${userId}|${listing.player_id}|${d}|who`) * buyers.length)].id;
-    // a club from anywhere in the world: the first day somebody pays 1.25-1.7 times his value, later days 0.95-1.7
-    const factor = d === listing.listed_matchday ? 1.25 + 0.45 * rnd : 0.95 + 0.75 * rnd;
+    // a club from anywhere in the world: the first bid is 1.25-1.7 times his value, later days 0.95-1.7
+    const factor = d === listing.listed_matchday + 1 ? 1.25 + 0.45 * rnd : 0.95 + 0.75 * rnd;
     out.push({ player_id: listing.player_id, matchday: d, club, amount: round1(value * factor) });
   }
   return out;

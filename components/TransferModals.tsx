@@ -312,7 +312,7 @@ export function SellModal({
             ))}
           </div>
           <p className="tb-note">
-            The sale is done the same day. A club that matches your price pays it. If none does, he goes for a fair price of about {money(fairPrice(player))}.
+            He stays on the market for a few matchdays, so other managers can see him and buy. A club that matches your price pays it. If none does by the end, he goes for a fair price of about {money(fairPrice(player))}.
           </p>
           {warning && <p className="tb-error" role="alert">{warning}</p>}
           {error && <p className="tb-error" role="alert">{error}</p>}
