@@ -6,7 +6,7 @@ import path from "node:path";
 
 const root = process.cwd();
 const out = path.join(root, "supabase/functions/_shared/src");
-const entries = ["lib/football/matchday.ts", "lib/football/strength.ts", "lib/football/cup.ts", "lib/football/europe.ts", "lib/football/continental.ts", "lib/football/halftime.ts", "lib/football/friendlies.ts", "lib/football/development.ts", "lib/football/leagueClubs.ts", "lib/football/squads.ts", "lib/football/availability.ts"];
+const entries = ["lib/football/matchday.ts", "lib/football/strength.ts", "lib/football/cup.ts", "lib/football/europe.ts", "lib/football/continental.ts", "lib/football/halftime.ts", "lib/football/friendlies.ts", "lib/football/development.ts", "lib/football/leagueClubs.ts", "lib/football/squads.ts", "lib/football/availability.ts", "lib/football/transfers.ts"];
 const seen = new Set();
 const missing = new Set();
 

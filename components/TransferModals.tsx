@@ -312,7 +312,7 @@ export function SellModal({
             ))}
           </div>
           <p className="tb-note">
-            He stays on the market for a few matchdays, so other managers can see him and buy. A club that matches your price pays it. If none does by the end, he goes for a fair price of about {money(fairPrice(player))}.
+            He stays on the market from now until midnight (Cairo time), so other managers can see him and buy. A club may pay your price at any moment of the day. If none does by midnight, he goes for a fair price of about {money(fairPrice(player))}.
           </p>
           {warning && <p className="tb-error" role="alert">{warning}</p>}
           {error && <p className="tb-error" role="alert">{error}</p>}

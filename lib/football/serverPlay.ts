@@ -85,3 +85,27 @@ export async function halftimeOnServer(client: SupabaseClient, matchId: string, 
   }
   return data as Revised;
 }
+
+/**
+ * Asks the server (Edge Function "settle-sales") to complete the sales of listed players that are due.
+ * Returns true when the server did it (the page then only reads the result), false when the function is
+ * not deployed yet (the page completes the sales itself, as before). Asked at most once every 15 seconds.
+ */
+let lastSettle = 0;
+let lastServed = false;
+export async function settleOnServer(client: SupabaseClient): Promise<boolean> {
+  if (Date.now() - lastSettle < 15_000) return lastServed;
+  lastSettle = Date.now();
+  try {
+    const { error } = await client.functions.invoke("settle-sales", { body: {} });
+    if (error) {
+      const status = (error as { context?: { status?: number } }).context?.status;
+      lastServed = !(status === undefined || status === 404);
+    } else {
+      lastServed = true;
+    }
+  } catch {
+    lastServed = false;
+  }
+  return lastServed;
+}

@@ -17,6 +17,7 @@ import { evaluateBoard } from "@/lib/football/board";
 import { calculateStandings } from "@/lib/football/table";
 import { teamRating, type Player } from "@/lib/football/squads";
 import { loadTransferState } from "@/lib/football/transfers";
+import { settleOnServer } from "@/lib/football/serverPlay";
 import { currentMatchday } from "@/lib/football/useTransfers";
 import { InviteModal } from "@/components/RoomModals";
 import { pendingCode } from "@/lib/football/rooms";
@@ -140,6 +141,14 @@ export default function DashboardPage() {
       if (w === "press" || w === "room") setWanted(w);
     } catch { /* no panel */ }
   }, []);
+  useEffect(() => {
+    if (!wanted || !club || !manager) return;
+    if (wanted === "room") setRoomOpen(true);
+    else if (nextMatch) setPressOpen(true);
+    else return;
+    setWanted(null);
+    try { window.history.replaceState(null, "", "/game/dashboard"); } catch { /* fine */ }
+  }, [wanted, club, manager, nextMatch]);
   const [table, setTable] = useState<Row[]>([]);
   const [form, setForm] = useState<("W" | "D" | "L")[]>([]);
   const closeRef = useRef<HTMLButtonElement>(null);
@@ -150,15 +159,6 @@ export default function DashboardPage() {
   const [summary, setSummary] = useState<SeasonSummary | null>(null);
   const [, setCounts] = useState<TrophyCounts>({ league: 0, league_cup: 0, objective: 0 });
   const [nextMatch, setNextMatch] = useState<{ matchday: number; opponent: string; home: boolean; kickoff: string | null } | null>(null);
-
-  useEffect(() => {
-    if (!wanted || !club || !manager) return;
-    if (wanted === "room") setRoomOpen(true);
-    else if (nextMatch) setPressOpen(true);
-    else return;
-    setWanted(null);
-    try { window.history.replaceState(null, "", "/game/dashboard"); } catch { /* fine */ }
-  }, [wanted, club, manager, nextMatch]);
 
   useEffect(() => {
     if (!menuOpen) return;
@@ -250,7 +250,8 @@ export default function DashboardPage() {
             return;
           }
 
-          const ts = await loadTransferState(supabase, authData.user.id, data.selected_club, season, currentMatchday(matchData ?? []), data.selected_league, true);
+          const served = await settleOnServer(supabase);
+          const ts = await loadTransferState(supabase, authData.user.id, data.selected_club, season, currentMatchday(matchData ?? []), data.selected_league, true, !served);
           clubBalance = buildFinance(data.selected_club, matchData ?? [], ts.net * 1_000_000).balance;
           setMySquad(ts.squads[data.selected_club] ?? []);
 

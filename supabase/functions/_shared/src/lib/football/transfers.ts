@@ -22,14 +22,15 @@ import { evolve, gainsAt, type TrainingRow } from "./development.ts";
 import { inCareer } from "./leagueIds.ts";
 import { loadFriendlies } from "./friendlies.ts";
 import { aiDeals, aiDealsAt } from "./aiTransfers.ts";
+import { nowMs } from "../serverTime.ts";
 import { gameDay, loadBank, needsSync, syncBank, type Bank } from "./bank.ts";
 
 export const MARKET = "market";
 export const ABROAD = "abroad";
 export const MAX_SQUAD = 35;
 export const MIN_BY_POSITION: Record<Position, number> = { GK: 2, DF: 5, MF: 5, FW: 3 };
-/** a listed player stays on the market: nobody buys him on the day he is listed, and he waits up to this many matchdays for the asking price */
-export const LISTING_DAYS = 3;
+/** a listed player stays on the market for the rest of the real day (Cairo time): he can sell at any moment between the listing and midnight */
+export const LISTING_DAYS = 0;
 
 export type Deal = {
   id: string;
@@ -55,6 +56,7 @@ export type Listing = {
   listed_matchday: number;
   status: "open" | "sold" | "withdrawn";
   league_id?: string | null;
+  created_at?: string;
 };
 
 export type Offer = { player_id: string; matchday: number; club: string; amount: number };
@@ -269,7 +271,14 @@ export function canBuy(args: {
 
 /* ---------- listings: bids from AI clubs ---------- */
 
-/** Bids for a listed player, one per matchday from the day AFTER he is listed (he always stays on the market for at least one matchday). */
+/** Seconds are counted in Cairo time, so "today" ends at the Cairo midnight. */
+export function endOfCairoDay(ms: number): number {
+  const parts = new Intl.DateTimeFormat("en-GB", { timeZone: "Africa/Cairo", hour: "2-digit", minute: "2-digit", second: "2-digit", hourCycle: "h23" }).formatToParts(new Date(ms));
+  const n = (t: string) => Number(parts.find((x) => x.type === t)?.value ?? 0);
+  const into = n("hour") * 3600 + n("minute") * 60 + n("second");
+  return ms + (86400 - into) * 1000;
+}
+
 /** Every club of the world that can buy a player of the manager: his own league and all the others. */
 export function worldBuyers(myClub: string) {
   // the Egyptian league sells inside the league and to the African clubs
@@ -277,19 +286,18 @@ export function worldBuyers(myClub: string) {
   return allClubs.filter((c) => c.id !== myClub);
 }
 
-export function bidsFor(userId: string, listing: Listing, player: Player, myClub: string, matchday: number): Offer[] {
-  const value = marketValue(player);
+/** The window of a listing in real time, and the one bid that comes inside it (a club, a price, a moment). */
+export function listingBid(userId: string, listing: Listing, player: Player, myClub: string) {
+  const start = listing.created_at ? Date.parse(listing.created_at) : NaN;
+  const legacy = !Number.isFinite(start); // old rows without a time: settled at once
+  const from = legacy ? 0 : start;
+  const end = legacy ? 0 : endOfCairoDay(start);
   const buyers = worldBuyers(myClub);
-  const out: Offer[] = [];
-
-  for (let d = listing.listed_matchday + 1; d <= matchday; d++) {
-    const rnd = unit(`${userId}|${listing.player_id}|${d}|bid`);
-    const club = buyers[Math.floor(unit(`${userId}|${listing.player_id}|${d}|who`) * buyers.length)].id;
-    // a club from anywhere in the world: the first bid is 1.25-1.7 times his value, later days 0.95-1.7
-    const factor = d === listing.listed_matchday + 1 ? 1.25 + 0.45 * rnd : 0.95 + 0.75 * rnd;
-    out.push({ player_id: listing.player_id, matchday: d, club, amount: round1(value * factor) });
-  }
-  return out;
+  const key = `${userId}|${listing.player_id}|${listing.id}`;
+  const club = buyers[Math.floor(unit(`${key}|who`) * buyers.length)]?.id ?? buyers[0].id;
+  const factor = 0.95 + 0.75 * unit(`${key}|bid`);
+  const at = from + (end - from) * unit(`${key}|when`);
+  return { club, amount: round1(marketValue(player) * factor), at, end };
 }
 
 /** What the game pays when nobody met the price in time. */
@@ -310,21 +318,21 @@ export function resolveListings(
   const sales: Sale[] = [];
   const offers: Offer[] = [];
   const my = squads[myClub] ?? [];
+  const now = nowMs();
 
   for (const listing of listings.filter((l) => l.status === "open")) {
     const player = my.find((p) => p.id === listing.player_id);
     if (!player) continue;
 
-    const bids = bidsFor(userId, listing, player, myClub, matchday);
-    const hit = bids.find((b) => b.amount >= listing.asking);
-
-    if (hit) {
-      sales.push({ listing, player, club: hit.club, fee: listing.asking, matchday: hit.matchday });
-    } else if (matchday >= listing.listed_matchday + LISTING_DAYS) {
-      const last = bids[bids.length - 1];
-      sales.push({ listing, player, club: last?.club ?? worldBuyers(myClub)[0].id, fee: fairPrice(player), matchday });
-    } else {
-      offers.push(...bids.filter((b) => b.amount >= listing.asking * 0.8));
+    const bid = listingBid(userId, listing, player, myClub);
+    if (now >= bid.at && bid.amount >= listing.asking) {
+      // somebody pays the price at some moment of the day
+      sales.push({ listing, player, club: bid.club, fee: listing.asking, matchday });
+    } else if (now >= bid.end) {
+      // the day is over and nobody met the price
+      sales.push({ listing, player, club: bid.club, fee: fairPrice(player), matchday });
+    } else if (now >= bid.at && bid.amount >= listing.asking * 0.8) {
+      offers.push({ player_id: listing.player_id, matchday, club: bid.club, amount: bid.amount });
     }
   }
 
@@ -368,7 +376,9 @@ export async function loadTransferState(
   matchday: number | null,
   leagueId?: string,
   /** only a page that knows the real current matchday may let the bank apply late fines or undo wrong ones */
-  syncTheBank = false
+  syncTheBank = false,
+  /** false when the server ("settle-sales") completes the sales: the page then only reads the result */
+  settleSales = true
 ): Promise<TransferState> {
   // each team a manager runs is its own save: only this team's deals, listings and training count
   const mineOnly = <T extends { league_id?: string | null }>(rows: T[] | null | undefined): T[] =>
@@ -480,8 +490,11 @@ export async function loadTransferState(
   if (matchday !== null && listings.length) {
     const { sales, offers } = resolveListings(userId, listings, squads, myClub, matchday);
 
-    for (const sale of sales) {
+    for (const sale of settleSales ? sales : []) {
       if (canSell(squads[myClub] ?? [], sale.player)) continue; // would leave a position short: keep him
+      // claim the listing first: two visits (or the server and a page) can never sell the same player twice
+      const claim = await client.from("transfer_listings").update({ status: "sold" }).eq("id", sale.listing.id).eq("status", "open").select("id");
+      if (claim.error || !(claim.data ?? []).length) continue;
       try {
         await recordDeal(client, {
           user_id: userId,
@@ -493,9 +506,9 @@ export async function loadTransferState(
           kind: "sell",
           matchday: sale.matchday,
         });
-        await client.from("transfer_listings").update({ status: "sold" }).eq("id", sale.listing.id);
       } catch {
-        /* it will be tried again on the next visit */
+        // the deal failed: put him back on the market, it will be tried again on the next visit
+        await client.from("transfer_listings").update({ status: "open" }).eq("id", sale.listing.id);
       }
     }
 

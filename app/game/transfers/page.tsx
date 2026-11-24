@@ -501,7 +501,7 @@ export default function TransfersPage() {
             {view === "mine" && (
               <>
                 <p className="tx-hint">
-                  <b>List</b> sets your asking price: {roomId ? "every manager of the league sees it, can buy at that price at once, or send you an offer" : "he stays on the market for a few matchdays and a club from anywhere in the world may bid; use Sell now for an instant sale"}. <b>Sell now</b> pays {Math.round(QUICK * 100)}% of the value at once. A listed player stays in your squad until a deal is done.
+                  <b>List</b> sets your asking price: {roomId ? "every manager of the league sees it, can buy at that price at once, or send you an offer" : "he stays on the market until midnight (Cairo time) and can be sold at any moment of the day; use Sell now for an instant sale"}. <b>Sell now</b> pays {Math.round(QUICK * 100)}% of the value at once. A listed player stays in your squad until a deal is done.
                   {!window.open && <> The window is closed, so players can only be listed.</>}
                 </p>
                 {ctx.state.offers.length > 0 && (

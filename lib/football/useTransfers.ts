@@ -7,6 +7,7 @@ import { activeSeason } from "@/lib/football/season";
 import { buildFinance } from "@/lib/football/finance";
 import { spendable } from "@/lib/football/bank";
 import { loadTransferState, type TransferState } from "@/lib/football/transfers";
+import { settleOnServer } from "@/lib/football/serverPlay";
 
 export type TransferContext = {
   userId: string;
@@ -62,7 +63,8 @@ export function useTransfers() {
 
       const rows = matches ?? [];
       const matchday = currentMatchday(rows);
-      const state = await loadTransferState(supabase, user.id, contract.selected_club, season, matchday, leagueId, true);
+      const served = await settleOnServer(supabase);
+      const state = await loadTransferState(supabase, user.id, contract.selected_club, season, matchday, leagueId, true, !served);
       const finance = buildFinance(contract.selected_club, rows, state.net * 1_000_000);
 
       setCtx({
