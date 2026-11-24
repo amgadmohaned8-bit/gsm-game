@@ -1,6 +1,6 @@
 /* Season awards: black and gold like the rest of the game */
-.aw { --gold: #2fe6c8; --gold-hi: #8ff5e3; --gold-lo: #1b7f72; --edge: #1c5663; --panel-2: #0a0907; position: relative; min-height: 100svh; isolation: isolate; overflow-x: clip; color: #fff; background: #060606; }
-.aw-bg { position: fixed; inset: 0; z-index: -2; background: radial-gradient(ellipse 60% 45% at 50% 0%, rgba(47, 230, 200, .22), transparent 70%), linear-gradient(180deg, #0d0c09, #060606 60%); }
+.aw { --gold: #A855F7; --gold-hi: #C084FC; --gold-lo: #7E22CE; --edge: #4A2F6B; --panel-2: #0a0907; position: relative; min-height: 100svh; isolation: isolate; overflow-x: clip; color: #fff; background: #060606; }
+.aw-bg { position: fixed; inset: 0; z-index: -2; background: radial-gradient(ellipse 60% 45% at 50% 0%, rgba(168, 85, 247, .22), transparent 70%), linear-gradient(180deg, #0d0c09, #060606 60%); }
 .aw-wrap { width: min(1100px, 100% - 32px); margin: 0 auto; padding: 14px 0 64px; display: grid; gap: 14px; }
 .aw-head { text-align: center; }
 .aw-head small { color: var(--gold); font: 800 12px var(--font-text); letter-spacing: .18em; text-transform: uppercase; }
@@ -9,12 +9,12 @@
 
 .aw-seasons { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px; }
 .aw-seasons button { min-height: 40px; padding: 0 16px; cursor: pointer; color: #fff; font: 700 14px var(--font-text); border: 1px solid var(--edge); border-radius: 10px; background: #14120c; }
-.aw-seasons button.is-on { background: linear-gradient(180deg, var(--gold-hi), var(--gold)); border-color: var(--gold-hi); color: #032420; }
+.aw-seasons button.is-on { background: linear-gradient(180deg, var(--gold-hi), var(--gold)); border-color: var(--gold-hi); color: #160922; }
 
 .aw-empty { display: grid; gap: 8px; justify-items: start; padding: 18px; border: 1px solid var(--edge); border-radius: 12px; background: linear-gradient(160deg, #1c160a, var(--panel-2)); }
 .aw-empty strong { font: 800 20px var(--font-display); color: var(--gold-hi); }
 .aw-empty p { margin: 0; color: #cfc7b0; font-size: 14px; line-height: 1.5; }
-.aw-btn { display: inline-flex; align-items: center; min-height: 46px; padding: 0 18px; border-radius: 10px; background: linear-gradient(180deg, var(--gold-hi), var(--gold)); color: #032420; font: 800 15px var(--font-text); text-decoration: none; box-shadow: 0 4px 0 var(--gold-lo); }
+.aw-btn { display: inline-flex; align-items: center; min-height: 46px; padding: 0 18px; border-radius: 10px; background: linear-gradient(180deg, var(--gold-hi), var(--gold)); color: #160922; font: 800 15px var(--font-text); text-decoration: none; box-shadow: 0 4px 0 var(--gold-lo); }
 
 .aw-finish { display: grid; grid-template-columns: 1fr auto; gap: 14px; align-items: center; padding: 16px 18px; border: 1px solid var(--gold-lo); border-radius: 14px; background: linear-gradient(160deg, #2a210c, var(--panel-2)); box-shadow: 0 4px 0 #000; }
 .aw-finish-club { display: flex; align-items: center; gap: 14px; min-width: 0; }
@@ -49,7 +49,7 @@
 .aw-pl img { width: 26px; height: 26px; object-fit: contain; }
 .aw-pl strong { font: 700 14px var(--font-text); overflow-wrap: anywhere; }
 .aw-pl small { color: #b9b19a; font-size: 12px; }
-.aw-pl.is-mine { border-color: var(--gold); background: rgba(47, 230, 200, .14); }
+.aw-pl.is-mine { border-color: var(--gold); background: rgba(168, 85, 247, .14); }
 
 .aw :is(a, button):focus-visible { outline: 3px solid var(--gold-hi); outline-offset: 2px; }
 @media (max-width: 900px) { .aw-prizes { grid-template-columns: repeat(2, minmax(0, 1fr)); } }

@@ -1,19 +1,19 @@
 /* The look of the game screens: a night-pitch teal, mint for actions, coral for alerts. Used by pages with class "dxp". */
 .dxp {
-  --bg: #051519; --bg-2: #0a2229; --panel: rgba(13, 46, 56, 0.82); --panel-solid: #0d2e38; --panel-hi: #134352;
-  --line: rgba(94, 234, 212, 0.2); --mint: #2fe6c8; --mint-ink: #032420; --coral: #ff6a55;
-  --text: #eafbf8; --dim: #8fb7b4; --win: #3ddc84; --draw: #f2c14e; --loss: #ff5a5a;
+  --bg: #09060F; --bg-2: #120B1D; --panel: rgba(29, 18, 43, 0.82); --panel-solid: #1D122B; --panel-hi: #302044;
+  --line: rgba(168, 85, 247, 0.2); --mint: #A855F7; --mint-ink: #160922; --coral: #F0B45A;
+  --text: #F7F0FF; --dim: #B9A9CC; --win: #3ddc84; --draw: #f2c14e; --loss: #ff5a5a;
   position: relative; min-height: 100svh; isolation: isolate; overflow-x: clip; color: var(--text);
-  background: radial-gradient(ellipse 80% 60% at 50% 0%, #0d3a45 0%, var(--bg-2) 45%, var(--bg) 100%);
+  background: radial-gradient(ellipse 80% 60% at 50% 0%, #38204F 0%, var(--bg-2) 45%, var(--bg) 100%);
   font-family: var(--font-body, system-ui, sans-serif);
 }
 .dxp::before { content: ""; position: fixed; inset: 0; z-index: -1; pointer-events: none; background:
-  linear-gradient(180deg, rgba(120, 255, 230, 0.12), transparent 55%) left -10% top -20% / 38% 120% no-repeat,
-  linear-gradient(180deg, rgba(120, 255, 230, 0.12), transparent 55%) right -10% top -20% / 38% 120% no-repeat; }
+  linear-gradient(180deg, rgba(168, 85, 247, 0.12), transparent 55%) left -10% top -20% / 38% 120% no-repeat,
+  linear-gradient(180deg, rgba(168, 85, 247, 0.12), transparent 55%) right -10% top -20% / 38% 120% no-repeat; }
 .dxp button { font: inherit; color: inherit; cursor: pointer; }
 .dxp button:focus-visible { outline: 3px solid var(--mint); outline-offset: 2px; }
 
-.dxbar { display: flex; align-items: center; gap: 10px; padding: 10px clamp(12px, 3vw, 28px); background: linear-gradient(180deg, rgba(3, 18, 22, 0.92), rgba(3, 18, 22, 0.55)); border-bottom: 1px solid var(--line); backdrop-filter: blur(6px); }
+.dxbar { display: flex; align-items: center; gap: 10px; padding: 10px clamp(12px, 3vw, 28px); background: linear-gradient(180deg, rgba(9, 6, 15, 0.92), rgba(9, 6, 15, 0.55)); border-bottom: 1px solid var(--line); backdrop-filter: blur(6px); }
 .dxbar-back { display: grid; place-items: center; width: 44px; height: 44px; flex: none; border-radius: 12px; background: var(--panel-solid); border: 1px solid var(--line); }
 .dxbar-title { font-weight: 800; font-size: 18px; }
 .dxbar-grow { flex: 1; }
@@ -25,11 +25,11 @@
 
 /* the older pages (transfers...) read these tokens: here they become the teal set */
 .dxp {
-  --ink-0: #051519; --ink-1: #0a2229; --ink-2: #0d2e38; --ink-3: #134352; --ink-4: #1a5566;
-  --line: rgba(94, 234, 212, 0.14); --line-2: rgba(94, 234, 212, 0.24);
-  --chalk: #eafbf8; --chalk-2: #a9cdca; --chalk-3: #7aa5a2;
-  --brass: #2fe6c8; --brass-hi: #8ff5e3; --brass-lo: #1b7f72; --brass-ink: #032420;
-  --pitch: #3ddc84; --card-red: #ff6a55;
+  --ink-0: #09060F; --ink-1: #120B1D; --ink-2: #1D122B; --ink-3: #302044; --ink-4: #3D2A55;
+  --line: rgba(168, 85, 247, 0.14); --line-2: rgba(168, 85, 247, 0.24);
+  --chalk: #F7F0FF; --chalk-2: #B9A9CC; --chalk-3: #8D7AA6;
+  --brass: #A855F7; --brass-hi: #C084FC; --brass-lo: #7E22CE; --brass-ink: #160922;
+  --pitch: #3ddc84; --card-red: #FF5D6C;
 }
-.dxp.tr, .dxp.sq { background: radial-gradient(ellipse 80% 60% at 50% 0%, #0d3a45 0%, #0a2229 45%, #051519 100%); }
+.dxp.tr, .dxp.sq { background: radial-gradient(ellipse 80% 60% at 50% 0%, #38204F 0%, #120B1D 45%, #09060F 100%); }
 .dxp .gx-slant { transform: none; }

@@ -16,7 +16,7 @@
 .ts-slot b { width: 30px; height: 30px; display: grid; place-items: center; border-radius: 50%; background: var(--brass); color: var(--brass-ink); font: 800 13px var(--font-display); }
 .ts-slot select { width: 100%; max-width: 150px; padding: 6px 4px; border: 1px solid rgba(255,255,255,.25); background: rgba(5,9,16,.78); color: var(--chalk); font: 600 12px var(--font-text); }
 .ts-side { display: grid; gap: 10px; align-content: start; }
-.ts-stat { display: grid; gap: 2px; padding: 14px; border: 1px solid var(--brass); background: rgba(47, 230, 200,.08); }
+.ts-stat { display: grid; gap: 2px; padding: 14px; border: 1px solid var(--brass); background: rgba(168, 85, 247,.08); }
 .ts-stat span { color: var(--chalk-3); font-size: 12px; text-transform: uppercase; letter-spacing: .12em; }
 .ts-stat strong { font: 900 48px var(--font-display); line-height: 1; }
 .ts-stat em { font-style: normal; font-size: 13px; } .ts-stat .is-up { color: #6fdc8c; } .ts-stat .is-down { color: #ff7a7a; }

@@ -9,12 +9,12 @@
 
 .ff-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
 .ff-club { position: relative; display: grid; justify-items: center; align-content: start; gap: 6px; padding: 20px 14px 14px; text-align: center; border-radius: 16px; background: var(--panel); border: 1px solid var(--line); transition: border-color 0.18s, transform 0.18s; }
-.ff-club:hover { border-color: rgba(94, 234, 212, 0.55); transform: translateY(-2px); }
+.ff-club:hover { border-color: rgba(168, 85, 247, 0.55); transform: translateY(-2px); }
 .ff-club img { width: clamp(70px, 9vw, 108px); height: clamp(70px, 9vw, 108px); object-fit: contain; filter: drop-shadow(0 8px 16px rgba(0, 0, 0, 0.5)); }
 .ff-club strong { font-size: 18px; line-height: 1.15; overflow-wrap: anywhere; }
 .ff-club small { color: var(--dim); font-size: 13px; min-height: 1.2em; }
 .ff-club.is-pal small { color: var(--mint); font-weight: 700; }
-.ff-go { align-self: end; width: 100%; min-height: 48px; margin-top: 8px; padding: 0 14px; border: 0; border-radius: 12px; background: linear-gradient(135deg, var(--mint), #1fb9a2); color: var(--mint-ink); font-weight: 800; font-size: 16px; transition: filter 0.18s, transform 0.18s; }
+.ff-go { align-self: end; width: 100%; min-height: 48px; margin-top: 8px; padding: 0 14px; border: 0; border-radius: 12px; background: linear-gradient(135deg, var(--mint), #7E22CE); color: var(--mint-ink); font-weight: 800; font-size: 16px; transition: filter 0.18s, transform 0.18s; }
 .ff-go:hover:not(:disabled) { filter: brightness(1.1); }
 .ff-go:active:not(:disabled) { transform: scale(0.98); }
 .ff-go:disabled { opacity: 0.5; cursor: not-allowed; }

@@ -8,7 +8,7 @@
 
 .fx { position: relative; min-height: 100svh; isolation: isolate; overflow-x: clip; background: var(--ink-0); }
 .fx-bg { position: fixed; inset: -3%; z-index: -5; background: url("/images/stadium-night.jpg") center / cover no-repeat; filter: saturate(0.5) brightness(0.4); }
-.fx-shade { position: fixed; inset: 0; z-index: -4; background: radial-gradient(ellipse 55% 50% at 78% 20%, rgba(47, 230, 200, 0.18), transparent 70%), linear-gradient(180deg, rgba(4, 6, 10, 0.5), var(--ink-0) 90%); }
+.fx-shade { position: fixed; inset: 0; z-index: -4; background: radial-gradient(ellipse 55% 50% at 78% 20%, rgba(168, 85, 247, 0.18), transparent 70%), linear-gradient(180deg, rgba(4, 6, 10, 0.5), var(--ink-0) 90%); }
 
 .fx-body { max-width: 1240px; margin: 0 auto; padding: clamp(22px, 4vh, 44px) clamp(16px, 4vw, 56px) 64px; display: grid; grid-template-columns: minmax(0, 1fr); gap: 24px; }
 
@@ -38,7 +38,7 @@
 
 .fx-start { margin: 0 22px; }
 .fx-start.is-ready { animation: fx-glow 1.8s ease-in-out infinite; }
-@keyframes fx-glow { 50% { filter: brightness(1.2) drop-shadow(0 0 18px rgba(143, 245, 227, 0.7)); } }
+@keyframes fx-glow { 50% { filter: brightness(1.2) drop-shadow(0 0 18px rgba(192, 132, 252, 0.7)); } }
 .fx-error { margin: 0 22px; padding: 12px 14px; border-left: 3px solid var(--card-red); background: rgba(238, 106, 96, 0.1); color: #ffc2bc; font-size: 14px; line-height: 1.5; }
 
 .fx-done { justify-items: center; padding: 34px 24px; text-align: center; color: var(--brass); }
@@ -61,7 +61,7 @@
 
 .fx-rows { margin: 0; padding: 0 0 8px; list-style: none; }
 .fx-rows li { display: grid; grid-template-columns: 56px 130px 70px minmax(0, 1fr) 96px; align-items: center; gap: 14px; min-height: 62px; padding: 0 26px 0 22px; border-top: 1px solid var(--line); border-left: 3px solid transparent; color: var(--chalk-2); font-size: 15px; font-weight: 600; }
-.fx-rows li.is-next { border-left-color: var(--brass); background: linear-gradient(90deg, rgba(47, 230, 200, 0.2), transparent); color: var(--chalk); }
+.fx-rows li.is-next { border-left-color: var(--brass); background: linear-gradient(90deg, rgba(168, 85, 247, 0.2), transparent); color: var(--chalk); }
 .fx-md { font-family: var(--font-display); font-size: 26px; font-weight: 800; color: var(--chalk); text-align: center; }
 .fx-date { display: grid; line-height: 1.2; }
 .fx-date small { color: var(--chalk-3); font-size: 12px; font-weight: 600; }
@@ -76,7 +76,7 @@
 
 /* the match */
 .fx-match { position: fixed; inset: 0; z-index: 150; overflow-y: auto; background: var(--ink-0); animation: gsm-fade-in 0.4s; }
-.fx-match-bg { position: fixed; inset: 0; background: radial-gradient(ellipse 70% 60% at 50% 0%, rgba(63, 215, 154, 0.2), transparent 70%), radial-gradient(ellipse 50% 40% at 50% 100%, rgba(47, 230, 200, 0.14), transparent 70%); }
+.fx-match-bg { position: fixed; inset: 0; background: radial-gradient(ellipse 70% 60% at 50% 0%, rgba(63, 215, 154, 0.2), transparent 70%), radial-gradient(ellipse 50% 40% at 50% 100%, rgba(168, 85, 247, 0.14), transparent 70%); }
 .fx-match-inner { position: relative; max-width: 820px; margin: 0 auto; display: grid; gap: 18px; padding: clamp(20px, 4vh, 44px) 16px 40px; }
 
 .fx-board { --bg: rgba(8, 12, 19, 0.95); --bd: var(--brass); --cut: 22px; display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 12px; padding: 22px; animation: fx-goal 0.7s var(--ease-out); }
@@ -103,7 +103,7 @@
 .fx-feed li { display: flex; align-items: baseline; gap: 14px; padding: 12px 16px; border-left: 3px solid var(--line-2); background: rgba(255, 255, 255, 0.04); color: var(--chalk-2); font-size: 15px; animation: fx-in 0.4s var(--ease-out); }
 @keyframes fx-in { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: none; } }
 .fx-feed time { flex: none; width: 40px; color: var(--chalk-3); font-family: var(--font-display); font-size: 20px; font-weight: 800; }
-.fx-feed li[data-type="goal"] { border-left-color: var(--brass); background: linear-gradient(90deg, rgba(47, 230, 200, 0.28), rgba(47, 230, 200, 0.06)); color: var(--chalk); font-weight: 800; font-size: 17px; }
+.fx-feed li[data-type="goal"] { border-left-color: var(--brass); background: linear-gradient(90deg, rgba(168, 85, 247, 0.28), rgba(168, 85, 247, 0.06)); color: var(--chalk); font-weight: 800; font-size: 17px; }
 .fx-feed li[data-type="whistle"] { border-left-color: var(--pitch); color: var(--chalk); font-weight: 700; }
 
 .fx-others { padding: 18px 20px; border: 1px solid var(--line-2); background: rgba(8, 12, 19, 0.7); animation: gsm-fade-in 0.5s; }
@@ -161,7 +161,7 @@
 .fx-round-nav button:disabled { opacity: 0.35; cursor: not-allowed; }
 .fx-round-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
 .fx-round-list li { display: grid; grid-template-columns: minmax(0, 1fr) 72px minmax(0, 1fr); align-items: center; gap: 10px; min-height: 52px; padding: 6px 12px; background: rgba(255, 255, 255, 0.04); border-left: 3px solid transparent; }
-.fx-round-list li.is-mine { border-left-color: var(--brass); background: rgba(47, 230, 200, 0.1); }
+.fx-round-list li.is-mine { border-left-color: var(--brass); background: rgba(168, 85, 247, 0.1); }
 .fx-round-list .fx-empty { display: block; padding: 18px 0; }
 .fx-r-home, .fx-r-away { display: flex; align-items: center; gap: 10px; min-width: 0; font-weight: 700; font-size: 15px; overflow-wrap: anywhere; }
 .fx-r-home { justify-content: flex-end; text-align: right; }

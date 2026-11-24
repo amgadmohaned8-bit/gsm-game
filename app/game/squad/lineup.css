@@ -1,42 +1,42 @@
 /* Lineups: the pitch fills the screen, cards in black and gold (made for a phone held wide) */
-.lu { --gold: #2fe6c8; --gold-hi: #8ff5e3; --gold-lo: #1b7f72; --edge: #1c5663; --panel: #0d2e38; --panel-2: #051519; position: relative; height: 100svh; min-height: 340px; display: flex; flex-direction: column; overflow: hidden; isolation: isolate; color: #fff; background: #051519; }
-.lu-bg { position: absolute; inset: 0; z-index: -2; background: radial-gradient(ellipse 60% 50% at 85% 0%, rgba(47, 230, 200, .16), transparent 70%), linear-gradient(180deg, #0a2229, #051519 70%); }
+.lu { --gold: #A855F7; --gold-hi: #C084FC; --gold-lo: #7E22CE; --edge: #4A2F6B; --panel: #1D122B; --panel-2: #09060F; position: relative; height: 100svh; min-height: 340px; display: flex; flex-direction: column; overflow: hidden; isolation: isolate; color: #fff; background: #09060F; }
+.lu-bg { position: absolute; inset: 0; z-index: -2; background: radial-gradient(ellipse 60% 50% at 85% 0%, rgba(168, 85, 247, .16), transparent 70%), linear-gradient(180deg, #120B1D, #09060F 70%); }
 
-.lu-top { display: flex; align-items: center; gap: 10px; padding: 8px clamp(10px, 2vw, 24px); border-bottom: 1px solid var(--edge); background: linear-gradient(180deg, #0d3a45, #051519); }
+.lu-top { display: flex; align-items: center; gap: 10px; padding: 8px clamp(10px, 2vw, 24px); border-bottom: 1px solid var(--edge); background: linear-gradient(180deg, #38204F, #09060F); }
 .lu-icon { flex: none; display: grid; place-items: center; width: 40px; height: 40px; color: var(--gold-hi); cursor: pointer; border: 1px solid var(--edge); border-radius: 10px; background: var(--panel); }
 .lu-title { display: grid; min-width: 0; margin-right: auto; }
 .lu-title small { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--gold); font: 800 11px var(--font-text); letter-spacing: .12em; text-transform: uppercase; }
 .lu-title strong { font: 900 20px var(--font-display); letter-spacing: .05em; text-transform: uppercase; color: var(--gold-hi); line-height: 1.05; }
 .lu-kpis { display: flex; gap: 6px; margin: 0; }
 .lu-kpis div { padding: 3px 10px; text-align: center; border: 1px solid var(--edge); border-radius: 8px; background: #000; }
-.lu-kpis dt { color: #7aa5a2; font: 800 9px var(--font-text); letter-spacing: .1em; text-transform: uppercase; }
+.lu-kpis dt { color: #8D7AA6; font: 800 9px var(--font-text); letter-spacing: .1em; text-transform: uppercase; }
 .lu-kpis dd { margin: 0; font: 900 19px/1.1 var(--font-display); color: var(--gold-hi); }
 .lu-kpis .is-up { color: #6fdc8c; } .lu-kpis .is-down { color: #ff7a7a; }
 .lu-actions { display: flex; gap: 6px; }
 .lu-btn { display: inline-flex; align-items: center; gap: 7px; min-height: 40px; padding: 0 12px; cursor: pointer; color: var(--gold-hi); font: 800 14px var(--font-display); letter-spacing: .05em; text-transform: uppercase; border: 1px solid var(--edge); border-radius: 10px; background: var(--panel); }
-.lu-btn b { min-width: 22px; padding: 1px 6px; text-align: center; color: #032420; background: var(--gold-hi); border-radius: 10px; font-size: 13px; }
-.lu-btn.is-gold { color: #032420; background: linear-gradient(180deg, var(--gold-hi), var(--gold)); border-color: var(--gold-hi); }
-.lu-btn.is-gold b { background: #032420; color: var(--gold-hi); }
+.lu-btn b { min-width: 22px; padding: 1px 6px; text-align: center; color: #160922; background: var(--gold-hi); border-radius: 10px; font-size: 13px; }
+.lu-btn.is-gold { color: #160922; background: linear-gradient(180deg, var(--gold-hi), var(--gold)); border-color: var(--gold-hi); }
+.lu-btn.is-gold b { background: #160922; color: var(--gold-hi); }
 .lu-btn:hover, .lu-icon:hover { border-color: var(--gold); }
 .lu :is(button):focus-visible { outline: 3px solid var(--gold-hi); outline-offset: 2px; }
 .lu-formwrap { position: relative; }
-.lu-forms { position: absolute; right: 0; top: calc(100% + 6px); z-index: 20; display: grid; grid-template-columns: repeat(2, 1fr); gap: 4px; min-width: 190px; padding: 8px; border: 1px solid var(--gold-lo); border-radius: 12px; background: #0a2229; box-shadow: 0 16px 40px rgba(0, 0, 0, .7); }
+.lu-forms { position: absolute; right: 0; top: calc(100% + 6px); z-index: 20; display: grid; grid-template-columns: repeat(2, 1fr); gap: 4px; min-width: 190px; padding: 8px; border: 1px solid var(--gold-lo); border-radius: 12px; background: #120B1D; box-shadow: 0 16px 40px rgba(0, 0, 0, .7); }
 .lu-forms button { min-height: 40px; cursor: pointer; color: #fff; font: 800 15px var(--font-display); border: 1px solid var(--edge); border-radius: 8px; background: var(--panel); }
-.lu-forms .is-on { color: #032420; background: var(--gold-hi); border-color: var(--gold-hi); }
+.lu-forms .is-on { color: #160922; background: var(--gold-hi); border-color: var(--gold-hi); }
 
 /* the pitch */
 .lu-pitch { position: relative; flex: 1; min-height: 0; margin: 8px clamp(8px, 2vw, 24px) 0; display: grid; grid-template-rows: repeat(4, minmax(0, 1fr)); padding: 6px 4px; border: 1px solid var(--edge); border-radius: 14px; overflow: hidden;
   background: repeating-linear-gradient(180deg, rgba(255, 255, 255, .06) 0 12.5%, transparent 12.5% 25%), radial-gradient(ellipse 70% 60% at 50% 40%, #1f7a55, #0b3a2b 80%); box-shadow: inset 0 0 60px rgba(0, 0, 0, .55); }
 .lu-marks { position: absolute; inset: 0; pointer-events: none; }
-.lu-marks i { position: absolute; border: 2px solid rgba(143, 245, 227, .24); }
+.lu-marks i { position: absolute; border: 2px solid rgba(192, 132, 252, .24); }
 .lu-box { left: 50%; width: 38%; height: 22%; transform: translateX(-50%); }
 .lu-box-t { top: -2px; border-top: 0; } .lu-box-b { bottom: -2px; border-bottom: 0; }
 .lu-circle { left: 50%; top: 50%; width: min(22%, 150px); aspect-ratio: 1; transform: translate(-50%, -50%); border-radius: 50%; }
-.lu-marks::after { content: ""; position: absolute; left: 0; right: 0; top: 50%; border-top: 2px solid rgba(143, 245, 227, .2); }
+.lu-marks::after { content: ""; position: absolute; left: 0; right: 0; top: 50%; border-top: 2px solid rgba(192, 132, 252, .2); }
 .lu-line { position: relative; display: flex; justify-content: space-evenly; align-items: center; min-height: 0; }
 
 /* a player card */
-.lu-card { position: relative; flex: none; display: block; height: min(94%, 108px); aspect-ratio: 1.45; padding: 0; overflow: hidden; cursor: pointer; color: #fff; font: inherit; text-align: left; border: 1px solid var(--gold-lo); border-radius: 9px; background: linear-gradient(160deg, #1a5566, #0a2229); box-shadow: 0 3px 0 #000, 0 8px 14px rgba(0, 0, 0, .45); transition: transform .15s var(--ease-out); }
+.lu-card { position: relative; flex: none; display: block; height: min(94%, 108px); aspect-ratio: 1.45; padding: 0; overflow: hidden; cursor: pointer; color: #fff; font: inherit; text-align: left; border: 1px solid var(--gold-lo); border-radius: 9px; background: linear-gradient(160deg, #3D2A55, #120B1D); box-shadow: 0 3px 0 #000, 0 8px 14px rgba(0, 0, 0, .45); transition: transform .15s var(--ease-out); }
 .lu-card:hover { transform: translateY(-2px); }
 .lu-card.t-elite { border-color: var(--gold-hi); }
 .lu-card .pf { position: absolute; left: 50%; top: 0; width: 70%; height: calc(100% - 22px); transform: translateX(-50%); object-fit: cover; object-position: center top; pointer-events: none; }
@@ -44,31 +44,31 @@
 .lu-pos { position: absolute; top: 4px; left: 5px; z-index: 2; padding: 1px 5px; font: 800 10px var(--font-text); font-style: normal; letter-spacing: .06em; color: var(--gold-hi); background: rgba(0, 0, 0, .7); border-radius: 4px; }
 .lu-rate { position: absolute; top: 2px; right: 6px; z-index: 2; font: 900 clamp(19px, 3.2vh, 26px)/1 var(--font-display); color: #fff; text-shadow: 0 2px 4px #000, 0 0 10px rgba(0, 0, 0, .9); }
 .lu-card.t-elite .lu-rate { color: var(--gold-hi); }
-.lu-name { position: absolute; left: 0; right: 0; bottom: 0; z-index: 2; padding: 3px 4px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; text-align: center; font: 800 12px/1.25 var(--font-text); color: #032420; background: linear-gradient(180deg, var(--gold-hi), var(--gold)); }
+.lu-name { position: absolute; left: 0; right: 0; bottom: 0; z-index: 2; padding: 3px 4px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; text-align: center; font: 800 12px/1.25 var(--font-text); color: #160922; background: linear-gradient(180deg, var(--gold-hi), var(--gold)); }
 .lu-card.is-off { border-color: #e5484d; } .lu-card.is-off .lu-pos { color: #ff8a8a; }
-.lu-card.is-picked { outline: 3px solid var(--gold-hi); outline-offset: 2px; box-shadow: 0 0 0 6px rgba(143, 245, 227, .2), 0 8px 14px rgba(0, 0, 0, .45); }
+.lu-card.is-picked { outline: 3px solid var(--gold-hi); outline-offset: 2px; box-shadow: 0 0 0 6px rgba(192, 132, 252, .2), 0 8px 14px rgba(0, 0, 0, .45); }
 
-.lu-hint { margin: 0; padding: 6px 14px 8px; min-height: 30px; text-align: center; color: #8fb7b4; font-size: 13px; }
+.lu-hint { margin: 0; padding: 6px 14px 8px; min-height: 30px; text-align: center; color: #B9A9CC; font-size: 13px; }
 
 /* substitutes */
 .lu-veil { position: fixed; inset: 0; z-index: 40; display: flex; align-items: flex-end; justify-content: center; background: rgba(0, 0, 0, .6); }
-.lu-sheet { width: min(1100px, 100%); max-height: 88svh; display: grid; grid-template-rows: auto minmax(0, 1fr); gap: 10px; padding: 12px clamp(12px, 2vw, 22px) 16px; overflow: hidden; border: 2px solid var(--gold-lo); border-bottom: 0; border-radius: 16px 16px 0 0; background: linear-gradient(180deg, #0d3a45, #051519); animation: lu-up .25s var(--ease-out); }
+.lu-sheet { width: min(1100px, 100%); max-height: 88svh; display: grid; grid-template-rows: auto minmax(0, 1fr); gap: 10px; padding: 12px clamp(12px, 2vw, 22px) 16px; overflow: hidden; border: 2px solid var(--gold-lo); border-bottom: 0; border-radius: 16px 16px 0 0; background: linear-gradient(180deg, #38204F, #09060F); animation: lu-up .25s var(--ease-out); }
 @keyframes lu-up { from { transform: translateY(40px); opacity: 0; } to { transform: none; opacity: 1; } }
 .lu-sheet > header { display: flex; align-items: center; gap: 10px; }
 .lu-sheet > header strong { font: 900 22px var(--font-display); letter-spacing: .05em; text-transform: uppercase; color: var(--gold-hi); }
-.lu-sheet > header span { flex: 1; min-width: 0; color: #8fb7b4; font-size: 13px; }
+.lu-sheet > header span { flex: 1; min-width: 0; color: #B9A9CC; font-size: 13px; }
 .lu-toggle { min-height: 38px; padding: 0 14px; cursor: pointer; color: var(--gold-hi); font: 800 13px var(--font-text); border: 1px solid var(--edge); border-radius: 10px; background: var(--panel); }
 .lu-bench { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; overflow-y: auto; padding: 4px 2px 6px; }
 .lu-col { display: grid; gap: 8px; align-content: start; justify-items: center; }
 .lu-col h3 { margin: 0; justify-self: stretch; text-align: center; font: 800 14px var(--font-display); letter-spacing: .06em; text-transform: uppercase; color: var(--gold-hi); }
 .lu-card.is-small { height: auto; width: min(100%, 150px); aspect-ratio: 1.45; }
-.lu-empty { display: grid; place-items: center; width: min(100%, 150px); aspect-ratio: 1.45; color: #7aa5a2; font: 800 13px var(--font-display); text-transform: uppercase; letter-spacing: .05em; border: 2px dashed var(--edge); border-radius: 9px; background: rgba(0, 0, 0, .35); }
+.lu-empty { display: grid; place-items: center; width: min(100%, 150px); aspect-ratio: 1.45; color: #8D7AA6; font: 800 13px var(--font-display); text-transform: uppercase; letter-spacing: .05em; border: 2px dashed var(--edge); border-radius: 9px; background: rgba(0, 0, 0, .35); }
 .lu-tabs { display: flex; gap: 6px; }
 .lu-tabs button { min-height: 36px; padding: 0 14px; cursor: pointer; color: #cfeee9; font: 800 13px var(--font-text); border: 1px solid var(--edge); border-radius: 8px; background: var(--panel); }
-.lu-tabs .is-on { color: #032420; background: var(--gold-hi); border-color: var(--gold-hi); }
+.lu-tabs .is-on { color: #160922; background: var(--gold-hi); border-color: var(--gold-hi); }
 .lu-all { display: grid; grid-template-columns: repeat(auto-fill, minmax(124px, 1fr)); gap: 10px; overflow-y: auto; padding: 4px 2px 8px; align-content: start; }
 .lu-all .lu-card.is-small { width: 100%; }
-.lu-none { grid-column: 1 / -1; margin: 8px 0; color: #7aa5a2; }
+.lu-none { grid-column: 1 / -1; margin: 8px 0; color: #8D7AA6; }
 .lu-sheet:has(.lu-tabs) { grid-template-rows: auto auto minmax(0, 1fr); }
 
 /* a phone held upright: bigger rows, narrower cards */

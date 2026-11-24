@@ -1,16 +1,16 @@
 /* The game menu: a plain list of big icons that slides in from the right. */
-.gm-burger { display: grid; place-items: center; width: 44px; height: 44px; margin-right: 6px; background: #0d2e38; border: 1px solid rgba(94, 234, 212, 0.2); border-radius: 12px; color: #eafbf8; cursor: pointer; transition: background 0.2s, border-color 0.2s; }
-.gm-burger:hover { background: #134352; border-color: #2fe6c8; }
-.gm-burger:focus-visible, .gm-drawer button:focus-visible { outline: 3px solid #2fe6c8; outline-offset: 2px; }
+.gm-burger { display: grid; place-items: center; width: 44px; height: 44px; margin-right: 6px; background: #1D122B; border: 1px solid rgba(168, 85, 247, 0.2); border-radius: 12px; color: #F7F0FF; cursor: pointer; transition: background 0.2s, border-color 0.2s; }
+.gm-burger:hover { background: #302044; border-color: #A855F7; }
+.gm-burger:focus-visible, .gm-drawer button:focus-visible { outline: 3px solid #A855F7; outline-offset: 2px; }
 .gm-scrim { position: fixed; inset: 0; z-index: 90; background: rgba(0, 0, 0, 0.6); backdrop-filter: blur(3px); animation: gm-fade 0.25s both; }
-.gm-drawer { position: fixed; z-index: 100; top: 0; bottom: 0; right: 0; left: auto; width: min(340px, 86vw); display: flex; flex-direction: column; background: linear-gradient(180deg, #0f4655, #0a3340); border-left: 1px solid rgba(94, 234, 212, 0.2); box-shadow: -30px 0 80px rgba(0, 0, 0, 0.55); transform: translateX(102%); visibility: hidden; transition: transform 0.35s cubic-bezier(0.2, 0.8, 0.2, 1), visibility 0s 0.35s; color: #eafbf8; }
+.gm-drawer { position: fixed; z-index: 100; top: 0; bottom: 0; right: 0; left: auto; width: min(340px, 86vw); display: flex; flex-direction: column; background: linear-gradient(180deg, #2A1740, #130B20); border-left: 1px solid rgba(168, 85, 247, 0.2); box-shadow: -30px 0 80px rgba(0, 0, 0, 0.55); transform: translateX(102%); visibility: hidden; transition: transform 0.35s cubic-bezier(0.2, 0.8, 0.2, 1), visibility 0s 0.35s; color: #F7F0FF; }
 .gm-drawer.is-open { transform: none; visibility: visible; transition: transform 0.35s cubic-bezier(0.2, 0.8, 0.2, 1); }
 .gm-drawer header { display: flex; align-items: center; justify-content: space-between; padding: 16px 18px 10px; }
 .gm-drawer h2 { margin: 0; font-size: 22px; }
-.gm-drawer header button { display: grid; place-items: center; width: 44px; height: 44px; background: none; border: 1px solid rgba(94, 234, 212, 0.2); border-radius: 12px; color: inherit; cursor: pointer; }
+.gm-drawer header button { display: grid; place-items: center; width: 44px; height: 44px; background: none; border: 1px solid rgba(168, 85, 247, 0.2); border-radius: 12px; color: inherit; cursor: pointer; }
 .gm-drawer nav { flex: 1; overflow-y: auto; display: grid; align-content: start; padding: 4px 10px 24px; }
 .gm-drawer nav button { display: flex; align-items: center; gap: 16px; min-height: 56px; padding: 8px 12px; text-align: left; background: none; border: 0; border-radius: 12px; color: inherit; font: inherit; cursor: pointer; transition: background 0.2s; }
-.gm-drawer nav button > svg:first-child { flex: none; color: #2fe6c8; }
+.gm-drawer nav button > svg:first-child { flex: none; color: #A855F7; }
 .gm-drawer nav button > svg:last-child { display: none; }
 .gm-drawer nav button span { flex: 1; display: grid; min-width: 0; }
 .gm-drawer nav button strong { font-size: 18px; }

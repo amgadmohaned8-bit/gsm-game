@@ -1,0 +1,24 @@
+/* =========================================================
+   Phone app layer: the game fills the whole screen at normal size,
+   like an installed game. Replaces the old landscape layer that
+   squeezed every screen into one tiny viewport.
+   ========================================================= */
+html { -webkit-tap-highlight-color: transparent; background: #09060F; }
+@media (pointer: coarse) {
+  html, body { overscroll-behavior: none; background: #09060F; }
+  body { -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; }
+  input, textarea, select, [contenteditable="true"] { -webkit-user-select: text; user-select: text; }
+  img { -webkit-user-drag: none; }
+  button, a, [role="button"], [role="tab"] { touch-action: manipulation; }
+
+  /* edge to edge: the bars and pages reach the screen edges, content stays clear of notch and gesture bar */
+  .dxbar, .dx-top, .mt-top { padding-left: max(12px, env(safe-area-inset-left)); padding-right: max(12px, env(safe-area-inset-right)); padding-top: max(10px, env(safe-area-inset-top)); }
+  .dx-body, .tc-wrap, .ff-wrap, .mt-stage, .tr-wrap { max-width: none; padding-left: max(14px, env(safe-area-inset-left)); padding-right: max(14px, env(safe-area-inset-right)); padding-bottom: max(36px, calc(env(safe-area-inset-bottom) + 20px)); }
+  .gx-hud { padding-left: max(14px, env(safe-area-inset-left)); padding-right: max(14px, env(safe-area-inset-right)); padding-top: max(10px, env(safe-area-inset-top)); }
+}
+
+/* a phone held sideways: normal type, nothing shrunk */
+@media (pointer: coarse) and (orientation: landscape) and (max-height: 520px) {
+  html { font-size: 16px; -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
+  .dx-body, .tc-wrap, .ff-wrap, .mt-stage { gap: 14px; }
+}

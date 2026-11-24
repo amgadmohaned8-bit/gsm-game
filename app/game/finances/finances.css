@@ -8,7 +8,7 @@
 
 .fn { position: relative; min-height: 100svh; isolation: isolate; overflow-x: clip; background: var(--ink-0); }
 .fn-bg { position: fixed; inset: -3%; z-index: -5; background: url("/images/stadium-night.jpg") center / cover no-repeat; filter: saturate(0.45) brightness(0.36); }
-.fn-shade { position: fixed; inset: 0; z-index: -4; background: radial-gradient(ellipse 60% 45% at 80% 10%, rgba(47, 230, 200, 0.16), transparent 70%), linear-gradient(180deg, rgba(4, 6, 10, 0.5), var(--ink-0) 88%); }
+.fn-shade { position: fixed; inset: 0; z-index: -4; background: radial-gradient(ellipse 60% 45% at 80% 10%, rgba(168, 85, 247, 0.16), transparent 70%), linear-gradient(180deg, rgba(4, 6, 10, 0.5), var(--ink-0) 88%); }
 
 .fn-body { max-width: 1240px; margin: 0 auto; padding: clamp(22px, 4vh, 44px) clamp(16px, 4vw, 56px) 64px; display: grid; grid-template-columns: minmax(0, 1fr); gap: 26px; }
 

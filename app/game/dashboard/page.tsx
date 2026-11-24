@@ -141,14 +141,6 @@ export default function DashboardPage() {
       if (w === "press" || w === "room") setWanted(w);
     } catch { /* no panel */ }
   }, []);
-  useEffect(() => {
-    if (!wanted || !club || !manager) return;
-    if (wanted === "room") setRoomOpen(true);
-    else if (nextMatch) setPressOpen(true);
-    else return;
-    setWanted(null);
-    try { window.history.replaceState(null, "", "/game/dashboard"); } catch { /* fine */ }
-  }, [wanted, club, manager, nextMatch]);
   const [table, setTable] = useState<Row[]>([]);
   const [form, setForm] = useState<("W" | "D" | "L")[]>([]);
   const closeRef = useRef<HTMLButtonElement>(null);
@@ -159,6 +151,15 @@ export default function DashboardPage() {
   const [summary, setSummary] = useState<SeasonSummary | null>(null);
   const [, setCounts] = useState<TrophyCounts>({ league: 0, league_cup: 0, objective: 0 });
   const [nextMatch, setNextMatch] = useState<{ matchday: number; opponent: string; home: boolean; kickoff: string | null } | null>(null);
+
+  useEffect(() => {
+    if (!wanted || !club || !manager) return;
+    if (wanted === "room") setRoomOpen(true);
+    else if (nextMatch) setPressOpen(true);
+    else return;
+    setWanted(null);
+    try { window.history.replaceState(null, "", "/game/dashboard"); } catch { /* fine */ }
+  }, [wanted, club, manager, nextMatch]);
 
   useEffect(() => {
     if (!menuOpen) return;
