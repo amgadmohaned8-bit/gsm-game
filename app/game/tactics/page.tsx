@@ -172,7 +172,7 @@ export default function TacticsPage() {
               <svg className="tk-board" viewBox="0 0 100 140" role="img" aria-label={`${def.name} on the pitch`} key={tactic.style}>
                 <defs>
                   <marker id="tc-head" viewBox="0 0 10 10" refX="7" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse">
-                    <path d="M0 0L10 5L0 10z" fill="#f7db96" />
+                    <path d="M0 0L10 5L0 10z" fill="#8ff5e3" />
                   </marker>
                 </defs>
                 <rect x="1" y="1" width="98" height="138" className="tc-line" />

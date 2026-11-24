@@ -1,6 +1,6 @@
 .bd { position: relative; min-height: 100svh; isolation: isolate; overflow-x: clip; background: var(--ink-0); }
 .bd-bg { position: fixed; inset: -3%; z-index: -5; background: url("/images/stadium-night.jpg") center / cover no-repeat; filter: saturate(.45) brightness(.3); }
-.bd-shade { position: fixed; inset: 0; z-index: -4; background: radial-gradient(ellipse 50% 40% at 15% 0%, rgba(227,178,88,.18), transparent 70%), linear-gradient(180deg, rgba(4,6,10,.5), var(--ink-0) 92%); }
+.bd-shade { position: fixed; inset: 0; z-index: -4; background: radial-gradient(ellipse 50% 40% at 15% 0%, rgba(47, 230, 200,.18), transparent 70%), linear-gradient(180deg, rgba(4,6,10,.5), var(--ink-0) 92%); }
 .bd-wrap { width: min(1100px, 100% - 32px); margin: 0 auto; padding: 28px 0 64px; display: grid; gap: 20px; }
 .bd-head p { margin: 0 0 4px; color: var(--brass); font-size: 13px; font-weight: 700; letter-spacing: .14em; text-transform: uppercase; }
 .bd-head h1 { margin: 0; font-family: var(--font-display); font-weight: 900; font-size: clamp(48px, 8vw, 92px); line-height: .92; text-transform: uppercase; }

@@ -11,6 +11,7 @@ import { loadCareers, switchCareer } from "@/lib/football/careers";
 import { isCafCup } from "@/lib/football/africa";
 import { squadOf, type Player } from "@/lib/football/squads";
 import { loadSim } from "@/lib/football/strength";
+import { playRoundOnServer, ownPrefs } from "@/lib/football/serverPlay";
 import { loadTransferState } from "@/lib/football/transfers";
 import {
   CONT_ROUNDS,
@@ -133,7 +134,8 @@ export default function ContinentalPage() {
     setError("");
     try {
       const sim = await loadSim(supabase, { userId, clubId: myClub, roomId: null, season: setup!.season, matchday: null, leagueId: manager?.selected_league });
-      const res = await playContRound(supabase, rows, next.round_no, myClub, userId, sim);
+      const served = await withTimeout(playRoundOnServer(supabase, "cont", setup!.season, next.round_no, setup!.comp_id, ownPrefs(userId)), 25000);
+      const res = await playContRound(supabase, rows, next.round_no, myClub, userId, sim, served ?? undefined);
       setPlaying(res);
     } catch (err) {
       console.error("Continental match error:", err);

@@ -161,11 +161,11 @@ export default function TeamSelectionPage() {
     return () => window.removeEventListener("keydown", onKey);
   }, [clubs]);
 
-  const color = clubColors[selectedClub.id] || "#e3b258";
+  const color = clubColors[selectedClub.id] || "#2fe6c8";
 
   if (cupDef && egypt === null) {
     return (
-      <main className="cl gx-grain" style={{ "--cc": "#e3b258" } as CSSProperties}>
+      <main className="cl gx-grain" style={{ "--cc": "#2fe6c8" } as CSSProperties}>
         <div className="gx-curtain" aria-hidden="true" />
         <div className="cl-bg" aria-hidden="true" />
         <GameHud step={3} onBack={() => router.back()} />
@@ -187,7 +187,7 @@ export default function TeamSelectionPage() {
                     key={club.id}
                     onClick={() => setPicked((cur) => (cur.includes(club.id) ? cur.filter((x) => x !== club.id) : cur.length < cupDef.egypt.length ? [...cur, club.id] : cur))}
                     className={`cl-tile ${on ? "is-active" : ""}`}
-                    style={{ "--rc": clubColors[club.id] || "#e3b258" } as CSSProperties}
+                    style={{ "--rc": clubColors[club.id] || "#2fe6c8" } as CSSProperties}
                     aria-pressed={on}
                   >
                     <img src={club.logo} alt="" />
@@ -293,7 +293,7 @@ export default function TeamSelectionPage() {
                     key={club.id}
                     onClick={() => setSelectedClub(club)}
                     className={`cl-tile ${active ? "is-active" : ""}`}
-                    style={{ "--rc": clubColors[club.id] || "#e3b258", "--n": clubs.indexOf(club) } as CSSProperties}
+                    style={{ "--rc": clubColors[club.id] || "#2fe6c8", "--n": clubs.indexOf(club) } as CSSProperties}
                     aria-pressed={active}
                   >
                     <img src={club.logo} alt="" />

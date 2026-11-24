@@ -1,5 +1,5 @@
 /* Performance analyst: the office picture fills the width of the game, the report sits under it */
-.an { --gold: #d4af37; --gold-hi: #f7db96; --gold-lo: #7a5c0e; --edge: #4a3a12; --panel-2: #0a0907; position: relative; min-height: 100svh; color: #fff; background: #060606; overflow-x: clip; }
+.an { --gold: #2fe6c8; --gold-hi: #8ff5e3; --gold-lo: #1b7f72; --edge: #1c5663; --panel-2: #0a0907; position: relative; min-height: 100svh; color: #fff; background: #060606; overflow-x: clip; }
 
 .an-hero { position: relative; width: 100%; line-height: 0; }
 .an-hero img { width: 100%; height: auto; max-height: 78svh; object-fit: cover; object-position: 50% 35%; display: block; }
@@ -23,7 +23,7 @@
 .an-lines dd { margin: 0; } .an-lines b { color: var(--gold-hi); }
 .an-note { font-size: 12.5px !important; color: #b9b19a !important; }
 .an-tips { margin: 0; padding-left: 18px; font-size: 14px; line-height: 1.5; color: #cfc7b0; display: grid; gap: 6px; }
-.an-btn { display: inline-flex; align-items: center; justify-content: center; min-height: 48px; padding: 0 18px; border: 0; border-radius: 10px; background: linear-gradient(180deg, var(--gold-hi), var(--gold)); color: #1a1204; font: 800 15px var(--font-text); text-decoration: none; cursor: pointer; box-shadow: 0 4px 0 var(--gold-lo); }
+.an-btn { display: inline-flex; align-items: center; justify-content: center; min-height: 48px; padding: 0 18px; border: 0; border-radius: 10px; background: linear-gradient(180deg, var(--gold-hi), var(--gold)); color: #032420; font: 800 15px var(--font-text); text-decoration: none; cursor: pointer; box-shadow: 0 4px 0 var(--gold-lo); }
 .an-btn:active { transform: translateY(2px); box-shadow: 0 2px 0 var(--gold-lo); }
 .an-btn:disabled { opacity: .55; cursor: not-allowed; }
 .an-btn.is-ghost { background: transparent; color: var(--gold-hi); border: 1px solid var(--edge); box-shadow: none; }

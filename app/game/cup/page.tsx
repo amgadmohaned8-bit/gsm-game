@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import { loadSim } from "@/lib/football/strength";
+import { playRoundOnServer, ownPrefs } from "@/lib/football/serverPlay";
 import { allClubs as clubs } from "@/lib/football/leagueClubs";
 import { activeSeason, seasonLabel } from "@/lib/football/season";
 import {
@@ -161,7 +162,8 @@ export default function CupPage() {
     setError("");
     try {
       const sim = await loadSim(supabase, { userId, clubId: myClub, roomId: manager?.room_id, season, matchday: null, leagueId: manager?.selected_league });
-      const result = await playCupRound(supabase, rows, next.round_no, myClub, manager?.room_id ?? userId, sim);
+      const served = await withTimeout(playRoundOnServer(supabase, "cup", season, next.round_no, null, ownPrefs(userId)), 25000);
+      const result = await playCupRound(supabase, rows, next.round_no, myClub, manager?.room_id ?? userId, sim, served ?? undefined);
       setPlaying(result);
     } catch (err) {
       console.error("Cup match error:", err);

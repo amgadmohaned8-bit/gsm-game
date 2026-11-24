@@ -52,7 +52,6 @@ export type ContMatch = {
   pens_away: number | null;
   winner: string | null;
   status: "scheduled" | "completed";
-  played_at?: string | null;
 };
 
 export type ContSetup = { comp_id: string; season: string; club_id: string; egypt: string[]; source: "standalone" | "league" };
@@ -200,27 +199,30 @@ export function simulateContMatch(userId: string, season: string, compId: string
   return { ...base, events, pens_home: homeWins ? high : low, pens_away: homeWins ? low : high, winner };
 }
 
-async function saveMatch(client: SupabaseClient, m: ContMatch, userId: string, playedAt: string, sim?: SimContext) {
-  const result = simulateContMatch(userId, m.season, m.comp_id, m.round_no, m.home_club, m.away_club, simOptions(m.home_club, m.away_club, sim));
-  const { error } = await client
+async function saveMatch(client: SupabaseClient, m: ContMatch, userId: string, playedAt: string, sim?: SimContext, fixed?: { home: number; away: number }) {
+  const result = simulateContMatch(userId, m.season, m.comp_id, m.round_no, m.home_club, m.away_club, { ...simOptions(m.home_club, m.away_club, sim), ...(fixed ? { fixed } : {}) });
+  const { error } = fixed ? { error: null } : await client
     .from("continental_matches")
     .update({ home_score: result.home_score, away_score: result.away_score, pens_home: result.pens_home, pens_away: result.pens_away, winner: result.winner, status: "completed", played_at: playedAt })
     .eq("id", m.id);
   if (error) throw error;
   return {
-    match: { ...m, home_score: result.home_score, away_score: result.away_score, pens_home: result.pens_home, pens_away: result.pens_away, winner: result.winner, status: "completed" as const, played_at: playedAt },
+    match: { ...m, home_score: result.home_score, away_score: result.away_score, pens_home: result.pens_home, pens_away: result.pens_away, winner: result.winner, status: "completed" as const },
     result,
   };
 }
 
 /** Plays every match of a round together, the manager's included. */
-export async function playContRound(client: SupabaseClient, all: ContMatch[], roundNo: number, myClub: string, userId: string, sim?: SimContext): Promise<PlayedContRound> {
+export async function playContRound(client: SupabaseClient, all: ContMatch[], roundNo: number, myClub: string, userId: string, sim?: SimContext,
+  /** scores the server already decided and saved (match id -> score): shown here, nothing is rolled or written */
+  authority?: { scores: Map<string, { home: number; away: number }>; playedAt: string }
+): Promise<PlayedContRound> {
   const todo = all.filter((m) => m.round_no === roundNo && m.status === "scheduled");
-  const playedAt = new Date().toISOString();
+  const playedAt = authority?.playedAt ?? new Date().toISOString();
   const out: PlayedContRound = { mine: null, others: [] };
   await Promise.all(
     todo.map(async (m) => {
-      const entry = await saveMatch(client, m, userId, playedAt, m.home_club === myClub || m.away_club === myClub ? sim : undefined);
+      const entry = await saveMatch(client, m, userId, playedAt, m.home_club === myClub || m.away_club === myClub ? sim : undefined, authority?.scores.get(m.id));
       if (m.home_club === myClub || m.away_club === myClub) out.mine = entry;
       else out.others.push(entry);
     })

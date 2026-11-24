@@ -186,13 +186,14 @@ async function saveTie(
   match: CupMatch,
   seed: string,
   playedAt: string,
-  sim?: SimContext
+  sim?: SimContext,
+  fixed?: { home: number; away: number }
 ) {
   const bonus = sim?.bonus ?? {};
   const options = (fixed?: SimOptions["fixed"]): SimOptions => ({ homeBonus: bonus[match.home_club], awayBonus: bonus[match.away_club], fixed });
   const day = 100 + match.round_no;
-  let result = simulateTie(seed, match.season, match.round_no, match.home_club, match.away_club, options());
-  if (sim?.roomId) {
+  let result = simulateTie(seed, match.season, match.round_no, match.home_club, match.away_club, options(fixed));
+  if (sim?.roomId && !fixed) {
     // in a shared league the first manager to play a tie decides it for everybody
     const stored = (await sharedScores(client, sim.roomId, match.season, day)).get(`${match.home_club}|${match.away_club}`);
     if (!stored) {
@@ -204,7 +205,7 @@ async function saveTie(
     }
   }
 
-  const { error } = await client
+  const { error } = fixed ? { error: null } : await client
     .from("cup_matches")
     .update({
       home_score: result.home_score,
@@ -240,15 +241,17 @@ export async function playCupRound(
   roundNo: number,
   myClub: string,
   seed: string,
-  sim?: SimContext
+  sim?: SimContext,
+  /** scores the server already decided and saved (match id -> score): shown here, nothing is rolled or written */
+  authority?: { scores: Map<string, { home: number; away: number }>; playedAt: string }
 ): Promise<PlayedCupRound> {
   const ties = all.filter((m) => m.round_no === roundNo && m.status === "scheduled");
-  const playedAt = new Date().toISOString();
+  const playedAt = authority?.playedAt ?? new Date().toISOString();
   const out: PlayedCupRound = { mine: null, others: [] };
 
   await Promise.all(
     ties.map(async (match) => {
-      const entry = await saveTie(client, match, seed, playedAt, sim);
+      const entry = await saveTie(client, match, seed, playedAt, sim, authority?.scores.get(match.id));
       if (match.home_club === myClub || match.away_club === myClub) out.mine = entry;
       else out.others.push(entry);
     })

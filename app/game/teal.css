@@ -1,0 +1,23 @@
+/* Every game screen in the night-pitch teal: the old tokens turn teal, the photo backdrops go, the top bar and menu match. */
+.gsm-teal {
+  --ink-0: #051519; --ink-1: #0a2229; --ink-2: #0d2e38; --ink-3: #134352; --ink-4: #1a5566;
+  --line: rgba(94, 234, 212, 0.14); --line-2: rgba(94, 234, 212, 0.24);
+  --chalk: #eafbf8; --chalk-2: #a9cdca; --chalk-3: #7aa5a2;
+  --brass: #2fe6c8; --brass-hi: #8ff5e3; --brass-lo: #1b7f72; --brass-ink: #032420;
+  --pitch: #3ddc84; --card-red: #ff6a55;
+  color: var(--chalk);
+}
+.gsm-teal > main { background: radial-gradient(ellipse 80% 60% at 50% 0%, #0d3a45 0%, #0a2229 45%, #051519 100%); }
+.gsm-teal > main.lu { background: #051519; }
+
+/* the old photo backdrops, shades and curtain */
+.gsm-teal .gx-kb,
+.gsm-teal .gx-curtain,
+.gsm-teal [aria-hidden="true"][class*="-shade"],
+.gsm-teal [aria-hidden="true"][class*="-bg"]:not(.lu-bg):not(.fx-match-bg) { display: none; }
+
+/* the top bar */
+.gsm-teal .gx-hud { padding: 10px clamp(12px, 3vw, 28px); background: linear-gradient(180deg, rgba(3, 18, 22, 0.92), rgba(3, 18, 22, 0.55)); border-bottom: 1px solid rgba(94, 234, 212, 0.2); backdrop-filter: blur(6px); }
+.gsm-teal .gx-hud-back { width: 44px; height: 44px; clip-path: none; border-radius: 12px; background: #0d2e38; border: 1px solid rgba(94, 234, 212, 0.2); }
+.gsm-teal .gx-hud-back:hover { background: #134352; color: var(--chalk); border-color: #2fe6c8; }
+.gsm-teal .gx-hud-brand span { font-size: 22px; letter-spacing: 0.12em; }

@@ -8,7 +8,7 @@
 
 .bk { position: relative; min-height: 100svh; isolation: isolate; overflow-x: clip; background: var(--ink-0); }
 .bk-bg { position: fixed; inset: -3%; z-index: -5; background: url("/studio/bank-hall.jpg") center / cover no-repeat; filter: saturate(0.5) brightness(0.28) blur(3px); }
-.bk-shade { position: fixed; inset: 0; z-index: -4; background: radial-gradient(ellipse 50% 40% at 85% 8%, rgba(227, 178, 88, 0.2), transparent 70%), linear-gradient(180deg, rgba(4, 6, 10, 0.45), var(--ink-0) 92%); }
+.bk-shade { position: fixed; inset: 0; z-index: -4; background: radial-gradient(ellipse 50% 40% at 85% 8%, rgba(47, 230, 200, 0.2), transparent 70%), linear-gradient(180deg, rgba(4, 6, 10, 0.45), var(--ink-0) 92%); }
 
 .bk-wrap { width: min(1240px, 100% - 32px); margin: 0 auto; padding: 24px 0 72px; display: grid; grid-template-columns: minmax(0, 1fr); gap: 18px; }
 .bk-wrap > * { min-width: 0; }

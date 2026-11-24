@@ -34,13 +34,13 @@
 .bc-bubble { position: relative; flex: 1; min-width: 0; padding: 16px 20px; background: #f4efe2; color: #14120c; border-radius: 4px 22px 22px 22px; font-family: var(--font-text), "Noto Sans Arabic", Tahoma, sans-serif; font-weight: 800; font-size: clamp(17px, 2.3vw, 23px); line-height: 1.55; box-shadow: 0 14px 34px rgba(0, 0, 0, 0.5); animation: bc-pop 0.35s var(--ease-out) both; }
 .bc-bubble::before { content: ""; position: absolute; left: -12px; bottom: 26px; border: 8px solid transparent; border-right-color: #f4efe2; border-left: 0; width: 0; }
 .bc-bubble p { margin: 0; }
-.bc-bubble.is-goal { background: linear-gradient(135deg, #ffe08a, #e3b258); border: 2px solid #fff3c4; }
+.bc-bubble.is-goal { background: linear-gradient(135deg, #ffe08a, #2fe6c8); border: 2px solid #fff3c4; }
 .bc-bubble.is-goal::before { border-right-color: #ffe08a; }
 .bc-bubble.is-miss { background: #e5e9f2; }
 .bc-goal-word { display: block; font-family: var(--font-display); font-style: italic; font-weight: 900; font-size: clamp(34px, 7vw, 64px); line-height: 1; letter-spacing: 0.04em; color: #b3121e; animation: bc-shake 0.5s both; }
 .bc-log { max-height: 190px; overflow: hidden; opacity: 0.85; }
 .bc-flash { position: fixed; inset: 0; pointer-events: none; background: radial-gradient(circle at 50% 40%, rgba(255, 224, 138, 0.55), transparent 65%); opacity: 0; animation: bc-flash 1.2s ease-out; }
-.bc-match.is-goal .fx-board { box-shadow: 0 0 0 2px var(--brass), 0 0 40px rgba(227, 178, 88, 0.6); }
+.bc-match.is-goal .fx-board { box-shadow: 0 0 0 2px var(--brass), 0 0 40px rgba(47, 230, 200, 0.6); }
 .bc-voice { margin-inline-start: 12px; padding: 4px 10px; background: none; border: 1px solid var(--line-2); color: var(--chalk-3); font-size: 12px; cursor: pointer; }
 .bc-voice[aria-pressed="true"] { color: var(--brass-hi); border-color: var(--brass); }
 

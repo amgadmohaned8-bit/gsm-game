@@ -18,6 +18,7 @@ import { useTransfers } from "@/lib/football/useTransfers";
 import PlayerFace from "@/components/PlayerFace";
 import { photoOf } from "@/lib/football/playerPhotos";
 import GsmMark from "@/components/GsmMark";
+import GameMenu from "@/components/GameMenu";
 import Icon from "@/components/Icon";
 import "./squad.css";
 import "./lineup.css";
@@ -202,6 +203,7 @@ export default function SquadPage() {
           <button type="button" className="lu-btn is-gold" onClick={() => setSubsOpen(true)}>
             <Icon name="squad" size={18} /><span>Subs</span><b>{bench.length}</b>
           </button>
+          <GameMenu />
         </div>
       </header>
 

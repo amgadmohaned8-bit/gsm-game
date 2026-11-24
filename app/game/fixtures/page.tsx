@@ -9,7 +9,7 @@ import { allClubs as clubs } from "@/lib/football/leagueClubs";
 import { myRoom, seasonRows } from "@/lib/football/rooms";
 import { sendFriendNotice } from "@/lib/football/friendlies";
 import { bonusFor, currentLineup, loadSim, withTimeout } from "@/lib/football/strength";
-import { playOnServer } from "@/lib/football/serverPlay";
+import { playOnServer, halftimeOnServer, ownPrefs } from "@/lib/football/serverPlay";
 import { activeSeason, nextSeason, seasonLabel } from "@/lib/football/season";
 import { isCafCup } from "@/lib/football/africa";
 import { cupForPosition, cafCup, fetchCont, fetchContSetup, roundLabel as contRoundLabel } from "@/lib/football/continental";
@@ -363,6 +363,9 @@ export default function FixturesPage() {
       starters: eleven,
       bench,
       apply: async (change: { starters: Player[]; style: "attack" | "balanced" | "defend"; subs: number }, now: Revised) => {
+        // the server redraws the second half and saves the new score (once per match)
+        const served = await withTimeout(halftimeOnServer(supabase, match.id, change.starters.map((p) => p.id), change.style, ownPrefs(userId)), 25000);
+        if (served) return served;
         const delta = (bonusFor(change.starters, myClub) - bonusFor(eleven, myClub)) * 0.6;
         const revised = reviseSecondHalf({
           events: now.events,

@@ -35,6 +35,35 @@ export function canKickOff(match: StoredMatch, now = nowMs()) {
   return !match.kickoff_at || new Date(match.kickoff_at).getTime() <= now;
 }
 
+/** the engine call for one fixture, with the manager's own tactic and strength applied */
+function runner(leagueKey: string, sim?: SimContext) {
+  const bonus = sim?.bonus ?? {};
+  const withMatchup = (_m: StoredMatch, club: string, opp: string, base: number | undefined) =>
+    sim?.myClub === club && sim.style && base !== undefined ? base + matchup(sim.style, aiStyle(opp)) : base;
+  const styles = (m: StoredMatch) =>
+    sim?.style && sim.myClub && (m.home_club === sim.myClub || m.away_club === sim.myClub)
+      ? { homeStyle: m.home_club === sim.myClub ? sim.style : aiStyle(m.home_club), awayStyle: m.away_club === sim.myClub ? sim.style : aiStyle(m.away_club) }
+      : {};
+  return (match: StoredMatch, fixed?: { home: number; away: number }) =>
+    simulateFixture({
+      leagueKey,
+      season: match.season,
+      matchday: match.matchday,
+      homeClub: match.home_club,
+      awayClub: match.away_club,
+      homeBonus: withMatchup(match, match.home_club, match.away_club, bonus[match.home_club]),
+      awayBonus: withMatchup(match, match.away_club, match.home_club, bonus[match.away_club]),
+      ...styles(match),
+      fixed,
+      squads: sim?.squads,
+    });
+}
+
+/** a match already played, drawn again with its saved score (the events of the first half, for the half-time changes) */
+export function replayFixture(match: StoredMatch, leagueKey: string, sim?: SimContext): SimulationResult {
+  return runner(leagueKey, sim)(match, { home: match.home_score ?? 0, away: match.away_score ?? 0 });
+}
+
 export async function playMatchday(
   client: SupabaseClient,
   all: StoredMatch[],
@@ -51,31 +80,7 @@ export async function playMatchday(
 
   const playedAt = authority?.playedAt ?? new Date().toISOString();
   const out: PlayedMatchday = { mine: null, others: [] };
-  const bonus = sim?.bonus ?? {};
-
-  // my style against how the other club plays
-  const withMatchup = (_m: StoredMatch, club: string, opp: string, base: number | undefined) =>
-    sim?.myClub === club && sim.style && base !== undefined ? base + matchup(sim.style, aiStyle(opp)) : base;
-
-  // the styles of both sides, for the manager's own match only
-  const styles = (m: StoredMatch) =>
-    sim?.style && sim.myClub && (m.home_club === sim.myClub || m.away_club === sim.myClub)
-      ? { homeStyle: m.home_club === sim.myClub ? sim.style : aiStyle(m.home_club), awayStyle: m.away_club === sim.myClub ? sim.style : aiStyle(m.away_club) }
-      : {};
-
-  const run = (match: StoredMatch, fixed?: { home: number; away: number }) =>
-    simulateFixture({
-      leagueKey,
-      season: match.season,
-      matchday: match.matchday,
-      homeClub: match.home_club,
-      awayClub: match.away_club,
-      homeBonus: withMatchup(match, match.home_club, match.away_club, bonus[match.home_club]),
-      awayBonus: withMatchup(match, match.away_club, match.home_club, bonus[match.away_club]),
-      ...styles(match),
-      fixed,
-      squads: sim?.squads,
-    });
+  const run = runner(leagueKey, sim);
 
   // results: a score another manager of this shared league already saved wins
   const results = new Map<string, SimulationResult>();

@@ -9,7 +9,8 @@ import { alertAt } from "@/lib/notify";
 import { useTransfers } from "@/lib/football/useTransfers";
 import type { Player, Position } from "@/lib/football/squads";
 import GsmMark from "@/components/GsmMark";
-import GameHud from "@/components/GameHud";
+import DxBar from "@/components/DxBar";
+import { seasonLabel } from "@/lib/football/season";
 import PlayerFace from "@/components/PlayerFace";
 import { kitOf } from "@/lib/football/kits";
 import "./training.css";
@@ -165,11 +166,8 @@ export default function TrainingPage() {
   const chips: [Filter, string][] = [["ALL", "All ages"], ["YOUNG", "Young (23 and under)"]];
 
   return (
-    <main className="tc">
-      <div className="gx-curtain" aria-hidden="true" />
-      <div className="tc-bg gx-kb" aria-hidden="true" />
-      <div className="tc-shade" aria-hidden="true" />
-      <GameHud onBack={() => router.push("/game/dashboard")} />
+    <main className="tc dxp">
+      <DxBar title="Training" onBack={() => router.push("/game/dashboard")} season={ctx.season ? seasonLabel(ctx.season) : undefined} />
 
       <div className="tc-wrap">
         <header className="tc-title">
@@ -186,7 +184,7 @@ export default function TrainingPage() {
                 <span className="tc-badge"><svg width="26" height="26" viewBox="0 0 24 24" aria-hidden="true">{posIcon(t.pos)}</svg></span>
                 <svg className="tc-shirt" viewBox="0 0 100 100" aria-hidden="true"><path d="M30 12l14 6c3 4 9 4 12 0l14-6 20 14-9 16-11-6v50H30V36l-11 6-9-16z" fill="var(--kit)" stroke="rgba(255,255,255,.55)" strokeWidth="2.5" strokeLinejoin="round" /><path d="M44 18c3 6 9 6 12 0" fill="none" stroke="rgba(255,255,255,.8)" strokeWidth="3" /></svg>
                 <strong>{t.title}</strong>
-                <span className="tc-hours"><svg width="22" height="22" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="13" r="8" fill="none" stroke="currentColor" strokeWidth="2" /><path d="M12 9v4l3 2M9 2h6" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" /></svg> {TRAIN_HOURS} hours · {n} players</span>
+                <span className="tc-hours"><svg width="22" height="22" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="13" r="8" fill="none" stroke="currentColor" strokeWidth="2" /><path d="M12 9v4l3 2M9 2h6" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" /></svg> Select · {TRAIN_HOURS}h <em>{n} players</em></span>
               </button>
             );
           })}

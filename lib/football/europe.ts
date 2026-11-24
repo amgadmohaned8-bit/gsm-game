@@ -1,4 +1,3 @@
-
 /**
  * The UEFA Champions League and the UEFA Europa League.
  *
@@ -84,7 +83,6 @@ export type EuroMatch = {
   pens_away: number | null;
   winner: string | null;
   status: "scheduled" | "completed";
-  played_at?: string | null;
 };
 
 export type EuroSetup = { comp_id: string; season: string; club_id: string; english: string[]; source: "league" | "standalone" };
@@ -133,12 +131,11 @@ export function entrantsOf(compId: string, english: string[]): string[] {
 /**
  * The eight matchdays of the league phase: a list per matchday of [home, away].
  * Every matchday is a round of a round-robin (each club plays once), eight of the
- * 35 rounds are chosen by the draw. Home and away are then dealt so that every
- * club has four of each.
+ * 35 rounds are chosen by the draw. Home and away are then dealt so that every club has four of each.
  */
 export function leaguePhase(userId: string, season: string, compId: string, english: string[]): [string, string][][] {
   const ids = entrantsOf(compId, english);
-  const n = ids.length;
+  const n = ids.length; // 36
   const random = rng(`${userId}|${season}|${compId}|league-phase`);
   const ks = Array.from({ length: n - 1 }, (_, i) => i);
   for (let i = ks.length - 1; i > 0; i--) {
@@ -203,9 +200,9 @@ export function leagueTable(rows: EuroMatch[], entrants: string[]): EuroRow[] {
     .sort((x, y) => y.points - x.points || y.gd - x.gd || y.gf - x.gf || y.won - x.won || getRating(y.clubId) - getRating(x.clubId) || x.clubId.localeCompare(y.clubId));
 }
 
-const SEED_ORDER = [1, 8, 4, 5, 2, 7, 3, 6];
+const SEED_ORDER = [1, 8, 4, 5, 2, 7, 3, 6]; // round of 16: where each top-8 seed sits in the bracket
 
- /** Who the next knockout stage plays, as first-leg pairs [home, away], or null while it is not decided. */
+/** Who the next knockout stage plays, as first-leg pairs [home, away], or null while it is not decided. */
 export function stagePairs(first: number, rows: EuroMatch[], entrants: string[]): [string, string][] | null {
   const leagueRows = rows.filter((m) => isLeagueRound(m.round_no));
   if (leagueRows.length < 144 || leagueRows.some((m) => m.status !== "completed")) return null;
@@ -215,6 +212,7 @@ export function stagePairs(first: number, rows: EuroMatch[], entrants: string[])
     const row = rows.find((m) => m.round_no === (stageFirst === 16 ? 16 : stageFirst + 1) && m.slot === slot);
     return row && row.status === "completed" ? row.winner : null;
   };
+  // the better placed club plays the second leg at home
   const order = (a: string, b: string): [string, string] => (place(a) < place(b) ? [b, a] : [a, b]);
 
   if (first === 8) {
@@ -245,6 +243,7 @@ export function stagePairs(first: number, rows: EuroMatch[], entrants: string[])
 
 const nameOf = (id: string) => allClubs.find((c) => c.id === id)?.name ?? id;
 
+/** The manager's own club in a cup match: its squad strength, its signings and its style count, like in the league. */
 function simOptions(home: string, away: string, sim?: SimContext): SimOptions {
   if (!sim?.myClub) return {};
   const mine = sim.myClub === home ? "home" : sim.myClub === away ? "away" : null;
@@ -291,37 +290,31 @@ export function simulateEuroMatch(userId: string, season: string, compId: string
   return { ...base, events, pens_home: homeWins ? high : low, pens_away: homeWins ? low : high, winner };
 }
 
-async function saveMatch(client: SupabaseClient, m: EuroMatch, userId: string, playedAt: string, leg1: EuroMatch | null, sim?: SimContext) {
-  const result = simulateEuroMatch(userId, m.season, m.comp_id, m.round_no, m.home_club, m.away_club, leg1, simOptions(m.home_club, m.away_club, sim));
-  const { error } = await client
+async function saveMatch(client: SupabaseClient, m: EuroMatch, userId: string, playedAt: string, leg1: EuroMatch | null, sim?: SimContext, fixed?: { home: number; away: number }) {
+  const result = simulateEuroMatch(userId, m.season, m.comp_id, m.round_no, m.home_club, m.away_club, leg1, { ...simOptions(m.home_club, m.away_club, sim), ...(fixed ? { fixed } : {}) });
+  const { error } = fixed ? { error: null } : await client
     .from("euro_matches")
     .update({ home_score: result.home_score, away_score: result.away_score, pens_home: result.pens_home, pens_away: result.pens_away, winner: result.winner, status: "completed", played_at: playedAt })
     .eq("id", m.id);
   if (error) throw error;
   return {
-    match: {
-      ...m,
-      home_score: result.home_score,
-      away_score: result.away_score,
-      pens_home: result.pens_home,
-      pens_away: result.pens_away,
-      winner: result.winner,
-      status: "completed" as const,
-      played_at: playedAt,
-    },
+    match: { ...m, home_score: result.home_score, away_score: result.away_score, pens_home: result.pens_home, pens_away: result.pens_away, winner: result.winner, status: "completed" as const },
     result,
   };
 }
 
 /** Plays every match of a round together, the manager's included. */
-export async function playEuroRound(client: SupabaseClient, all: EuroMatch[], roundNo: number, myClub: string, userId: string, sim?: SimContext): Promise<PlayedEuroRound> {
+export async function playEuroRound(client: SupabaseClient, all: EuroMatch[], roundNo: number, myClub: string, userId: string, sim?: SimContext,
+  /** scores the server already decided and saved (match id -> score): shown here, nothing is rolled or written */
+  authority?: { scores: Map<string, { home: number; away: number }>; playedAt: string }
+): Promise<PlayedEuroRound> {
   const todo = all.filter((m) => m.round_no === roundNo && m.status === "scheduled");
-  const playedAt = new Date().toISOString();
+  const playedAt = authority?.playedAt ?? new Date().toISOString();
   const out: PlayedEuroRound = { mine: null, others: [] };
   await Promise.all(
     todo.map(async (m) => {
       const leg1 = isSecondLeg(roundNo) ? all.find((x) => x.round_no === roundNo - 1 && x.slot === m.slot) ?? null : null;
-      const entry = await saveMatch(client, m, userId, playedAt, leg1, m.home_club === myClub || m.away_club === myClub ? sim : undefined);
+      const entry = await saveMatch(client, m, userId, playedAt, leg1, m.home_club === myClub || m.away_club === myClub ? sim : undefined, authority?.scores.get(m.id));
       if (m.home_club === myClub || m.away_club === myClub) out.mine = entry;
       else out.others.push(entry);
     })

@@ -1,8 +1,8 @@
 /* My teams: the profile and the four manager slots, in black and gold */
-.mt { --gold: #d4af37; --gold-hi: #f7db96; --gold-lo: #7a5c0e; --edge: #4a3a12; --panel: #14120c; --panel-2: #0a0907; position: relative; min-height: 100svh; display: flex; flex-direction: column; overflow: hidden; isolation: isolate; color: #fff; background: #060606; }
+.mt { --gold: #2fe6c8; --gold-hi: #8ff5e3; --gold-lo: #1b7f72; --edge: #1c5663; --panel: #14120c; --panel-2: #0a0907; position: relative; min-height: 100svh; display: flex; flex-direction: column; overflow: hidden; isolation: isolate; color: #fff; background: #060606; }
 .mt-bg { position: absolute; inset: 0; z-index: -2; background:
-  radial-gradient(ellipse 60% 50% at 85% 0%, rgba(212, 175, 55, .22), transparent 70%),
-  radial-gradient(ellipse 50% 60% at 5% 100%, rgba(212, 175, 55, .12), transparent 70%),
+  radial-gradient(ellipse 60% 50% at 85% 0%, rgba(47, 230, 200, .22), transparent 70%),
+  radial-gradient(ellipse 50% 60% at 5% 100%, rgba(47, 230, 200, .12), transparent 70%),
   linear-gradient(180deg, #0d0c09 0%, #060606 60%, #050505 100%); }
 .mt-bg::after { content: ""; position: absolute; inset: 0; opacity: .05; background: repeating-linear-gradient(115deg, var(--gold-hi) 0 1px, transparent 1px 26px); }
 
@@ -19,12 +19,12 @@
 
 /* profile card */
 .mt-profile { display: grid; gap: 14px; align-content: start; }
-.mt-card { position: relative; display: grid; justify-items: center; overflow: hidden; border-radius: 20px; border: 2px solid var(--gold-lo); background: linear-gradient(160deg, #3a2d0d 0%, #1b150a 50%, #0d0b07 100%); box-shadow: 0 6px 0 #000, 0 22px 40px -18px rgba(0, 0, 0, .9), inset 0 1px 0 rgba(247, 219, 150, .35); }
+.mt-card { position: relative; display: grid; justify-items: center; overflow: hidden; border-radius: 20px; border: 2px solid var(--gold-lo); background: linear-gradient(160deg, #3a2d0d 0%, #1b150a 50%, #0d0b07 100%); box-shadow: 0 6px 0 #000, 0 22px 40px -18px rgba(0, 0, 0, .9), inset 0 1px 0 rgba(143, 245, 227, .35); }
 .mt-tools { position: absolute; left: 12px; top: 12px; display: grid; gap: 10px; z-index: 1; }
 .mt-tools button { width: 46px; height: 46px; display: grid; place-items: center; color: var(--gold-hi); cursor: pointer; border: 0; background: transparent; filter: drop-shadow(0 3px 0 rgba(0, 0, 0, .7)); }
 .mt-tools button:hover { transform: scale(1.08); }
 .mt-me { display: grid; justify-items: center; gap: 10px; width: 100%; padding: 22px 16px 18px; font: inherit; color: inherit; cursor: pointer; border: 0; background: transparent; }
-.mt-avatar { width: clamp(84px, 9vw, 112px); aspect-ratio: 1; display: grid; place-items: center; overflow: hidden; border-radius: 50%; border: 4px solid var(--gold); background: linear-gradient(160deg, #3a2d0d, #0d0b07); box-shadow: 0 0 0 4px rgba(0, 0, 0, .55), 0 0 28px rgba(212, 175, 55, .35); }
+.mt-avatar { width: clamp(84px, 9vw, 112px); aspect-ratio: 1; display: grid; place-items: center; overflow: hidden; border-radius: 50%; border: 4px solid var(--gold); background: linear-gradient(160deg, #3a2d0d, #0d0b07); box-shadow: 0 0 0 4px rgba(0, 0, 0, .55), 0 0 28px rgba(47, 230, 200, .35); }
 .mt-avatar img { width: 100%; height: 100%; object-fit: cover; }
 .mt-avatar b { font: 900 clamp(40px, 5vw, 54px) var(--font-display); color: var(--gold-hi); }
 .mt-me h1 { margin: 0; max-width: 100%; text-align: center; font: 900 clamp(28px, 3.4vw, 42px) var(--font-display); line-height: .95; text-shadow: 0 3px 0 rgba(0, 0, 0, .7); overflow-wrap: anywhere; }
@@ -45,20 +45,20 @@
 .mt-tile:active { transform: translateY(3px); box-shadow: 0 2px 0 #000; }
 .mt-tile small { max-width: 100%; font: 800 clamp(11px, 1.15vw, 14px) var(--font-display); letter-spacing: 0; text-transform: uppercase; color: #cfc4a2; }
 .mt-tile strong { white-space: nowrap; font: 900 clamp(20px, 2.3vw, 28px) var(--font-display); line-height: 1; color: #fff; }
-.mt-art { position: absolute; left: 50%; bottom: -10px; transform: translateX(-50%); color: rgba(212, 175, 55, .55); filter: drop-shadow(0 2px 0 rgba(0, 0, 0, .6)); pointer-events: none; }
+.mt-art { position: absolute; left: 50%; bottom: -10px; transform: translateX(-50%); color: rgba(47, 230, 200, .55); filter: drop-shadow(0 2px 0 rgba(0, 0, 0, .6)); pointer-events: none; }
 .mt-tile small, .mt-tile strong { position: relative; z-index: 1; }
 .mt-tile strong { margin-bottom: 38px; }
 
 /* the four slots */
 .mt-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: clamp(12px, 1.8vw, 20px); }
 .mt-slot { --c1: #7c3aed; --c2: #0a0907; position: relative; display: grid; align-content: end; justify-items: center; gap: 4px; min-height: clamp(190px, 29vh, 270px); padding: 16px 14px 14px; overflow: hidden; text-align: center; color: #fff; font: inherit; cursor: pointer; border-radius: 18px; border: 2px solid var(--edge); background:
-  repeating-linear-gradient(115deg, rgba(247, 219, 150, .05) 0 1px, transparent 1px 22px),
+  repeating-linear-gradient(115deg, rgba(143, 245, 227, .05) 0 1px, transparent 1px 22px),
   linear-gradient(180deg, color-mix(in srgb, var(--c1) 26%, #14110a), #0a0907 85%);
-  box-shadow: 0 6px 0 #000, 0 20px 34px -18px rgba(0, 0, 0, .9), inset 0 1px 0 rgba(247, 219, 150, .22); transition: transform .15s ease; animation: mt-in .5s both; animation-delay: calc(var(--i, 0) * 70ms); }
+  box-shadow: 0 6px 0 #000, 0 20px 34px -18px rgba(0, 0, 0, .9), inset 0 1px 0 rgba(143, 245, 227, .22); transition: transform .15s ease; animation: mt-in .5s both; animation-delay: calc(var(--i, 0) * 70ms); }
 .mt-slot:hover:not(:disabled) { transform: translateY(-3px); }
 .mt-slot:active:not(:disabled) { transform: translateY(3px); box-shadow: 0 3px 0 #000; }
 .mt-slot:disabled { cursor: progress; opacity: .8; }
-.mt-slot.is-active { border-color: var(--gold); box-shadow: 0 6px 0 #000, 0 0 0 2px rgba(212, 175, 55, .35), 0 0 30px rgba(212, 175, 55, .25); }
+.mt-slot.is-active { border-color: var(--gold); box-shadow: 0 6px 0 #000, 0 0 0 2px rgba(47, 230, 200, .35), 0 0 30px rgba(47, 230, 200, .25); }
 .mt-num { position: absolute; left: 0; top: 0; width: 54px; height: 62px; display: grid; place-items: center; font: 900 38px var(--font-display); color: var(--gold-hi); background: #000; border-bottom-right-radius: 14px; border-right: 1px solid var(--edge); border-bottom: 1px solid var(--edge); }
 .mt-comp { position: absolute; right: 12px; top: 12px; width: 52px; height: 52px; object-fit: contain; filter: drop-shadow(0 3px 6px rgba(0, 0, 0, .6)); }
 .mt-kind { display: none; }
@@ -71,9 +71,9 @@
 .mt-go { display: inline-flex; align-items: center; gap: 6px; margin-top: 8px; padding: 6px 18px; font: 900 16px var(--font-display); letter-spacing: .08em; text-transform: uppercase; color: #231a04; border-radius: 10px; background: linear-gradient(180deg, var(--gold-hi), var(--gold)); box-shadow: 0 3px 0 var(--gold-lo); }
 
 .mt-add { align-content: center; gap: 12px; border-style: solid; background:
-  repeating-linear-gradient(115deg, rgba(247, 219, 150, .05) 0 1px, transparent 1px 22px),
+  repeating-linear-gradient(115deg, rgba(143, 245, 227, .05) 0 1px, transparent 1px 22px),
   linear-gradient(180deg, #17140c, #0a0907); }
-.mt-plus { width: clamp(64px, 7vw, 84px); aspect-ratio: 1; display: grid; place-items: center; font: 900 clamp(46px, 5vw, 62px)/1 var(--font-display); color: #231a04; border-radius: 50%; background: radial-gradient(circle at 50% 35%, var(--gold-hi), var(--gold)); border: 4px solid #000; box-shadow: 0 4px 0 var(--gold-lo), 0 0 26px rgba(212, 175, 55, .3), inset 0 2px 0 rgba(255, 255, 255, .45); }
+.mt-plus { width: clamp(64px, 7vw, 84px); aspect-ratio: 1; display: grid; place-items: center; font: 900 clamp(46px, 5vw, 62px)/1 var(--font-display); color: #231a04; border-radius: 50%; background: radial-gradient(circle at 50% 35%, var(--gold-hi), var(--gold)); border: 4px solid #000; box-shadow: 0 4px 0 var(--gold-lo), 0 0 26px rgba(47, 230, 200, .3), inset 0 2px 0 rgba(255, 255, 255, .45); }
 .mt-add strong { font: 900 clamp(20px, 2.4vw, 28px) var(--font-display); letter-spacing: .02em; text-transform: uppercase; color: #f1ead7; text-shadow: 0 3px 0 rgba(0, 0, 0, .7); }
 .mt-skel { animation: mt-pulse 1.2s ease-in-out infinite; background: rgba(255, 255, 255, .06); border-color: rgba(255, 255, 255, .1); }
 .mt-err { margin: 10px 0 0; padding: 8px 12px; border-radius: 10px; background: rgba(120, 10, 20, .6); color: #ffd3d3; }

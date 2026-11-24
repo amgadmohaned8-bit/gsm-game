@@ -32,7 +32,7 @@ import {
 } from "@/lib/football/dealing";
 import PlayerFace from "@/components/PlayerFace";
 import GsmMark from "@/components/GsmMark";
-import GameHud from "@/components/GameHud";
+import DxBar from "@/components/DxBar";
 import Icon from "@/components/Icon";
 import "./transfers.css";
 
@@ -372,11 +372,8 @@ export default function TransfersPage() {
   const openHuman = openClub ? humans.get(openClub) : undefined;
 
   return (
-    <main className="tr tx">
-      <div className="gx-curtain" aria-hidden="true" />
-      <div className="tr-bg gx-kb" aria-hidden="true" />
-      <div className="tr-shade" aria-hidden="true" />
-      <GameHud onBack={() => router.push("/game/dashboard")} />
+    <main className="tr tx dxp">
+      <DxBar title="Transfers" onBack={() => router.push("/game/dashboard")} />
 
       <div className="tr-wrap tx-wrap">
         <header className="tx-top">
