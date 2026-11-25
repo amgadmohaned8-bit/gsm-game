@@ -1,0 +1,2 @@
+[id]\club.css
+[id]\page.tsx

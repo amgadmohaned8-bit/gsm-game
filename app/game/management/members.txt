@@ -1,0 +1,4 @@
+management.css
+page.tsx
+app\game\management\management.css
+app\game\management\page.tsx

@@ -1,0 +1,9 @@
+board-objective.png
+caf-champions-league.png
+caf-confederation-cup.png
+egypt-cup.png
+egyptian-premier-league.png
+league-cup.png
+premier-league.png
+uefa-champions-league.png
+uefa-europa-league.png

@@ -1,0 +1,3 @@
+lineup.css
+page.tsx
+squad.css
