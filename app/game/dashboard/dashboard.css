@@ -221,3 +221,307 @@
   .dx-card:not(.dx-play) .dx-card-b { display: none; }
   .dx-vs { font-size: min(13vh, 48px); }
 }
+
+/* =========================================================
+   GSM - OPPO A16 / SMALL TOUCH LANDSCAPE FIX
+   Keeps desktop layout untouched.
+   ========================================================= */
+
+@media (pointer: coarse) and (orientation: landscape) and (max-height: 700px) {
+
+  .dx {
+    height: 100dvh;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  /* Compact top navigation */
+  .dx-top {
+    flex: 0 0 auto;
+    min-height: 58px;
+    padding: 6px 14px;
+    gap: 8px;
+  }
+
+  .dx-me {
+    width: 38px;
+    height: 38px;
+  }
+
+  .dx-pill {
+    height: 34px;
+    padding-inline: 10px;
+    font-size: 14px;
+  }
+
+  .dx-ico {
+    width: 38px;
+    height: 38px;
+  }
+
+  .dx-season {
+    display: none;
+  }
+
+  /* Main screen: three separate horizontal rows */
+  .dx-body {
+    flex: 1;
+    min-height: 0;
+    width: 100%;
+    max-width: none;
+    margin: 0;
+    padding: 8px 16px 10px;
+    gap: 8px;
+    overflow: hidden;
+
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows:
+      minmax(100px, 0.8fr)
+      minmax(105px, 0.85fr)
+      minmax(155px, 1.35fr);
+  }
+
+  /* Match area */
+  .dx-hero {
+    min-height: 0;
+    padding: 0;
+    gap: 12px;
+    grid-template-columns:
+      minmax(0, 1fr)
+      minmax(0, 1.2fr)
+      minmax(0, 1fr);
+  }
+
+  .dx-team {
+    min-width: 0;
+    min-height: 0;
+    gap: 3px;
+  }
+
+  .dx-team img,
+  .dx-blank {
+    width: auto;
+    height: min(12vh, 72px);
+    max-width: 100%;
+    aspect-ratio: 1;
+  }
+
+  .dx-team strong {
+    max-width: 100%;
+    font-size: clamp(13px, 2.5vh, 19px);
+    line-height: 1.1;
+    overflow-wrap: anywhere;
+  }
+
+  .dx-team small {
+    font-size: 11px;
+  }
+
+  .dx-mid {
+    min-width: 0;
+    gap: 3px;
+  }
+
+  .dx-chip {
+    padding: 3px 10px;
+    font-size: 13px;
+  }
+
+  .dx-clock {
+    font-size: clamp(12px, 2.5vh, 16px);
+  }
+
+  .dx-vs {
+    font-size: min(8vh, 42px);
+    -webkit-text-stroke-width: 1px;
+  }
+
+  .dx-where {
+    font-size: 10px;
+  }
+
+  .dx-form {
+    margin: 2px 0 0;
+  }
+
+  .dx-form li {
+    width: 20px;
+    height: 20px;
+    font-size: 10px;
+  }
+
+  /* Action cards */
+  .dx-actions {
+    min-height: 0;
+    grid-template-columns:
+      minmax(0, 1.2fr)
+      repeat(3, minmax(0, 1fr));
+    gap: 8px;
+  }
+
+  .dx-card {
+    min-width: 0;
+    min-height: 0;
+    padding: 8px 10px;
+    gap: 4px;
+    border-radius: 12px;
+  }
+
+  .dx-play {
+    grid-column: auto;
+  }
+
+  .dx-card > svg:first-child {
+    width: 21px;
+    height: 21px;
+  }
+
+  .dx-card-h {
+    font-size: clamp(12px, 2.5vh, 17px);
+  }
+
+  .dx-play .dx-card-h {
+    font-size: clamp(17px, 3.5vh, 23px);
+  }
+
+  .dx-card-b {
+    font-size: 11px;
+    line-height: 1.2;
+  }
+
+  .dx-meter {
+    height: 6px;
+  }
+
+  /* Bottom section */
+  .dx-lower {
+    min-height: 0;
+    grid-template-columns:
+      minmax(0, 1.4fr)
+      minmax(0, 1fr);
+    gap: 8px;
+  }
+
+  .dx-left {
+    min-height: 0;
+    grid-template-rows: auto minmax(0, 1fr);
+    gap: 8px;
+  }
+
+  .dx-banner {
+    min-width: 0;
+    padding: 7px 12px;
+    gap: 8px;
+  }
+
+  .dx-banner > svg {
+    width: 22px;
+    height: 22px;
+  }
+
+  .dx-banner strong {
+    font-size: 14px;
+  }
+
+  .dx-banner small {
+    display: none;
+  }
+
+  /* Shortcuts: three columns, remaining cards wrap */
+  .dx-tiles {
+    min-height: 0;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-auto-rows: minmax(0, 1fr);
+    gap: 7px;
+  }
+
+  .dx-tiles button {
+    min-width: 0;
+    min-height: 0;
+    padding: 6px 8px;
+    gap: 3px;
+    border-radius: 10px;
+  }
+
+  .dx-tiles svg {
+    width: 19px;
+    height: 19px;
+    margin: 0;
+  }
+
+  .dx-tiles strong {
+    font-size: 12px;
+    overflow-wrap: anywhere;
+  }
+
+  .dx-tiles small {
+    display: none;
+  }
+
+  /* League table */
+  .dx-table {
+    min-height: 0;
+    min-width: 0;
+    padding: 6px 8px;
+    gap: 2px;
+    overflow: hidden;
+  }
+
+  .dx-table-h {
+    padding: 2px 5px;
+    font-size: 12px;
+  }
+
+  .dx-table ul {
+    min-height: 0;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+  }
+
+  .dx-table li {
+    grid-template-columns: 22px 23px minmax(0, 1fr) auto;
+    gap: 6px;
+    padding: 3px 5px;
+    font-size: 12px;
+  }
+
+  .dx-table li img {
+    width: 20px;
+    height: 20px;
+  }
+
+  .dx-table li span {
+    min-width: 0;
+  }
+}
+
+/* Extra-short landscape screens */
+@media (pointer: coarse) and (orientation: landscape) and (max-height: 420px) {
+
+  .dx-body {
+    grid-template-rows:
+      minmax(85px, 0.75fr)
+      minmax(90px, 0.8fr)
+      minmax(125px, 1.2fr);
+    padding-top: 5px;
+    gap: 6px;
+  }
+
+  .dx-where,
+  .dx-form,
+  .dx-card:not(.dx-play) .dx-card-b {
+    display: none;
+  }
+
+  .dx-team img,
+  .dx-blank {
+    height: min(10vh, 55px);
+  }
+
+  .dx-card {
+    padding: 5px 8px;
+  }
+}
+
