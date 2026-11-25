@@ -709,5 +709,7 @@ export const PHOTO_FILES: string[] = [
  "zalaka-pyramids.png",
  "ziad-haytham-pyramids.png",
  "zion-suzuki-aston-villa-2026-27-portrait-footylogos.png",
- "zizo-al-ahly.png"
+ "zizo-al-ahly.png",
+ "ابراهيم عبد الجواد.jpg",
+ "سيف زاهر.jpg"
 ];
