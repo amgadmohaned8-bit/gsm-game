@@ -665,6 +665,7 @@ export const PHOTO_FILES: string[] = [
  "tyrick-mitchell-crystal-palace-2026-27-portrait-footylogos.png",
  "tyrique-george-everton-2026-27-portrait-footylogos.png",
  "tyrone-mings-aston-villa-2026-27-portrait-footylogos.png",
+ "unnamed.webp",
  "valentin-barco-chelsea-2026-27-portrait-footylogos.png",
  "veljko-milosavljevic-bournemouth-2026-27-portrait-footylogos.png",
  "victor-lindelof-aston-villa-2026-27-portrait-footylogos.png",
