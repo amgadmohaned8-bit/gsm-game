@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
@@ -29,20 +28,22 @@ import GsmMark from "@/components/GsmMark";
 import DxBar from "@/components/DxBar";
 import { seasonLabel } from "@/lib/football/season";
 import PlayerFace from "@/components/PlayerFace";
+import { kitOf } from "@/lib/football/kits";
 import { nowMs } from "@/lib/serverTime";
 import "./training.css";
 
 type Filter = "ALL" | "YOUNG";
 
-const POSITIONS: {
+const TYPES: {
   pos: Position;
   title: string;
   short: string;
+  tone: string;
 }[] = [
-  { pos: "GK", title: "Goalkeepers", short: "GK" },
-  { pos: "DF", title: "Defenders", short: "DF" },
-  { pos: "MF", title: "Midfielders", short: "MF" },
-  { pos: "FW", title: "Forwards", short: "FW" },
+  { pos: "GK", title: "Goalkeepers", short: "GK", tone: "gk" },
+  { pos: "DF", title: "Defenders", short: "DF", tone: "df" },
+  { pos: "MF", title: "Midfielders", short: "MF", tone: "mf" },
+  { pos: "FW", title: "Forwards", short: "FW", tone: "fw" },
 ];
 
 export default function TrainingPage() {
@@ -52,25 +53,27 @@ export default function TrainingPage() {
   const [level, setLevel] = useState(1);
   const [filter, setFilter] = useState<Filter>("ALL");
   const [pos, setPos] = useState<Position>("FW");
-
-  const [busy, setBusy] = useState(false);
+  const [busyIds, setBusyIds] = useState<string[]>([]);
   const [problem, setProblem] = useState("");
   const [result, setResult] = useState<{
     name: string;
     gain: number;
   } | null>(null);
 
-  // The player must be confirmed before a session is created.
-  const [selectedPlayer, setSelectedPlayer] = useState<Player | null>(null);
-
   const uid = ctx?.userId;
 
   useEffect(() => {
     if (!uid) return;
 
+    let active = true;
+
     loadUnlocked(supabase, uid).then((ids) => {
-      setLevel(levelOf(xpOf(ids)));
+      if (active) setLevel(levelOf(xpOf(ids)));
     });
+
+    return () => {
+      active = false;
+    };
   }, [uid]);
 
   const boost = trainingBoost(level);
@@ -92,13 +95,12 @@ export default function TrainingPage() {
     return () => clearInterval(timer);
   }, []);
 
-  // Sessions which are still running.
   const running = useMemo(() => {
     if (!now) return [];
 
     return training
-      .filter((session) => {
-        const end = finishesAt(session);
+      .filter((item) => {
+        const end = finishesAt(item);
         return end !== null && end > now;
       })
       .sort(
@@ -118,23 +120,22 @@ export default function TrainingPage() {
   }, [running.length, reload]);
 
   const runKey = running
-    .map((session) => `${session.player_id}:${session.created_at}`)
+    .map((item) => `${item.player_id}:${item.created_at}`)
     .join("|");
 
   useEffect(() => {
-    running.forEach((session, index) => {
-      const end = finishesAt(session);
+    running.forEach((item, index) => {
+      const end = finishesAt(item);
 
       if (end) {
         void alertAt(
           40 + index,
           end,
           "Training finished",
-          "A player finished training. Start the next one."
+          "A player finished training."
         );
       }
     });
-
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [runKey]);
 
@@ -143,27 +144,32 @@ export default function TrainingPage() {
     [squad]
   );
 
-  const trainingIds = useMemo(
-    () => new Set(running.map((session) => session.player_id)),
-    [running]
-  );
+  const runningByPosition = useMemo(() => {
+    const map: Partial<Record<Position, (typeof running)[number]>> = {};
+
+    running.forEach((item) => {
+      const player = byId.get(item.player_id);
+      if (player) map[player.position] = item;
+    });
+
+    return map;
+  }, [running, byId]);
 
   const seasonGain = useMemo(() => {
     const out: Record<string, number> = {};
 
     if (!ctx) return out;
 
-    for (const session of training) {
-      if (session.season === ctx.season) {
-        out[session.player_id] =
-          (out[session.player_id] ?? 0) + Number(session.gain);
+    for (const item of training) {
+      if (item.season === ctx.season) {
+        out[item.player_id] =
+          (out[item.player_id] ?? 0) + Number(item.gain);
       }
     }
 
     return out;
   }, [ctx, training]);
 
-  // Completed progress toward the next rating.
   const finished = useMemo(
     () =>
       ctx
@@ -177,17 +183,10 @@ export default function TrainingPage() {
     [ctx, training, squad]
   );
 
-  // The gain that is currently being processed.
-  const pendingGain = useMemo(() => {
-    const out: Record<string, number> = {};
-
-    running.forEach((session) => {
-      out[session.player_id] =
-        (out[session.player_id] ?? 0) + Number(session.gain);
-    });
-
-    return out;
-  }, [running]);
+  const trainingIds = useMemo(
+    () => new Set(running.map((item) => item.player_id)),
+    [running]
+  );
 
   const rows = useMemo(() => {
     return squad
@@ -196,80 +195,86 @@ export default function TrainingPage() {
           player.position === pos &&
           (filter === "ALL" || player.age <= 23)
       )
-      .slice()
       .sort(
         (a, b) =>
           a.age - b.age || b.rating - a.rating
       );
   }, [squad, filter, pos]);
 
-  if (loading || !ctx) {
-    return (
-      <main className="fx-loading">
-        <GsmMark size={60} />
-        <p>{error || "Loading the training ground..."}</p>
-      </main>
-    );
+  const kit = kitOf(ctx?.clubId ?? "")[0];
+
+  function runningFor(position: Position) {
+    return runningByPosition[position];
   }
 
-  const positionOf = (id: string) => byId.get(id)?.position;
-
-  const runningBy = (position: Position) =>
-    running.filter(
-      (session) =>
-        positionOf(session.player_id) === position
-    ).length;
-
-  function slotProblem(position: Position): string {
-    if (day === null) {
-      return "The season is over.";
-    }
-
-    const otherPositions = POSITIONS
-      .map((item) => item.pos)
-      .filter(
-        (item) =>
-          item !== position && runningBy(item) === 0
-      ).length;
-
-    const reserved =
-      runningBy(position) === 0 ? 0 : otherPositions;
-
-    if (running.length + reserved >= SLOTS) {
-      return running.length >= SLOTS
-        ? "All four training places are busy. Wait for a player to finish."
-        : "Train a goalkeeper, defender, midfielder and forward before filling the remaining places.";
-    }
-
-    return "";
+  function playerFor(position: Position) {
+    const item = runningFor(position);
+    return item ? byId.get(item.player_id) : undefined;
   }
 
-  async function train(player: Player) {
-    if (!ctx || day === null || busy) return;
-    if (trainingIds.has(player.id)) return;
+  function clock(ms: number) {
+    const total = Math.max(0, Math.floor(ms / 1000));
+    const hours = Math.floor(total / 3600);
+    const minutes = Math.floor((total % 3600) / 60);
+    const seconds = total % 60;
 
-    const reason = slotProblem(player.position);
+    return [
+      String(hours).padStart(2, "0"),
+      String(minutes).padStart(2, "0"),
+      String(seconds).padStart(2, "0"),
+    ].join(":");
+  }
 
-    if (reason) {
-      setProblem(reason);
-      return;
-    }
-
+  function previewGain(player: Player) {
     const spent = seasonGain[player.id] ?? 0;
-    const gain = Math.max(
+    const remaining = Math.max(0, cap(player.age) - spent);
+
+    return Math.max(
       0,
       Math.min(
         sessionGain(player.age) * boost,
-        cap(player.age) - spent
+        remaining
       )
     );
+  }
 
-    if (gain <= 0) {
-      setProblem("This player has reached his training limit for this season.");
+  function selectPosition(position: Position) {
+    setPos(position);
+    setFilter("ALL");
+    setProblem("");
+    setResult(null);
+  }
+
+  async function train(player: Player) {
+    if (!ctx || day === null || busyIds.includes(player.id)) return;
+
+    if (trainingIds.has(player.id)) {
+      setProblem("This player is already training.");
       return;
     }
 
-    setBusy(true);
+    if (runningFor(player.position)) {
+      setProblem(
+        `The ${player.position} training place is already occupied.`
+      );
+      return;
+    }
+
+    if (running.length >= SLOTS) {
+      setProblem("All four training places are currently occupied.");
+      return;
+    }
+
+    const gain = previewGain(player);
+
+    if (gain <= 0) {
+      setProblem(
+        "This player has reached his season development limit."
+      );
+      return;
+    }
+
+    setBusyIds((previous) => [...previous, player.id]);
     setProblem("");
     setResult(null);
 
@@ -301,8 +306,6 @@ export default function TrainingPage() {
         gain: row.gain,
       });
 
-      setSelectedPlayer(null);
-
       await reload();
     } catch (err) {
       console.error("Training error:", err);
@@ -311,627 +314,436 @@ export default function TrainingPage() {
         "The session did not save. Make sure supabase/010_training.sql and 015_training_cooldown.sql have been run."
       );
     } finally {
-      setBusy(false);
+      setBusyIds((previous) =>
+        previous.filter((id) => id !== player.id)
+      );
     }
   }
 
-  function clock(ms: number) {
-    const total = Math.max(0, Math.floor(ms / 1000));
-    const hours = Math.floor(total / 3600);
-    const minutes = Math.floor((total % 3600) / 60);
-    const seconds = total % 60;
-
-    return [
-      String(hours).padStart(2, "0"),
-      String(minutes).padStart(2, "0"),
-      String(seconds).padStart(2, "0"),
-    ].join(":");
+  if (loading || !ctx) {
+    return (
+      <main className="fx-loading">
+        <GsmMark size={60} />
+        <p>{error || "Loading the training ground..."}</p>
+      </main>
+    );
   }
 
-  const slotRows = Array.from({ length: SLOTS }).map(
-    (_, index) => {
-      const session = running[index];
-      const player = session
-        ? byId.get(session.player_id)
-        : undefined;
+  const selectedRunning = runningFor(pos);
+  const selectedPlayer = playerFor(pos);
 
-      const end = session ? finishesAt(session) : null;
-      const gain = session ? Number(session.gain) : 0;
+  const chips: [Filter, string][] = [
+    ["ALL", "All players"],
+    ["YOUNG", "Under 24"],
+  ];
 
-      const progress =
-        end && now
-          ? Math.min(
-              1,
-              Math.max(0, 1 - (end - now) / TRAIN_MS)
-            )
-          : 0;
-
-      return {
-        player,
-        end,
-        gain,
-        progress,
-      };
+  const posIcon = (position: Position) => {
+    if (position === "GK") {
+      return (
+        <path
+          d="M8 21v-7l-2-4 2-1 1 2V5l2 0v6l1-7 2 0v7l1-5 2 1-1 7 2 4v8z"
+          fill="currentColor"
+        />
+      );
     }
-  );
 
-  const currentPosition = POSITIONS.find(
-    (item) => item.pos === pos
-  );
+    if (position === "DF") {
+      return (
+        <path
+          d="M12 2l8 3v6c0 5-3.5 9-8 11-4.5-2-8-6-8-11V5z"
+          fill="currentColor"
+        />
+      );
+    }
 
-  const selectedSpent = selectedPlayer
-    ? seasonGain[selectedPlayer.id] ?? 0
-    : 0;
+    if (position === "MF") {
+      return (
+        <g
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+        >
+          <circle cx="12" cy="12" r="9" />
+          <path d="M12 7l4 3-1.5 5h-5L8 10z" />
+        </g>
+      );
+    }
 
-  const selectedGain = selectedPlayer
-    ? Math.max(
-        0,
-        Math.min(
-          sessionGain(selectedPlayer.age) * boost,
-          cap(selectedPlayer.age) - selectedSpent
-        )
-      )
-    : 0;
-
-  const selectedProgress = selectedPlayer
-    ? progressOf(finished[selectedPlayer.id] ?? 0)
-    : 0;
-
-  const selectedPreview = Math.min(
-    Math.max(0, 1 - selectedProgress),
-    selectedGain
-  );
+    return (
+      <g
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2"
+      >
+        <circle cx="12" cy="12" r="8" />
+        <circle cx="12" cy="12" r="3" />
+        <path d="M12 1v5M12 18v5M1 12h5M18 12h5" />
+      </g>
+    );
+  };
 
   return (
     <main className="tc dxp">
       <DxBar
         title="Training"
         onBack={() => router.push("/game/dashboard")}
-        season={
-          ctx.season
-            ? seasonLabel(ctx.season)
-            : undefined
-        }
+        season={seasonLabel(ctx.season)}
       />
 
       <div className="tc-wrap">
         <header className="tc-heading">
-          <div className="tc-heading-icon">
-            <svg viewBox="0 0 24 24" aria-hidden="true">
-              <path
-                d="M3 9v6M6 7v10M18 7v10M21 9v6M6 12h12"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-              />
-            </svg>
-          </div>
-
-          <div className="tc-heading-copy">
-            <span className="tc-eyebrow">
-              CLUB DEVELOPMENT
-            </span>
-            <h1>Player Training</h1>
+          <div>
+            <span className="tc-eyebrow">PLAYER DEVELOPMENT</span>
+            <h1>Training Ground</h1>
             <p>
-              Choose a position and select a player to
-              improve his rating.
+              Choose one player for each position and develop your squad.
             </p>
           </div>
 
-          <div className="tc-coach-level">
-            <span>COACH LEVEL</span>
-            <strong>{level}</strong>
-            <small>
-              +{Math.round((boost - 1) * 100)}% boost
-            </small>
+          <div className="tc-duration">
+            <span>SESSION DURATION</span>
+            <strong>{TRAIN_HOURS} HOURS</strong>
           </div>
         </header>
 
-        <section className="tc-overview">
-          <div className="tc-overview-main">
+        <section className="tc-board">
+          <div className="tc-section-heading">
             <div>
-              <span className="tc-section-kicker">
-                TRAINING GROUND
-              </span>
-              <h2>Active sessions</h2>
-              <p>
-                Each player trains independently for{" "}
-                {TRAIN_HOURS} hours.
-              </p>
+              <span className="tc-eyebrow">YOUR TRAINING SLOTS</span>
+              <h2>Choose a position</h2>
             </div>
 
-            <div className="tc-session-count">
-              <strong>{running.length}</strong>
-              <span>/ {SLOTS} ACTIVE</span>
-            </div>
+            <span className="tc-slot-count">
+              {running.length}/{SLOTS} ACTIVE
+            </span>
           </div>
 
-          <div className="tc-active-grid">
-            {slotRows.map((slot, index) => (
-              <article
-                key={index}
-                className={`tc-active-card ${
-                  slot.player ? "has-player" : "is-empty"
-                }`}
-              >
-                {slot.player ? (
-                  <>
-                    <div className="tc-active-top">
-                      <span className="tc-active-status">
-                        <i />
-                        TRAINING
-                      </span>
-                      <span className="tc-active-position">
-                        {slot.player.position}
-                      </span>
-                    </div>
+          <div className="tc-types">
+            {TYPES.map((type) => {
+              const active = runningFor(type.pos);
+              const player = playerFor(type.pos);
+              const end = active ? finishesAt(active) : null;
+              const gain = active ? Number(active.gain) : 0;
 
-                    <div className="tc-active-player">
-                      <div className="tc-active-face">
-                        <PlayerFace player={slot.player} />
-                        <b>{slot.player.rating}</b>
-                      </div>
+              const share =
+                end && now
+                  ? Math.min(
+                      1,
+                      Math.max(0, 1 - (end - now) / TRAIN_MS)
+                    )
+                  : 0;
 
-                      <div className="tc-active-info">
-                        <strong>{slot.player.name}</strong>
-                        <small>
-                          {slot.player.age} years old
-                        </small>
-                        <span>
-                          +{slot.gain.toFixed(2)} progress
-                        </span>
-                      </div>
-                    </div>
+              const selected = pos === type.pos;
 
-                    <div className="tc-active-progress">
-                      <div className="tc-active-progress-track">
-                        <i
-                          style={{
-                            width: `${slot.progress * 100}%`,
-                          }}
-                        />
-                      </div>
-                      <div className="tc-active-time">
-                        <span>TIME REMAINING</span>
-                        <strong>
-                          {slot.end
-                            ? clock(slot.end - now)
-                            : clock(TRAIN_MS)}
-                        </strong>
-                      </div>
-                    </div>
-                  </>
-                ) : (
-                  <div className="tc-empty-content">
-                    <span className="tc-empty-number">
-                      0{index + 1}
+              const count = squad.filter(
+                (item) => item.position === type.pos
+              ).length;
+
+              return (
+                <button
+                  key={type.pos}
+                  type="button"
+                  className={`tc-type is-${type.tone} ${
+                    selected ? "is-selected" : ""
+                  } ${active ? "is-active" : ""}`}
+                  onClick={() => selectPosition(type.pos)}
+                  style={{ "--kit": kit } as CSSProperties}
+                  aria-pressed={selected}
+                >
+                  <span className="tc-type-top">
+                    <span className="tc-position-icon">
+                      <svg viewBox="0 0 24 24">
+                        {posIcon(type.pos)}
+                      </svg>
                     </span>
-                    <div className="tc-empty-icon">+</div>
-                    <strong>Empty slot</strong>
-                    <small>
-                      Select a player below
-                    </small>
-                  </div>
-                )}
-              </article>
-            ))}
+
+                    <span className="tc-position-code">
+                      {type.short}
+                    </span>
+                  </span>
+
+                  <span className="tc-type-name">
+                    {type.title}
+                  </span>
+
+                  {player && active ? (
+                    <span className="tc-active-player">
+                      <span className="tc-active-face">
+                        <PlayerFace player={player} />
+                      </span>
+
+                      <span className="tc-active-info">
+                        <strong>{player.name}</strong>
+                        <small>
+                          Rating {player.rating} · +{gain.toFixed(2)}
+                        </small>
+                      </span>
+                    </span>
+                  ) : (
+                    <span className="tc-empty-slot">
+                      <span className="tc-plus">+</span>
+                      <span>Choose a player</span>
+                    </span>
+                  )}
+
+                  {active && end ? (
+                    <span className="tc-type-progress">
+                      <span className="tc-type-timer">
+                        {clock(end - now)}
+                      </span>
+
+                      <span className="tc-meter">
+                        <i style={{ width: `${share * 100}%` }} />
+                      </span>
+                    </span>
+                  ) : (
+                    <span className="tc-type-footer">
+                      {count} players available
+                      <span>›</span>
+                    </span>
+                  )}
+                </button>
+              );
+            })}
           </div>
         </section>
 
         {problem && (
-          <div className="tc-message is-error" role="alert">
-            <span>!</span>
+          <div className="tc-message tc-error" role="alert">
             {problem}
-            <button
-              type="button"
-              onClick={() => setProblem("")}
-              aria-label="Dismiss message"
-            >
-              ×
-            </button>
           </div>
         )}
 
         {result && (
-          <div className="tc-message is-success" role="status">
-            <span>✓</span>
-            <div>
-              <strong>{result.name}</strong> started training.
-              <small>
-                +{result.gain.toFixed(2)} development progress
-                · {TRAIN_HOURS} hours
-              </small>
-            </div>
-            <button
-              type="button"
-              onClick={() => setResult(null)}
-              aria-label="Dismiss message"
-            >
-              ×
-            </button>
+          <div className="tc-message tc-success" role="status">
+            <strong>{result.name}</strong> started training.
+            <span> +{result.gain.toFixed(2)} development</span>
           </div>
         )}
 
-        <section className="tc-selection">
-          <div className="tc-selection-heading">
+        <section className="tc-picker">
+          <div className="tc-picker-heading">
             <div>
-              <span className="tc-section-kicker">
-                SELECT YOUR PLAYER
+              <span className="tc-eyebrow">
+                {TYPES.find((type) => type.pos === pos)?.short} SQUAD
               </span>
-              <h2>Choose a position</h2>
+
+              <h2>
+                {TYPES.find((type) => type.pos === pos)?.title}
+              </h2>
+
               <p>
-                Select a position to see the players available
-                for training.
+                {selectedRunning
+                  ? "This position is currently occupied."
+                  : "Select a player to start his individual training."}
               </p>
             </div>
 
-            <div className="tc-duration">
-              <span>SESSION DURATION</span>
-              <strong>{TRAIN_HOURS} HOURS</strong>
-            </div>
-          </div>
-
-          <div className="tc-position-grid" role="tablist">
-            {POSITIONS.map((item) => {
-              const count = squad.filter(
-                (player) => player.position === item.pos
-              ).length;
-
-              const active = pos === item.pos;
-
-              return (
-                <button
-                  key={item.pos}
-                  type="button"
-                  role="tab"
-                  aria-selected={active}
-                  className={`tc-position ${
-                    active ? "is-selected" : ""
-                  }`}
-                  onClick={() => {
-                    setPos(item.pos);
-                    setSelectedPlayer(null);
-                    setProblem("");
-                  }}
-                >
-                  <span className="tc-position-code">
-                    {item.short}
-                  </span>
-
-                  <span className="tc-position-text">
-                    <strong>{item.title}</strong>
-                    <small>{count} players</small>
-                  </span>
-
-                  <span className="tc-position-arrow">
-                    ›
-                  </span>
-                </button>
-              );
-            })}
-          </div>
-
-          <div className="tc-players-heading">
-            <div>
-              <span className="tc-section-kicker">
-                {currentPosition?.short} SQUAD
-              </span>
-              <h2>
-                {currentPosition?.title ?? "Players"}
-              </h2>
-            </div>
-
             <div className="tc-filters">
-              <button
-                type="button"
-                className={filter === "ALL" ? "is-active" : ""}
-                aria-pressed={filter === "ALL"}
-                onClick={() => setFilter("ALL")}
-              >
-                All
-              </button>
-
-              <button
-                type="button"
-                className={
-                  filter === "YOUNG" ? "is-active" : ""
-                }
-                aria-pressed={filter === "YOUNG"}
-                onClick={() => setFilter("YOUNG")}
-              >
-                U23
-              </button>
+              {chips.map(([id, label]) => (
+                <button
+                  key={id}
+                  type="button"
+                  aria-pressed={filter === id}
+                  onClick={() => setFilter(id)}
+                >
+                  {label}
+                </button>
+              ))}
             </div>
           </div>
 
-          <div className="tc-player-grid">
-            {rows.map((player, index) => {
-              const isTraining = trainingIds.has(player.id);
-              const spent = seasonGain[player.id] ?? 0;
-              const capNow = cap(player.age);
-              const progress = progressOf(
-                finished[player.id] ?? 0
-              );
+          {selectedRunning && selectedPlayer ? (
+            <div className="tc-occupied">
+              <div className="tc-occupied-face">
+                <PlayerFace player={selectedPlayer} />
+              </div>
 
-              const activeGain = pendingGain[player.id] ?? 0;
+              <div className="tc-occupied-info">
+                <span className="tc-live-label">
+                  <i />
+                  TRAINING IN PROGRESS
+                </span>
 
-              const nextGain = isTraining
-                ? activeGain
-                : Math.max(
-                    0,
-                    Math.min(
-                      sessionGain(player.age) * boost,
-                      capNow - spent
-                    )
-                  );
+                <h3>{selectedPlayer.name}</h3>
 
-              const preview = Math.min(
-                Math.max(0, 1 - progress),
-                nextGain
-              );
+                <p>
+                  {selectedPlayer.position} · Rating {selectedPlayer.rating}
+                </p>
 
-              const atCap = spent >= capNow - 0.005;
-              const playerPhase = phase(player.age);
-              const isSelected =
-                selectedPlayer?.id === player.id;
+                <div className="tc-meter">
+                  {(() => {
+                    const end = finishesAt(selectedRunning);
 
-              let phaseLabel = "PRIME";
+                    const share =
+                      end && now
+                        ? Math.min(
+                            1,
+                            Math.max(0, 1 - (end - now) / TRAIN_MS)
+                          )
+                        : 0;
 
-              if (playerPhase === "rising") {
-                phaseLabel = "RISING";
-              } else if (playerPhase === "declining") {
-                phaseLabel = "DECLINING";
-              }
+                    return (
+                      <i style={{ width: `${share * 100}%` }} />
+                    );
+                  })()}
+                </div>
+              </div>
 
-              return (
-                <button
-                  key={player.id}
-                  type="button"
-                  className={`tc-player-card ${
-                    isSelected ? "is-selected" : ""
-                  } ${isTraining ? "is-training" : ""}`}
-                  style={
-                    {
-                      "--card-delay": `${Math.min(index, 15) * 35}ms`,
-                    } as CSSProperties
-                  }
-                  onClick={() => {
-                    if (
-                      busy ||
-                      isTraining ||
-                      atCap ||
-                      day === null
-                    ) {
-                      return;
-                    }
+              <div className="tc-occupied-timer">
+                <span>TIME LEFT</span>
 
-                    setProblem("");
-                    setSelectedPlayer(player);
-                  }}
-                  disabled={
-                    busy ||
-                    isTraining ||
-                    atCap ||
-                    day === null
-                  }
-                >
-                  <div className="tc-player-card-top">
-                    <span className="tc-player-position">
-                      {player.position}
-                    </span>
+                <strong>
+                  {clock(
+                    (finishesAt(selectedRunning) ?? now) - now
+                  )}
+                </strong>
 
-                    <span
-                      className={`tc-player-phase phase-${playerPhase}`}
-                    >
-                      {phaseLabel}
-                    </span>
-                  </div>
-
-                  <div className="tc-player-visual">
-                    <div className="tc-player-face">
-                      <PlayerFace player={player} />
-                    </div>
-
-                    <div className="tc-player-rating">
-                      <strong>{player.rating}</strong>
-                      <small>OVR</small>
-                    </div>
-                  </div>
-
-                  <div className="tc-player-details">
-                    <strong>{player.name}</strong>
-                    <span>{player.age} YEARS OLD</span>
-                  </div>
-
-                  <div className="tc-player-gain">
-                    <span>
-                      {isTraining
-                        ? "CURRENT SESSION"
-                        : "NEXT SESSION"}
-                    </span>
-                    <strong>
-                      +{nextGain.toFixed(2)}
-                    </strong>
-                  </div>
-
-                  <div className="tc-development">
-                    <div className="tc-development-track">
-                      <i
-                        className="tc-development-done"
-                        style={{
-                          width: `${Math.min(100, progress * 100)}%`,
-                        }}
-                      />
-                      <i
-                        className="tc-development-preview"
-                        style={{
-                          width: `${Math.min(100, preview * 100)}%`,
-                        }}
-                      />
-                    </div>
-
-                    <div className="tc-development-labels">
-                      <span>DEVELOPMENT</span>
-                      <strong>
-                        {Math.round(progress * 100)}%
-                        {preview > 0
-                          ? ` + ${Math.round(preview * 100)}%`
-                          : ""}
-                      </strong>
-                    </div>
-                  </div>
-
-                  <div className="tc-player-card-footer">
-                    {isTraining ? (
-                      <>
-                        <span className="tc-status-dot" />
-                        Training in progress
-                      </>
-                    ) : atCap ? (
-                      "Season limit reached"
-                    ) : (
-                      <>
-                        Select player <span>›</span>
-                      </>
-                    )}
-                  </div>
-                </button>
-              );
-            })}
-
-            {rows.length === 0 && (
-              <div className="tc-no-players">
-                <span>—</span>
-                <strong>No players available</strong>
                 <small>
-                  {filter === "YOUNG"
-                    ? "There are no players aged 23 or under in this position."
-                    : "This position has no players in your squad."}
+                  +{Number(selectedRunning.gain).toFixed(2)} development
                 </small>
               </div>
-            )}
-          </div>
+            </div>
+          ) : (
+            <ul className="tc-grid">
+              {rows.map((player, index) => {
+                const trained = trainingIds.has(player.id);
+                const busy = busyIds.includes(player.id);
+
+                const currentProgress = progressOf(
+                  finished[player.id] ?? 0
+                );
+
+                const gain = previewGain(player);
+
+                const projected = Math.min(
+                  1 - currentProgress,
+                  gain
+                );
+
+                const atCap = gain <= 0;
+                const playerPhase = phase(player.age);
+
+                return (
+                  <li
+                    key={player.id}
+                    style={{
+                      animationDelay: `${Math.min(index, 16) * 25}ms`,
+                    }}
+                  >
+                    <button
+                      type="button"
+                      className={`tc-card ph-${playerPhase} ${
+                        trained ? "is-trained" : ""
+                      } ${busy ? "is-busy" : ""}`}
+                      onClick={() => void train(player)}
+                      disabled={
+                        trained ||
+                        busy ||
+                        !!selectedRunning ||
+                        day === null ||
+                        atCap
+                      }
+                    >
+                      <span className="tc-card-top">
+                        <span className="tc-card-position">
+                          {player.position}
+                        </span>
+
+                        <span className="tc-card-phase">
+                          {playerPhase}
+                        </span>
+                      </span>
+
+                      <span className="tc-player-visual">
+                        <span className="tc-player-photo">
+                          <PlayerFace player={player} />
+                        </span>
+
+                        <span className="tc-rating">
+                          {player.rating}
+                          <small>OVR</small>
+                        </span>
+                      </span>
+
+                      <span className="tc-player-name">
+                        {player.name}
+                      </span>
+
+                      <span className="tc-player-age">
+                        {player.age} YEARS OLD
+                      </span>
+
+                      <span className="tc-next-session">
+                        <span>NEXT SESSION</span>
+
+                        <strong>
+                          {atCap ? "MAX" : `+${gain.toFixed(2)}`}
+                        </strong>
+                      </span>
+
+                      <span className="tc-development-label">
+                        <span>DEVELOPMENT</span>
+
+                        <strong>
+                          {Math.round(currentProgress * 100)}%
+                          {projected > 0
+                            ? ` → ${Math.round(
+                                (currentProgress + projected) * 100
+                              )}%`
+                            : ""}
+                        </strong>
+                      </span>
+
+                      <span className="tc-prog">
+                        <i
+                          className="is-done"
+                          style={{
+                            width: `${currentProgress * 100}%`,
+                          }}
+                        />
+
+                        <i
+                          className="is-preview"
+                          style={{
+                            width: `${projected * 100}%`,
+                          }}
+                        />
+                      </span>
+
+                      <span className="tc-card-action">
+                        {trained
+                          ? "Training in progress"
+                          : busy
+                          ? "Starting..."
+                          : atCap
+                          ? "Season limit reached"
+                          : "Select player  ›"}
+                      </span>
+                    </button>
+                  </li>
+                );
+              })}
+
+              {rows.length === 0 && (
+                <li className="tc-none">
+                  No players available in this position.
+                </li>
+              )}
+            </ul>
+          )}
         </section>
 
-        <footer className="tc-footer-note">
-          <span>GSM PLAYER DEVELOPMENT</span>
-          <p>
-            Young players develop faster. Each player has an
-            independent training countdown.
-          </p>
+        <footer className="tc-footer">
+          <span>Coach level {level}</span>
+
+          <span>
+            Training bonus +{Math.round((boost - 1) * 100)}%
+          </span>
+
+          <span>One player per position</span>
         </footer>
       </div>
-
-      {selectedPlayer && (
-        <div
-          className="tc-modal-backdrop"
-          role="presentation"
-          onClick={() => {
-            if (!busy) setSelectedPlayer(null);
-          }}
-        >
-          <section
-            className="tc-confirm-modal"
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="tc-confirm-title"
-            onClick={(event) => event.stopPropagation()}
-          >
-            <button
-              type="button"
-              className="tc-modal-close"
-              onClick={() => setSelectedPlayer(null)}
-              disabled={busy}
-              aria-label="Close"
-            >
-              ×
-            </button>
-
-            <span className="tc-modal-kicker">
-              CONFIRM TRAINING
-            </span>
-
-            <div className="tc-modal-player">
-              <div className="tc-modal-face">
-                <PlayerFace player={selectedPlayer} />
-                <b>{selectedPlayer.rating}</b>
-              </div>
-
-              <div>
-                <h2 id="tc-confirm-title">
-                  {selectedPlayer.name}
-                </h2>
-                <p>
-                  {selectedPlayer.position} ·{" "}
-                  {selectedPlayer.age} years old
-                </p>
-              </div>
-            </div>
-
-            <div className="tc-modal-preview">
-              <div>
-                <span>SESSION DURATION</span>
-                <strong>{TRAIN_HOURS} hours</strong>
-              </div>
-
-              <div>
-                <span>EXPECTED DEVELOPMENT</span>
-                <strong className="tc-modal-gain">
-                  +{selectedGain.toFixed(2)}
-                </strong>
-              </div>
-            </div>
-
-            <div className="tc-modal-progress">
-              <div className="tc-development-track">
-                <i
-                  className="tc-development-done"
-                  style={{
-                    width: `${Math.min(
-                      100,
-                      selectedProgress * 100
-                    )}%`,
-                  }}
-                />
-                <i
-                  className="tc-development-preview"
-                  style={{
-                    width: `${Math.min(
-                      100,
-                      selectedPreview * 100
-                    )}%`,
-                  }}
-                />
-              </div>
-
-              <small>
-                Current progress + expected session progress
-              </small>
-            </div>
-
-            <div className="tc-modal-actions">
-              <button
-                type="button"
-                className="tc-cancel-button"
-                onClick={() => setSelectedPlayer(null)}
-                disabled={busy}
-              >
-                Cancel
-              </button>
-
-              <button
-                type="button"
-                className="tc-confirm-button"
-                onClick={() => void train(selectedPlayer)}
-                disabled={busy || selectedGain <= 0}
-              >
-                {busy ? "Starting..." : "Confirm training"}
-              </button>
-            </div>
-          </section>
-        </div>
-      )}
     </main>
   );
 }
