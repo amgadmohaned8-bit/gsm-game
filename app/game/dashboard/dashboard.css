@@ -768,3 +768,369 @@
     transition: none !important;
   }
 }
+
+
+/* =========================================================
+   COMPACT PHONE LANDSCAPE — tuned to the 772 × 328 reference
+   Keeps the same colors and dashboard content, but matches
+   the compact three-row composition of the reference image.
+   ========================================================= */
+@media (pointer: coarse) and (orientation: landscape) and (max-height: 500px) {
+  .dx {
+    width: 100%;
+    height: 100dvh;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  /* Slim header */
+  .dx-top {
+    flex: 0 0 47px;
+    min-height: 47px;
+    height: 47px;
+    gap: 7px;
+    padding: 3px max(14px, env(safe-area-inset-right)) 3px
+      max(14px, env(safe-area-inset-left));
+  }
+  .dx-me {
+    width: 36px;
+    height: 36px;
+  }
+  .dx-me b {
+    min-width: 18px;
+    height: 18px;
+    right: -5px;
+    bottom: -4px;
+    font-size: 10px;
+  }
+  .dx-pill {
+    height: 33px;
+    padding: 0 11px;
+    gap: 6px;
+    font-size: 14px;
+  }
+  .dx-pill svg { width: 16px; height: 16px; }
+  .dx-season { display: none; }
+  .dx-ico {
+    width: 36px;
+    height: 36px;
+    border-radius: 10px;
+  }
+  .dx-ico svg { width: 18px; height: 18px; }
+  .dx-ico em { top: 4px; right: 4px; width: 8px; height: 8px; }
+  .dx-burger { width: 38px; height: 38px; }
+
+  /* Three balanced rows: fixture, action cards, lower dashboard */
+  .dx-body {
+    flex: 1 1 auto;
+    min-height: 0;
+    width: 100%;
+    max-width: none;
+    margin: 0;
+    padding: 0 max(14px, env(safe-area-inset-right))
+      max(6px, env(safe-area-inset-bottom))
+      max(14px, env(safe-area-inset-left));
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows:
+      minmax(0, 1.65fr)
+      minmax(48px, .62fr)
+      minmax(74px, 1fr);
+    gap: 5px;
+    overflow: hidden;
+  }
+
+  /* Match panel — centered VS and equal club columns */
+  .dx-hero {
+    min-width: 0;
+    min-height: 0;
+    height: 100%;
+    grid-template-columns: minmax(0, 1fr) minmax(100px, .95fr) minmax(0, 1fr);
+    align-items: center;
+    gap: 5px;
+    padding: 2px 0 0;
+  }
+  .dx-team {
+    min-width: 0;
+    min-height: 0;
+    align-content: center;
+    justify-items: center;
+    gap: 2px;
+  }
+  .dx-team img,
+  .dx-blank {
+    width: clamp(48px, 18vh, 62px);
+    height: clamp(48px, 18vh, 62px);
+    max-width: 100%;
+    object-fit: contain;
+  }
+  .dx-team strong {
+    max-width: 100%;
+    font-size: clamp(13px, 4.2vh, 16px);
+    line-height: 1.05;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .dx-team small {
+    max-width: 100%;
+    font-size: clamp(9px, 2.8vh, 11px);
+    line-height: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .dx-mid {
+    min-width: 0;
+    gap: 2px;
+    align-content: center;
+  }
+  .dx-chip {
+    padding: 3px 10px;
+    border-radius: 10px;
+    font-size: clamp(11px, 3.6vh, 14px);
+    line-height: 1.15;
+  }
+  .dx-clock {
+    font-size: clamp(11px, 3.7vh, 15px);
+    line-height: 1.1;
+    white-space: nowrap;
+  }
+  .dx-vs {
+    font-size: clamp(32px, 10vh, 42px);
+    line-height: .86;
+    -webkit-text-stroke-width: 1.4px;
+  }
+  .dx-where { display: none; }
+  .dx-form { margin: 2px 0 0; gap: 3px; }
+  .dx-form li {
+    width: 17px;
+    height: 17px;
+    font-size: 9px;
+  }
+
+  /* Four action cards in one short horizontal row */
+  .dx-actions {
+    min-width: 0;
+    min-height: 0;
+    height: 100%;
+    grid-template-columns: 1.45fr 1.12fr 1.12fr 1.12fr;
+    gap: 6px;
+  }
+  .dx-card {
+    min-width: 0;
+    min-height: 0;
+    height: 100%;
+    padding: 5px 9px;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    justify-content: center;
+    gap: 1px;
+    border-radius: 13px;
+    overflow: hidden;
+  }
+  .dx-card > svg:first-child { display: none; }
+  .dx-card-h {
+    max-width: 100%;
+    font-size: clamp(11px, 3.8vh, 15px);
+    line-height: 1.08;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .dx-card-b {
+    max-width: 100%;
+    font-size: clamp(9px, 2.8vh, 11px);
+    line-height: 1.1;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .dx-play {
+    grid-column: auto;
+    min-height: 0;
+    justify-content: center;
+    padding-right: 25px;
+  }
+  .dx-play .dx-card-h {
+    font-size: clamp(13px, 4.5vh, 17px);
+  }
+  .dx-play .dx-card-b { font-size: clamp(9px, 2.8vh, 11px); }
+  .dx-play > svg {
+    display: block;
+    right: 5px;
+    width: 19px;
+    height: 19px;
+  }
+  .dx-meter {
+    width: 100%;
+    height: 5px;
+    min-height: 5px;
+    margin-top: 2px;
+    flex: none;
+  }
+  .dx-card:not(.dx-play) .dx-card-b { display: none; }
+
+  /* Bottom row: friendlies + 3 shortcut tiles on left, table on right */
+  .dx-lower {
+    min-width: 0;
+    min-height: 0;
+    height: 100%;
+    grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr);
+    gap: 7px;
+    align-items: stretch;
+  }
+  .dx-left {
+    min-width: 0;
+    min-height: 0;
+    grid-template-rows: minmax(30px, .82fr) minmax(34px, 1fr);
+    gap: 5px;
+  }
+  .dx-banner {
+    min-width: 0;
+    min-height: 0;
+    height: 100%;
+    padding: 3px 9px;
+    gap: 8px;
+    border-left-width: 5px;
+    border-radius: 12px;
+  }
+  .dx-banner > svg {
+    width: 20px;
+    height: 20px;
+  }
+  .dx-banner span { min-width: 0; }
+  .dx-banner strong {
+    font-size: clamp(12px, 3.7vh, 15px);
+    line-height: 1;
+  }
+  .dx-banner small { display: none; }
+
+  .dx-tiles {
+    min-width: 0;
+    min-height: 0;
+    height: 100%;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-template-rows: minmax(0, 1fr);
+    gap: 5px;
+    overflow: hidden;
+  }
+  .dx-tiles button {
+    min-width: 0;
+    min-height: 0;
+    height: 100%;
+    padding: 3px 7px;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 5px;
+    border-radius: 12px;
+    overflow: hidden;
+  }
+  .dx-tiles svg {
+    width: 17px;
+    height: 17px;
+    flex: none;
+    margin: 0;
+  }
+  .dx-tiles strong {
+    min-width: 0;
+    font-size: clamp(9px, 3.2vh, 12px);
+    line-height: 1;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .dx-tiles small { display: none; }
+
+  .dx-table {
+    min-width: 0;
+    min-height: 0;
+    height: 100%;
+    padding: 5px 7px;
+    grid-template-rows: auto minmax(0, 1fr);
+    gap: 2px;
+    border-radius: 12px;
+    overflow: hidden;
+  }
+  .dx-table-h {
+    min-width: 0;
+    padding: 1px 4px 2px;
+    font-size: clamp(10px, 3.4vh, 13px);
+    line-height: 1.05;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .dx-table ul {
+    min-width: 0;
+    min-height: 0;
+    height: 100%;
+    display: grid;
+    grid-auto-rows: minmax(0, 1fr);
+    gap: 1px;
+    overflow-y: auto;
+    overflow-x: hidden;
+    padding: 0 1px 0 0;
+    touch-action: pan-y;
+    overscroll-behavior: contain;
+    scrollbar-width: none;
+  }
+  .dx-table ul::-webkit-scrollbar { display: none; }
+  .dx-table li {
+    min-width: 0;
+    min-height: 0;
+    grid-template-columns: 19px 19px minmax(0, 1fr) auto;
+    gap: 4px;
+    padding: 1px 4px;
+    border-radius: 8px;
+    font-size: clamp(9px, 3.1vh, 12px);
+    line-height: 1;
+  }
+  .dx-table li b { font-size: inherit; }
+  .dx-table li img {
+    width: 17px;
+    height: 17px;
+  }
+  .dx-table li span {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .dx-table li strong { font-size: inherit; }
+
+  /* Keep the compact header uncluttered; these actions remain in the game menu. */
+  .dx-top > button:nth-of-type(5),
+  .dx-top > button:nth-of-type(6) {
+    display: none;
+  }
+
+  /* Menu still fits the short viewport and scrolls internally. */
+  .dx-drawer { padding-bottom: env(safe-area-inset-bottom); }
+}
+
+/* Very short landscape phones */
+@media (pointer: coarse) and (orientation: landscape) and (max-height: 360px) {
+  .dx-top {
+    flex-basis: 42px;
+    min-height: 42px;
+    height: 42px;
+  }
+  .dx-body {
+    grid-template-rows: minmax(0, 1.55fr) minmax(44px, .62fr) minmax(68px, 1fr);
+    gap: 4px;
+  }
+  .dx-team img,
+  .dx-blank {
+    width: clamp(42px, 16vh, 54px);
+    height: clamp(42px, 16vh, 54px);
+  }
+  .dx-vs { font-size: clamp(28px, 9vh, 36px); }
+  .dx-tiles button { padding-inline: 4px; gap: 3px; }
+  .dx-tiles strong { font-size: 9px; }
+}
