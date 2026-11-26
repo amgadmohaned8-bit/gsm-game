@@ -1,4 +1,5 @@
 // @ts-nocheck
+
 /**
  * Transfers.
  *
@@ -540,8 +541,31 @@ export async function loadTransferState(
       listings = mineOnly(l2 as Listing[] | null);
       squads = view(deals);
     }
-    return { deals, listings, squads, training, renewals, offers: resolveListings(userId, listings, squads, myClub, matchday).offers, aiDeals: others, net: transfersNet(deals, myClub) + friendlyMoney + awardMoney - renewalFees + bank.cash, matchday, bank };
+
+    return {
+      deals,
+      listings,
+      squads,
+      training,
+      renewals,
+      offers: resolveListings(userId, listings, squads, myClub, matchday ?? 0).offers,
+      aiDeals: others,
+      net: transfersNet(deals, myClub) + friendlyMoney + awardMoney - renewalFees + bank.cash,
+      matchday,
+      bank,
+    };
   }
 
-  return { deals, listings, squads, training, renewals, offers: [], aiDeals: others, net: transfersNet(deals, myClub) + friendlyMoney + awardMoney - renewalFees + bank.cash, matchday, bank };
+  return {
+    deals,
+    listings,
+    squads,
+    training,
+    renewals,
+    offers: [],
+    aiDeals: others,
+    net: transfersNet(deals, myClub) + friendlyMoney + awardMoney - renewalFees + bank.cash,
+    matchday,
+    bank,
+  };
 }
