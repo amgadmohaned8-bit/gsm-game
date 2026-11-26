@@ -286,12 +286,14 @@ export function worldBuyers(myClub: string) {
 }
 
 /** The window of a listing in real time, and the one bid that comes inside it (a club, a price, a moment). */
-export function listingBid(userId: string, listing: Listing, player: Player, myClub: string) {
+export function listingBid(userId: string, listing: { id: string; player_id: string; created_at?: string }, player: Player, myClub: string, exclude?: Set<string>) {
   const start = listing.created_at ? Date.parse(listing.created_at) : NaN;
   const legacy = !Number.isFinite(start); // old rows without a time: settled at once
   const from = legacy ? 0 : start;
   const end = legacy ? 0 : endOfCairoDay(start);
-  const buyers = worldBuyers(myClub);
+  const allBuyers = worldBuyers(myClub);
+  // clubs run by other managers never buy from the computer
+  const buyers = exclude?.size ? allBuyers.filter((c) => !exclude.has(c.id)) : allBuyers;
   const key = `${userId}|${listing.player_id}|${listing.id}`;
   const club = buyers[Math.floor(unit(`${key}|who`) * buyers.length)]?.id ?? buyers[0].id;
   const factor = 0.95 + 0.75 * unit(`${key}|bid`);
@@ -305,6 +307,21 @@ export function fairPrice(player: Player) {
 }
 
 export type Sale = { listing: Listing; player: Player; club: string; fee: number; matchday: number };
+
+/** A listing in a shared league: has a computer club paid his price (or the fair price at midnight) by now? */
+export function dueSale(
+  userId: string,
+  listing: { id: string; player_id: string; asking: number; created_at?: string },
+  player: Player,
+  myClub: string,
+  now: number,
+  exclude?: Set<string>
+): { club: string; fee: number } | null {
+  const bid = listingBid(userId, listing, player, myClub, exclude);
+  if (now >= bid.at && bid.amount >= listing.asking) return { club: bid.club, fee: listing.asking };
+  if (now >= bid.end) return { club: bid.club, fee: Math.min(fairPrice(player), listing.asking) };
+  return null;
+}
 
 /** Which open listings are sold by now, and which bids are still waiting. */
 export function resolveListings(
@@ -486,13 +503,15 @@ export async function loadTransferState(
     }
   }
 
-  if (matchday !== null && listings.length) {
-    const { sales, offers } = resolveListings(userId, listings, squads, myClub, matchday);
+  // between seasons there is no matchday: the sale is then written as an off-season deal (matchday 0)
+  if (listings.length) {
+    const { sales, offers } = resolveListings(userId, listings, squads, myClub, matchday ?? 0);
 
     for (const sale of settleSales ? sales : []) {
       if (canSell(squads[myClub] ?? [], sale.player)) continue; // would leave a position short: keep him
       // claim the listing first: two visits (or the server and a page) can never sell the same player twice
       const claim = await client.from("transfer_listings").update({ status: "sold" }).eq("id", sale.listing.id).eq("status", "open").select("id");
+      if (claim.error) console.error("Could not close the listing:", claim.error.message);
       if (claim.error || !(claim.data ?? []).length) continue;
       try {
         await recordDeal(client, {

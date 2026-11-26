@@ -4,7 +4,7 @@
 //  - called by the scheduler (header x-cron-secret): settles every manager that has an open listing
 // Before deploying run:  node scripts/build-edge.mjs
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.4";
-import { loadTransferState } from "../_shared/src/lib/football/transfers.ts";
+import { loadTransferState, dueSale, canSell } from "../_shared/src/lib/football/transfers.ts";
 import { activeSeason } from "../_shared/src/lib/football/season.ts";
 
 const cors = {
@@ -25,14 +25,37 @@ async function settle(admin, userId: string): Promise<number> {
   const { data: contract } = await admin.from("manager_contracts").select("selected_club, selected_league").eq("user_id", userId).maybeSingle();
   if (!contract?.selected_club) return 0;
   const leagueId = contract.selected_league || "premier-league";
-  const { count: before } = await admin.from("transfer_listings").select("id", { count: "exact", head: true }).eq("user_id", userId).eq("status", "open");
+  const open = async () => {
+    const solo = await admin.from("transfer_listings").select("id", { count: "exact", head: true }).eq("user_id", userId).eq("status", "open");
+    const room = await admin.from("manager_listings").select("id", { count: "exact", head: true }).eq("seller_id", userId).eq("status", "open");
+    return (solo.count ?? 0) + (room.count ?? 0);
+  };
+  const before = await open();
   if (!before) return 0;
   const season = await activeSeason(admin, userId, leagueId);
   const { data: matches } = await admin.from("league_matches").select("matchday, status").eq("user_id", userId).eq("league_id", leagueId).eq("season", season);
-  // the state loader completes every sale that is due (a listing is claimed once, so nothing sells twice)
-  await loadTransferState(admin, userId, contract.selected_club, season, currentMatchday(matches ?? []), leagueId, false, true);
-  const { count: after } = await admin.from("transfer_listings").select("id", { count: "exact", head: true }).eq("user_id", userId).eq("status", "open");
-  return (before ?? 0) - (after ?? 0);
+  const matchday = currentMatchday(matches ?? []);
+  // solo listings: the state loader completes every sale that is due (a listing is claimed once, so nothing sells twice)
+  const state = await loadTransferState(admin, userId, contract.selected_club, season, matchday, leagueId, false, true);
+
+  // listings in a shared league: a computer club pays on the day, the database checks the rules
+  const { data: roomListings } = await admin.from("manager_listings").select("*").eq("seller_id", userId).eq("status", "open");
+  const mine = state.squads[contract.selected_club] ?? [];
+  for (const l of roomListings ?? []) {
+    try {
+      const { data: members } = await admin.from("room_members").select("club_id").eq("room_id", l.room_id);
+      const humans = new Set((members ?? []).map((m: { club_id: string }) => m.club_id));
+      const player = mine.find((p) => p.id === l.player_id);
+      if (!player || canSell(mine, player)) continue;
+      const sale = dueSale(userId, { ...l, asking: Number(l.asking) }, player, contract.selected_club, Date.now(), humans);
+      if (!sale) continue;
+      const { error } = await admin.rpc("listing_sell_to_computer_as", { p_seller: userId, p_listing: l.id, p_club: sale.club, p_fee: sale.fee, p_season: season, p_matchday: matchday ?? 0 });
+      if (error) console.error("room sale refused:", error.message);
+    } catch (e) {
+      console.error("room sale failed:", e);
+    }
+  }
+  return Math.max(0, before - (await open()));
 }
 
 Deno.serve(async (req) => {
@@ -43,8 +66,9 @@ Deno.serve(async (req) => {
 
     const secret = Deno.env.get("CRON_SECRET");
     if (secret && req.headers.get("x-cron-secret") === secret) {
-      const { data } = await admin.from("transfer_listings").select("user_id").eq("status", "open").limit(500);
-      const users = [...new Set((data ?? []).map((r: { user_id: string }) => r.user_id))];
+      const solo = await admin.from("transfer_listings").select("user_id").eq("status", "open").limit(500);
+      const room = await admin.from("manager_listings").select("seller_id").eq("status", "open").limit(500);
+      const users = [...new Set([...(solo.data ?? []).map((r: { user_id: string }) => r.user_id), ...(room.data ?? []).map((r: { seller_id: string }) => r.seller_id)])];
       let sold = 0;
       for (const id of users) {
         try { sold += await settle(admin, id); } catch (e) { console.error("settle failed for", id, e); }

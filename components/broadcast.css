@@ -121,3 +121,8 @@
 .tl-in::before { border-bottom: 8px solid #3fd978; }
 .tl-out { color: #ff9b9b !important; }
 .tl-out::before { border-top: 8px solid #ff5a5f; }
+
+/* the Egyptian studio: green neon wall, the match card in the dark gap between the two presenters */
+.is-egypt .bc-stage { border-color: rgba(120, 255, 120, 0.35); }
+.is-egypt .bc-tv { left: 33.8%; top: 3%; width: 30.4%; height: 36%; background: radial-gradient(ellipse at 50% 0%, #0e4a22, #03150a 82%); border-color: rgba(120, 255, 120, 0.35); box-shadow: 0 0 3cqw rgba(60, 255, 90, 0.18); }
+.is-egypt .bc-tv small, .is-egypt .bc-tv b { color: #8dff6b; }

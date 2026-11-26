@@ -1,7 +1,7 @@
 "use client";
 
 import { signingBan } from "@/lib/football/bank";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
@@ -21,13 +21,14 @@ import {
   windowStatus,
   MIN_BY_POSITION,
   worldBuyers,
+  dueSale,
 } from "@/lib/football/transfers";
 import { useTransfers } from "@/lib/football/useTransfers";
 import { BidModal, OfferModal, SellModal, money, sellerLabel } from "@/components/TransferModals";
 import { myRoom, type RoomMember } from "@/lib/football/rooms";
 import { loadOffers, tellAbout, type ManagerOffer } from "@/lib/football/offers";
 import {
-  acceptOffer as dbAccept, answerOffer, buyNow, dealError, listPlayer, loadListings, loadLog, makeOffer, signFromClub, withdrawListing,
+  acceptOffer as dbAccept, answerOffer, buyNow, dealError, listPlayer, loadListings, loadLog, makeOffer, sellToComputer, signFromClub, withdrawListing,
   type DealCtx, type LogRow, type ManagerListing,
 } from "@/lib/football/dealing";
 import PlayerFace from "@/components/PlayerFace";
@@ -130,6 +131,28 @@ export default function TransfersPage() {
   /** clubs another person manages: they answer offers themselves */
   const humans = useMemo(() => new Map<string, RoomMember>(members.filter((m) => m.user_id !== ctx?.userId).map((m) => [m.club_id, m] as [string, RoomMember])), [members, ctx?.userId]);
   const myName = members.find((m) => m.user_id === ctx?.userId)?.name || "A manager";
+
+  // a shared league: a listed player is also sold to a computer club on the day, like in a solo league
+  const settling = useRef(new Set<string>());
+  useEffect(() => {
+    if (!ctx || !roomId || members.length === 0 || mlist.length === 0) return;
+    const humanClubs = new Set(members.map((m) => m.club_id));
+    const nowT = nowMs();
+    for (const l of mlist) {
+      if (l.seller_id !== ctx.userId || settling.current.has(l.id)) continue;
+      const player = mine.find((p) => p.id === l.player_id);
+      if (!player || canSell(mine, player)) continue;
+      const sale = dueSale(ctx.userId, l, player, ctx.clubId, nowT, humanClubs);
+      if (!sale) continue;
+      settling.current.add(l.id);
+      sellToComputer(supabase, l.id, sale.club, sale.fee, ctx.season, ctx.matchday ?? 0)
+        .then(async () => {
+          await reload();
+          await refreshShared(ctx.userId, roomId);
+        })
+        .catch((err) => { console.error("Computer sale failed (run 038_sell_listing_to_computer.sql?):", err); }); // not retried until the page is opened again
+    }
+  }, [ctx, roomId, members, mlist, mine, reload, refreshShared]);
   const toAnswer = offers.filter((o) => ctx && ((o.status === "open" && o.seller_id === ctx.userId) || (o.status === "countered" && o.buyer_id === ctx.userId))).length;
   const listingOf = useMemo(() => new Map(mlist.map((l) => [l.player_id, l])), [mlist]);
 

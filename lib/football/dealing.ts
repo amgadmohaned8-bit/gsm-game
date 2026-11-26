@@ -116,3 +116,8 @@ export async function loadLog(client: SupabaseClient, roomId: string): Promise<L
   if (error) return [];
   return ((data ?? []) as LogRow[]).map((r) => ({ ...r, fee: Number(r.fee), created_at: String(r.created_at) }));
 }
+
+/** A computer club pays for a player the manager listed in a shared league (the league's own rules are checked by the database). */
+export async function sellToComputer(client: SupabaseClient, listingId: string, club: string, fee: number, season: string, matchday: number): Promise<void> {
+  await must(client.rpc("listing_sell_to_computer", { p_listing: listingId, p_club: club, p_fee: fee, p_season: season, p_matchday: matchday }));
+}

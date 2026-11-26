@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { allClubs as clubs } from "@/lib/football/leagueClubs";
+import { allClubs as clubs, leagueOfClub } from "@/lib/football/leagueClubs";
 import type { MatchEvent } from "@/lib/football/matchSim";
 import { pick, studioScript, type Line } from "@/lib/football/commentary";
 import { commentatorFor, voiceOf } from "@/lib/football/commentators";
@@ -122,6 +122,8 @@ export default function MatchOverlay(props: Props) {
 function Studio({ homeClub, awayClub, myClub, label = "Today's match", onDone }: Props & { onDone: () => void }) {
   const home = clubOf(homeClub);
   const away = clubOf(awayClub);
+  // the Egyptian league has its own studio (green neon); every other league keeps the blue one
+  const egypt = leagueOfClub(myClub) === "egyptian-premier-league";
   const script = useMemo<Line[]>(
     () =>
       home && away
@@ -157,9 +159,9 @@ function Studio({ homeClub, awayClub, myClub, label = "Today's match", onDone }:
   }
 
   return (
-    <div className="bc bc-studio" role="dialog" aria-modal="true" aria-label="Studio" onClick={next}>
+    <div className={`bc bc-studio${egypt ? " is-egypt" : ""}`} role="dialog" aria-modal="true" aria-label="Studio" onClick={next}>
       <div className="bc-stage">
-        <img className="bc-studio-img" src="/studio/studio.jpg" alt="" />
+        <img className="bc-studio-img" src={egypt ? "/studio/studio-egypt.jpg" : "/studio/studio.jpg"} alt="" />
         <div className={`bc-dim is-left ${line.who === "f" ? "" : "is-on"}`} aria-hidden="true" />
         <div className={`bc-dim is-right ${line.who === "m" ? "" : "is-on"}`} aria-hidden="true" />
         <div className="bc-tv" aria-hidden="true">
