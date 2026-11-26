@@ -1,5 +1,6 @@
 "use client";
 
+import Flag from "@/components/Flag";
 import { pushPref } from "@/lib/prefsSync";
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
@@ -160,7 +161,7 @@ export default function SquadPage() {
         {photoOf(p) ? <PlayerFace player={p} /> : <s className="lu-ph" aria-hidden="true" />}
         <em className="lu-pos">{off ? `${p.position}>${opts.slot}` : p.position}</em>
         <b className="lu-rate">{p.rating}</b>
-        <span className="lu-name">{p.name}</span>
+        <span className="lu-name"><Flag code={p.nationality} />{p.name}</span>
       </button>
     );
   };

@@ -1,5 +1,6 @@
 "use client";
 
+import Flag from "@/components/Flag";
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
@@ -10,7 +11,7 @@ import { resetCareerData } from "@/lib/football/careerReset";
 import { loadCareers, switchCareer } from "@/lib/football/careers";
 import { baseLeague } from "@/lib/football/leagueIds";
 import { squadOf, type Player } from "@/lib/football/squads";
-import { loadSim, withTimeout } from "@/lib/football/strength";
+import { loadSim } from "@/lib/football/strength";
 import { playRoundOnServer, ownPrefs } from "@/lib/football/serverPlay";
 import { loadTransferState } from "@/lib/football/transfers";
 import { euroLogo } from "@/lib/football/europeClubs";
@@ -343,7 +344,7 @@ export default function EuropePage() {
                 {mySquad.filter((p) => p.position === pos).map((p) => (
                   <div className="cn-player" key={p.id}>
                     <span className="cn-no">{p.number ?? "-"}</span>
-                    <strong>{p.name}</strong>
+                    <strong><Flag code={p.nationality} />{p.name}</strong>
                     <small>{p.nationality} · {p.age}</small>
                     <b>{p.rating}</b>
                   </div>

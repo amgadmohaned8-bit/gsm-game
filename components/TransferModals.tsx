@@ -1,5 +1,6 @@
 "use client";
 
+import Flag from "@/components/Flag";
 import { useEffect, useRef, useState } from "react";
 import { allClubs as clubs } from "@/lib/football/leagueClubs";
 import { marketValue, type Player } from "@/lib/football/squads";
@@ -61,7 +62,7 @@ function PlayerHead({ player, sub }: { player: Player; sub: string }) {
         <small>{player.position}</small>
       </div>
       <div>
-        <h2>{player.name}</h2>
+        <h2><Flag code={player.nationality} />{player.name}</h2>
         <p>
           {player.age} years{player.nationality ? ` · ${player.nationality}` : ""} · {sub}
         </p>

@@ -1,5 +1,6 @@
 "use client";
 
+import Flag from "@/components/Flag";
 import { signingBan } from "@/lib/football/bank";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
@@ -471,7 +472,7 @@ export default function TransfersPage() {
                       <li key={l.id} className="tx-row is-market">
                         <b className={rateCls(p)}><PlayerFace player={p} className="tx-face" /><i>{p.rating}</i></b>
                         <span className="tx-name">
-                          <strong>{p.name}<em className="tr-tag is-new">For sale</em></strong>
+                          <strong><Flag code={p.nationality} />{p.name}<em className="tr-tag is-new">For sale</em></strong>
                           <small>{p.position} · {p.age} · {clubName(l.seller_club)}{seller ? ` · ${seller.name}` : own ? " · you" : ""} · value {money(marketValue(p))}</small>
                         </span>
                         <span className="tx-price"><small>Asking</small><b>{money(l.asking)}</b></span>
@@ -508,7 +509,7 @@ export default function TransfersPage() {
                       <li key={p.id} className="tx-row">
                         <b className={rateCls(p)}><PlayerFace player={p} className="tx-face" /><i>{p.rating}</i></b>
                         <span className="tx-name">
-                          <strong>{p.name}{onSale.isNew.has(p.id) && <em className="tr-tag is-new">New</em>}{onSale.leaving.has(p.id) && <em className="tr-tag is-leaving">Leaving soon</em>}</strong>
+                          <strong><Flag code={p.nationality} />{p.name}{onSale.isNew.has(p.id) && <em className="tr-tag is-new">New</em>}{onSale.leaving.has(p.id) && <em className="tr-tag is-leaving">Leaving soon</em>}</strong>
                           <small>{p.position} · {p.age} · {club ? club.name : sellerLabel(p)}</small>
                         </span>
                         <span className="tx-val">{originOf(p.id) === "Free" ? "Free agent" : "Base price"}</span>
@@ -534,7 +535,7 @@ export default function TransfersPage() {
                       if (!p) return null;
                       return (
                         <div key={`${o.player_id}-${o.matchday}`} className="tx-offer">
-                          <span><strong>{clubName(o.club)}</strong> offer {money(o.amount)} for <strong>{p.name}</strong></span>
+                          <span><strong>{clubName(o.club)}</strong> offer {money(o.amount)} for <strong><Flag code={p.nationality} />{p.name}</strong></span>
                           <button type="button" className="tx-btn" disabled={busy === p.id || !!canSell(mine, p)} onClick={() => acceptComputerOffer(p.id, o.club, o.amount)}>Accept</button>
                         </div>
                       );
@@ -551,7 +552,7 @@ export default function TransfersPage() {
                       <li key={p.id} className="tx-row is-sell">
                         <b className={rateCls(p)}><PlayerFace player={p} className="tx-face" /><i>{p.rating}</i></b>
                         <span className="tx-name">
-                          <strong>{p.name}{asking !== undefined && <em className="tr-tag is-leaving">Listed</em>}</strong>
+                          <strong><Flag code={p.nationality} />{p.name}{asking !== undefined && <em className="tr-tag is-leaving">Listed</em>}</strong>
                           <small>{p.position} · {p.age}{asking !== undefined ? ` · asking ${money(asking)}` : ""}</small>
                         </span>
                         <span className="tx-val">{money(marketValue(p))}</span>
@@ -686,7 +687,7 @@ export default function TransfersPage() {
                   <li key={p.id} className="tx-row is-market">
                     <b className={rateCls(p)}><PlayerFace player={p} className="tx-face" /><i>{p.rating}</i></b>
                     <span className="tx-name">
-                      <strong>{p.name}{l && <em className="tr-tag is-new">For sale</em>}</strong>
+                      <strong><Flag code={p.nationality} />{p.name}{l && <em className="tr-tag is-new">For sale</em>}</strong>
                       <small>{p.position} · {p.age} · {p.nationality || "-"}</small>
                     </span>
                     <span className="tx-price"><small>{l ? "Asking" : "Value"}</small><b>{money(l ? l.asking : marketValue(p))}</b></span>

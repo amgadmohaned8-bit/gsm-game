@@ -1,5 +1,6 @@
 "use client";
 
+import Flag from "@/components/Flag";
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
@@ -130,7 +131,7 @@ export default function ContractsPage() {
           {rows.map(({ p, c, left }, i) => (
             <li key={p.id} style={{ animationDelay: `${Math.min(i, 20) * 16}ms` }} className={left <= 1 ? "is-exp" : ""}>
               <b>{p.rating}</b>
-              <div><strong>{p.name}</strong><small>{p.position} · {p.age} yrs</small></div>
+              <div><strong><Flag code={p.nationality} />{p.name}</strong><small>{p.position} · {p.age} yrs</small></div>
               <span className="ct-wage">{c.wage.toFixed(2)}M<small>a year</small></span>
               <span className={`ct-left ${left <= 1 ? "is-exp" : ""}`}>{left <= 1 ? "Last season" : `${left} seasons`}<small>until {c.endYear + 1}</small></span>
               <button type="button" className="ct-renew" onClick={() => start(p)}>Renew</button>

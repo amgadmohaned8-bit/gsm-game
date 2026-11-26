@@ -114,8 +114,11 @@ export async function loadSim(
   let fitness: Record<string, number> = {};
   try {
     const state = await withTimeout(loadTransferState(client, opts.userId, opts.clubId, opts.season, opts.matchday, opts.leagueId ?? undefined), 8000);
-    if (opts.matchday !== null) squads = squadsAt(state.deals, opts.season, opts.matchday, state.training, { club: opts.clubId, renewals: state.renewals });
-    else squads = state.squads; // a cup or European match: the club as it is today, signings included
+    if (opts.matchday !== null) {
+      squads = squadsAt(state.deals, opts.season, opts.matchday, state.training, { club: opts.clubId, renewals: state.renewals });
+      // the other clubs as they really are: a player a friend or a computer club sold is no longer there
+      for (const [club, list] of Object.entries(state.squads)) if (club !== opts.clubId) squads[club] = list;
+    } else squads = state.squads; // a cup or European match: the club as it is today, signings included
     const mySquad = state.squads[opts.clubId] ?? [];
     if (opts.matchday !== null) fitness = await withTimeout(loadFitness(client, opts.userId, opts.season, opts.matchday, state.training, mySquad), 6000).catch(() => ({}));
     const day = opts.matchday !== null ? { key: opts.roomId ?? opts.userId, season: opts.season, matchday: opts.matchday, fit: fitness } : undefined;

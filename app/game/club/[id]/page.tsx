@@ -1,5 +1,6 @@
 "use client";
 
+import Flag from "@/components/Flag";
 import { signingBan } from "@/lib/football/bank";
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
@@ -136,7 +137,7 @@ export default function ClubPage() {
               <button key={p.id} type="button" className="tr-star gx-cut" style={{ animationDelay: `${i * 90}ms` }} onClick={() => setBid(p)}>
                 <em className="tr-shine" aria-hidden="true" />
                 <b>{p.rating}</b>
-                <strong>{p.name}</strong>
+                <strong><Flag code={p.nationality} />{p.name}</strong>
                 <small>{p.position} · {p.age}</small>
                 <span>Value about {money(marketValue(p))}</span>
                 <i aria-hidden="true">Make an offer</i>
@@ -157,7 +158,7 @@ export default function ClubPage() {
                     <div className="tr-row cl-row">
                       <b className={`tr-rate ${p.rating >= 85 ? "is-elite" : p.rating >= 78 ? "is-high" : ""}`}>{p.rating}</b>
                       <span className="tr-name">
-                        <strong>{p.name}</strong>
+                        <strong><Flag code={p.nationality} />{p.name}</strong>
                         <small>{p.position} · {p.age} · {p.nationality || "-"}</small>
                       </span>
                       <span className="tr-val">{money(marketValue(p))}</span>

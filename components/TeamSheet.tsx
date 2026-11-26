@@ -1,5 +1,6 @@
 "use client";
 
+import Flag from "@/components/Flag";
 import { useMemo, useState } from "react";
 import { absenceOn } from "@/lib/football/availability";
 import { bestEleven, formations, type FormationName, type Player } from "@/lib/football/squads";
@@ -115,7 +116,7 @@ export default function TeamSheet({
               <ul>
                 {out.map(({ p, a }) => (
                   <li key={p.id} className={a!.kind}>
-                    <strong>{p.name}</strong>
+                    <strong><Flag code={p.nationality} />{p.name}</strong>
                     <small>{a!.kind === "ban" ? "Suspended" : a!.label} · back matchday {a!.to + 1}</small>
                   </li>
                 ))}

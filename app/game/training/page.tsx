@@ -1,26 +1,10 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
-import {
-  levelOf,
-  loadUnlocked,
-  xpOf,
-  trainingBoost,
-  capBoost,
-} from "@/lib/football/badges";
-import {
-  finishesAt,
-  gainsAt,
-  phase,
-  progressOf,
-  seasonCap,
-  sessionGain,
-  SLOTS,
-  TRAIN_HOURS,
-  TRAIN_MS,
-} from "@/lib/football/development";
+import { levelOf, loadUnlocked, xpOf, trainingBoost, capBoost } from "@/lib/football/badges";
+import { finishesAt, gainsAt, phase, progressOf, seasonCap, sessionGain, SLOTS, TRAIN_HOURS, TRAIN_MS } from "@/lib/football/development";
 import { alertAt } from "@/lib/notify";
 import { useTransfers } from "@/lib/football/useTransfers";
 import type { Player, Position } from "@/lib/football/squads";
@@ -28,54 +12,25 @@ import GsmMark from "@/components/GsmMark";
 import DxBar from "@/components/DxBar";
 import { seasonLabel } from "@/lib/football/season";
 import PlayerFace from "@/components/PlayerFace";
-import { kitOf } from "@/lib/football/kits";
-import { nowMs } from "@/lib/serverTime";
 import "./training.css";
 
+import { nowMs } from "@/lib/serverTime";
 type Filter = "ALL" | "YOUNG";
-
-const TYPES: {
-  pos: Position;
-  title: string;
-  short: string;
-  tone: string;
-}[] = [
-  { pos: "GK", title: "Goalkeepers", short: "GK", tone: "gk" },
-  { pos: "DF", title: "Defenders", short: "DF", tone: "df" },
-  { pos: "MF", title: "Midfielders", short: "MF", tone: "mf" },
-  { pos: "FW", title: "Forwards", short: "FW", tone: "fw" },
-];
 
 export default function TrainingPage() {
   const router = useRouter();
   const { ctx, loading, error, reload } = useTransfers();
-
   const [level, setLevel] = useState(1);
   const [filter, setFilter] = useState<Filter>("ALL");
-  const [pos, setPos] = useState<Position>("FW");
-  const [busyIds, setBusyIds] = useState<string[]>([]);
+  const [sel, setSel] = useState<Position | null>(null);
+  const [busy, setBusy] = useState(false);
   const [problem, setProblem] = useState("");
-  const [result, setResult] = useState<{
-    name: string;
-    gain: number;
-  } | null>(null);
+  const [result, setResult] = useState<{ name: string; gain: number } | null>(null);
 
   const uid = ctx?.userId;
-
   useEffect(() => {
-    if (!uid) return;
-
-    let active = true;
-
-    loadUnlocked(supabase, uid).then((ids) => {
-      if (active) setLevel(levelOf(xpOf(ids)));
-    });
-
-    return () => {
-      active = false;
-    };
+    if (uid) loadUnlocked(supabase, uid).then((ids) => setLevel(levelOf(xpOf(ids))));
   }, [uid]);
-
   const boost = trainingBoost(level);
   const cap = (age: number) => seasonCap(age) * capBoost(level);
 
@@ -84,241 +39,56 @@ export default function TrainingPage() {
   const day = ctx?.matchday ?? null;
 
   const [now, setNow] = useState(0);
-
   useEffect(() => {
     setNow(nowMs());
-
-    const timer = setInterval(() => {
-      setNow(nowMs());
-    }, 1000);
-
-    return () => clearInterval(timer);
+    const t = setInterval(() => setNow(nowMs()), 1000);
+    return () => clearInterval(t);
   }, []);
 
-  const running = useMemo(() => {
-    if (!now) return [];
-
-    return training
-      .filter((item) => {
-        const end = finishesAt(item);
-        return end !== null && end > now;
-      })
-      .sort(
-        (a, b) =>
-          (finishesAt(a) ?? 0) - (finishesAt(b) ?? 0)
-      );
-  }, [now, training]);
-
+  /** the session in progress: its players and when it ends (8 hours after it started) */
+  const doneToday = useMemo(
+    () => (now ? training.filter((t) => { const end = finishesAt(t); return end !== null && end > now; }) : []),
+    [now, training]
+  );
+  const running = useMemo(() => doneToday.slice().sort((a, b) => (finishesAt(a) ?? 0) - (finishesAt(b) ?? 0)), [doneToday]);
   const wasCount = useRef(0);
-
   useEffect(() => {
-    if (running.length < wasCount.current) {
-      void reload();
-    }
-
+    // someone just finished while the page is open: load the new ratings
+    if (running.length < wasCount.current) void reload();
     wasCount.current = running.length;
   }, [running.length, reload]);
-
-  const runKey = running
-    .map((item) => `${item.player_id}:${item.created_at}`)
-    .join("|");
-
+  const runKey = running.map((t) => `${t.player_id}:${t.created_at}`).join("|");
   useEffect(() => {
-    running.forEach((item, index) => {
-      const end = finishesAt(item);
-
-      if (end) {
-        void alertAt(
-          40 + index,
-          end,
-          "Training finished",
-          "A player finished training."
-        );
-      }
+    running.forEach((t, i) => {
+      const end = finishesAt(t);
+      if (end) void alertAt(40 + i, end, "Training finished", "A player finished training. Start the next one.");
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [runKey]);
-
-  const byId = useMemo(
-    () => new Map(squad.map((player) => [player.id, player])),
-    [squad]
-  );
-
-  const runningByPosition = useMemo(() => {
-    const map: Partial<Record<Position, (typeof running)[number]>> = {};
-
-    running.forEach((item) => {
-      const player = byId.get(item.player_id);
-      if (player) map[player.position] = item;
-    });
-
-    return map;
-  }, [running, byId]);
-
   const seasonGain = useMemo(() => {
     const out: Record<string, number> = {};
-
     if (!ctx) return out;
-
-    for (const item of training) {
-      if (item.season === ctx.season) {
-        out[item.player_id] =
-          (out[item.player_id] ?? 0) + Number(item.gain);
-      }
-    }
-
+    for (const t of training) if (t.season === ctx.season) out[t.player_id] = (out[t.player_id] ?? 0) + Number(t.gain);
     return out;
   }, [ctx, training]);
 
-  const finished = useMemo(
-    () =>
-      ctx
-        ? gainsAt(
-            training,
-            ctx.season,
-            ctx.matchday ?? 99,
-            squad
-          )
-        : {},
-    [ctx, training, squad]
-  );
-
-  const trainingIds = useMemo(
-    () => new Set(running.map((item) => item.player_id)),
-    [running]
-  );
+  /** finished training per player (the green bar) and what the running session will add */
+  const finished = useMemo(() => (ctx ? gainsAt(training, ctx.season, ctx.matchday ?? 99, squad) : {}), [ctx, training, squad]);
+  const pendingGain = useMemo(() => {
+    const out: Record<string, number> = {};
+    doneToday.forEach((t) => { out[t.player_id] = (out[t.player_id] ?? 0) + Number(t.gain); });
+    return out;
+  }, [doneToday]);
 
   const rows = useMemo(() => {
-    return squad
-      .filter(
-        (player) =>
-          player.position === pos &&
-          (filter === "ALL" || player.age <= 23)
-      )
-      .sort(
-        (a, b) =>
-          a.age - b.age || b.rating - a.rating
-      );
-  }, [squad, filter, pos]);
-
-  const kit = kitOf(ctx?.clubId ?? "")[0];
-
-  function runningFor(position: Position) {
-    return runningByPosition[position];
-  }
-
-  function playerFor(position: Position) {
-    const item = runningFor(position);
-    return item ? byId.get(item.player_id) : undefined;
-  }
-
-  function clock(ms: number) {
-    const total = Math.max(0, Math.floor(ms / 1000));
-    const hours = Math.floor(total / 3600);
-    const minutes = Math.floor((total % 3600) / 60);
-    const seconds = total % 60;
-
-    return [
-      String(hours).padStart(2, "0"),
-      String(minutes).padStart(2, "0"),
-      String(seconds).padStart(2, "0"),
-    ].join(":");
-  }
-
-  function previewGain(player: Player) {
-    const spent = seasonGain[player.id] ?? 0;
-    const remaining = Math.max(0, cap(player.age) - spent);
-
-    return Math.max(
-      0,
-      Math.min(
-        sessionGain(player.age) * boost,
-        remaining
-      )
-    );
-  }
-
-  function selectPosition(position: Position) {
-    setPos(position);
-    setFilter("ALL");
-    setProblem("");
-    setResult(null);
-  }
-
-  async function train(player: Player) {
-    if (!ctx || day === null || busyIds.includes(player.id)) return;
-
-    if (trainingIds.has(player.id)) {
-      setProblem("This player is already training.");
-      return;
-    }
-
-    if (runningFor(player.position)) {
-      setProblem(
-        `The ${player.position} training place is already occupied.`
-      );
-      return;
-    }
-
-    if (running.length >= SLOTS) {
-      setProblem("All four training places are currently occupied.");
-      return;
-    }
-
-    const gain = previewGain(player);
-
-    if (gain <= 0) {
-      setProblem(
-        "This player has reached his season development limit."
-      );
-      return;
-    }
-
-    setBusyIds((previous) => [...previous, player.id]);
-    setProblem("");
-    setResult(null);
-
-    try {
-      const row = {
-        user_id: ctx.userId,
-        league_id: ctx.leagueId,
-        season: ctx.season,
-        matchday: day,
-        player_id: player.id,
-        gain: Math.round(gain * 100) / 100,
-      };
-
-      const { error: insertError } = await supabase
-        .from("training_sessions")
-        .insert(row);
-
-      if (insertError) throw insertError;
-
-      void alertAt(
-        40 + running.length,
-        nowMs() + TRAIN_MS,
-        "Training finished",
-        `${player.name} finished training.`
-      );
-
-      setResult({
-        name: player.name,
-        gain: row.gain,
-      });
-
-      await reload();
-    } catch (err) {
-      console.error("Training error:", err);
-
-      setProblem(
-        "The session did not save. Make sure supabase/010_training.sql and 015_training_cooldown.sql have been run."
-      );
-    } finally {
-      setBusyIds((previous) =>
-        previous.filter((id) => id !== player.id)
-      );
-    }
-  }
+    const list = squad.filter((p) => p.position === sel && (filter === "ALL" || p.age <= 23));
+    return list.slice().sort((a, b) => a.age - b.age || b.rating - a.rating);
+  }, [squad, filter, sel]);
+  useEffect(() => {
+    if (!result) return;
+    const t = setTimeout(() => setResult(null), 5000);
+    return () => clearTimeout(t);
+  }, [result]);
 
   if (loading || !ctx) {
     return (
@@ -329,421 +99,171 @@ export default function TrainingPage() {
     );
   }
 
-  const selectedRunning = runningFor(pos);
-  const selectedPlayer = playerFor(pos);
+  const byId = new Map(squad.map((p) => [p.id, p]));
+  const posOf = (id: string) => byId.get(id)?.position;
+  const runningBy = (k: Position) => running.filter((t) => posOf(t.player_id) === k).length;
+  const trainingIds = new Set(running.map((t) => t.player_id));
 
-  const chips: [Filter, string][] = [
-    ["ALL", "All players"],
-    ["YOUNG", "Under 24"],
+  /** four sessions at a time, and every position keeps a place: nobody can fill the board with one position */
+  function slotProblem(k: Position): string {
+    if (day === null) return "The season is over.";
+    if (runningBy(k) > 0) return "This place is busy. Wait for the player to finish.";
+    const others = (["GK", "DF", "MF", "FW"] as Position[]).filter((x) => x !== k && runningBy(x) === 0).length;
+    const reserved = runningBy(k) === 0 ? 0 : others;
+    if (running.length + reserved >= SLOTS) {
+      return running.length >= SLOTS ? "All four training places are busy. Wait for a player to finish." : "Keep a place free for the other positions: train a goalkeeper, defender, midfielder and forward first.";
+    }
+    return "";
+  }
+
+  /** one tap starts that player's own 8 hour countdown */
+  async function train(p: Player) {
+    if (!ctx || day === null || busy || trainingIds.has(p.id)) return;
+    const why = slotProblem(p.position);
+    if (why) { setProblem(why); setSel(null); return; }
+    setBusy(true);
+    setProblem("");
+    try {
+      const spent = seasonGain[p.id] ?? 0;
+      const gain = Math.max(0, Math.min(sessionGain(p.age) * boost, cap(p.age) - spent));
+      const row = { user_id: ctx.userId, league_id: ctx.leagueId, season: ctx.season, matchday: day, player_id: p.id, gain: Math.round(gain * 100) / 100 };
+      const { error: insertError } = await supabase.from("training_sessions").insert(row);
+      if (insertError) throw insertError;
+      void alertAt(40 + running.length, nowMs() + TRAIN_MS, "Training finished", `${p.name} finished training.`);
+      setResult({ name: p.name, gain: row.gain });
+      setSel(null);
+      await reload();
+    } catch (err) {
+      console.error("Training error:", err);
+      setProblem("The session did not save. Make sure supabase/010_training.sql and 015_training_cooldown.sql have been run.");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  function left(ms: number) {
+    const m = Math.max(0, Math.ceil(ms / 60000));
+    return m >= 60 ? `${Math.floor(m / 60)}h ${m % 60}m left` : `${m}m left`;
+  }
+  function clock(ms: number) {
+    const t = Math.max(0, Math.floor(ms / 1000));
+    const h = Math.floor(t / 3600), m = Math.floor((t % 3600) / 60), sec = t % 60;
+    return `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}:${String(sec).padStart(2, "0")}`;
+  }
+  function left(ms: number) {
+    const m = Math.max(0, Math.ceil(ms / 60000));
+    return m >= 60 ? `${Math.floor(m / 60)}h ${m % 60}m left` : `${m}m left`;
+  }
+  function clock(ms: number) {
+    const t = Math.max(0, Math.floor(ms / 1000));
+    const h = Math.floor(t / 3600), m = Math.floor((t % 3600) / 60), sec = t % 60;
+    return `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}:${String(sec).padStart(2, "0")}`;
+  }
+  const posIcon = (k: Position) =>
+    k === "GK" ? <path d="M8 21v-7l-2-4 2-1 1 2V5l2 0v6l1-7 2 0v7l1-5 2 1-1 7 2 4v8z" fill="currentColor" /> :
+    k === "DF" ? <path d="M12 2l8 3v6c0 5-3.5 9-8 11-4.5-2-8-6-8-11V5z" fill="currentColor" /> :
+    k === "MF" ? <g fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="9" /><path d="M12 7l4 3-1.5 5h-5L8 10z" /></g> :
+    <g fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="8" /><circle cx="12" cy="12" r="3" /><path d="M12 1v5M12 18v5M1 12h5M18 12h5" /></g>;
+  const TYPES: { pos: Position; title: string; tone: string }[] = [
+    { pos: "GK", title: "Goalkeeper", tone: "gk" },
+    { pos: "DF", title: "Defenders", tone: "df" },
+    { pos: "MF", title: "Midfielders", tone: "mf" },
+    { pos: "FW", title: "Forwards", tone: "fw" },
   ];
-
-  const posIcon = (position: Position) => {
-    if (position === "GK") {
-      return (
-        <path
-          d="M8 21v-7l-2-4 2-1 1 2V5l2 0v6l1-7 2 0v7l1-5 2 1-1 7 2 4v8z"
-          fill="currentColor"
-        />
-      );
-    }
-
-    if (position === "DF") {
-      return (
-        <path
-          d="M12 2l8 3v6c0 5-3.5 9-8 11-4.5-2-8-6-8-11V5z"
-          fill="currentColor"
-        />
-      );
-    }
-
-    if (position === "MF") {
-      return (
-        <g
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="2"
-        >
-          <circle cx="12" cy="12" r="9" />
-          <path d="M12 7l4 3-1.5 5h-5L8 10z" />
-        </g>
-      );
-    }
-
-    return (
-      <g
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="2"
-      >
-        <circle cx="12" cy="12" r="8" />
-        <circle cx="12" cy="12" r="3" />
-        <path d="M12 1v5M12 18v5M1 12h5M18 12h5" />
-      </g>
-    );
-  };
+  const chips: [Filter, string][] = [["ALL", "All ages"], ["YOUNG", "23 and under"]];
+  const open = TYPES.find((t) => t.pos === sel);
 
   return (
     <main className="tc dxp">
-      <DxBar
-        title="Training"
-        onBack={() => router.push("/game/dashboard")}
-        season={seasonLabel(ctx.season)}
-      />
+      <DxBar title="Training" onBack={() => router.push("/game/dashboard")} season={ctx.season ? seasonLabel(ctx.season) : undefined} />
 
       <div className="tc-wrap">
-        <header className="tc-heading">
-          <div>
-            <span className="tc-eyebrow">PLAYER DEVELOPMENT</span>
-            <h1>Training Ground</h1>
-            <p>
-              Choose one player for each position and develop your squad.
-            </p>
-          </div>
+        <p className="tc-hint">Tap a place and choose a player. His {TRAIN_HOURS} hour countdown starts at once. Coach level {level}: +{Math.round((boost - 1) * 100)}%.</p>
 
-          <div className="tc-duration">
-            <span>SESSION DURATION</span>
-            <strong>{TRAIN_HOURS} HOURS</strong>
-          </div>
-        </header>
+        {problem && <p className="tc-problem" role="alert" onClick={() => setProblem("")}>{problem}</p>}
+        {result && <p className="tc-result" role="status">{result.name} started training (+{result.gain.toFixed(2)}).</p>}
 
-        <section className="tc-board">
-          <div className="tc-section-heading">
-            <div>
-              <span className="tc-eyebrow">YOUR TRAINING SLOTS</span>
-              <h2>Choose a position</h2>
-            </div>
-
-            <span className="tc-slot-count">
-              {running.length}/{SLOTS} ACTIVE
-            </span>
-          </div>
-
-          <div className="tc-types">
-            {TYPES.map((type) => {
-              const active = runningFor(type.pos);
-              const player = playerFor(type.pos);
-              const end = active ? finishesAt(active) : null;
-              const gain = active ? Number(active.gain) : 0;
-
-              const share =
-                end && now
-                  ? Math.min(
-                      1,
-                      Math.max(0, 1 - (end - now) / TRAIN_MS)
-                    )
-                  : 0;
-
-              const selected = pos === type.pos;
-
-              const count = squad.filter(
-                (item) => item.position === type.pos
-              ).length;
-
-              return (
-                <button
-                  key={type.pos}
-                  type="button"
-                  className={`tc-type is-${type.tone} ${
-                    selected ? "is-selected" : ""
-                  } ${active ? "is-active" : ""}`}
-                  onClick={() => selectPosition(type.pos)}
-                  style={{ "--kit": kit } as CSSProperties}
-                  aria-pressed={selected}
-                >
-                  <span className="tc-type-top">
-                    <span className="tc-position-icon">
-                      <svg viewBox="0 0 24 24">
-                        {posIcon(type.pos)}
-                      </svg>
+        <section className="tc-places" aria-label="Training places">
+          {TYPES.map((t) => {
+            const run = running.find((r) => posOf(r.player_id) === t.pos);
+            const p = run ? byId.get(run.player_id) : undefined;
+            const end = run ? finishesAt(run) : null;
+            const share = end && now ? Math.min(1, Math.max(0, 1 - (end - now) / TRAIN_MS)) : 0;
+            const n = squad.filter((x) => x.position === t.pos).length;
+            const prog = p ? progressOf(finished[p.id] ?? 0) : 0;
+            const wait = p ? Math.min(1 - prog, pendingGain[p.id] ?? 0) : 0;
+            return (
+              <button key={t.pos} type="button" className={`tc-place is-${t.tone} ${p ? "is-run" : ""}`} disabled={!!p || day === null} onClick={() => { setProblem(""); setFilter("ALL"); setSel(t.pos); }} aria-label={p ? `${t.title}: ${p.name} is training` : `Choose a ${t.title}`}>
+                <span className="tc-ptitle">{t.title}<em>{n}</em></span>
+                {p ? (
+                  <>
+                    <span className="tc-photo">
+                      <span className="tc-sil" aria-hidden="true" />
+                      <PlayerFace player={p} />
+                      <b>{p.rating}</b>
                     </span>
-
-                    <span className="tc-position-code">
-                      {type.short}
+                    <strong className="tc-pname">{p.name}</strong>
+                    <span className="tc-count" role="timer">{end ? clock(end - now) : clock(TRAIN_MS)}</span>
+                    <span className="tc-meter"><i style={{ width: `${share * 100}%` }} /></span>
+                    <span className="tc-prog" aria-hidden="true">
+                      <em className="is-done" style={{ width: `${prog * 100}%` }} />
+                      <em className="is-wait" style={{ width: `${wait * 100}%` }} />
                     </span>
-                  </span>
-
-                  <span className="tc-type-name">
-                    {type.title}
-                  </span>
-
-                  {player && active ? (
-                    <span className="tc-active-player">
-                      <span className="tc-active-face">
-                        <PlayerFace player={player} />
-                      </span>
-
-                      <span className="tc-active-info">
-                        <strong>{player.name}</strong>
-                        <small>
-                          Rating {player.rating} · +{gain.toFixed(2)}
-                        </small>
-                      </span>
-                    </span>
-                  ) : (
-                    <span className="tc-empty-slot">
-                      <span className="tc-plus">+</span>
-                      <span>Choose a player</span>
-                    </span>
-                  )}
-
-                  {active && end ? (
-                    <span className="tc-type-progress">
-                      <span className="tc-type-timer">
-                        {clock(end - now)}
-                      </span>
-
-                      <span className="tc-meter">
-                        <i style={{ width: `${share * 100}%` }} />
-                      </span>
-                    </span>
-                  ) : (
-                    <span className="tc-type-footer">
-                      {count} players available
-                      <span>›</span>
-                    </span>
-                  )}
-                </button>
-              );
-            })}
-          </div>
+                    <small>{Math.round(prog * 100)}% → {Math.round((prog + wait) * 100)}% to {p.rating + 1}</small>
+                  </>
+                ) : (
+                  <span className="tc-empty"><svg width="44" height="44" viewBox="0 0 24 24" aria-hidden="true">{posIcon(t.pos)}</svg><b>Choose player</b></span>
+                )}
+              </button>
+            );
+          })}
         </section>
+      </div>
 
-        {problem && (
-          <div className="tc-message tc-error" role="alert">
-            {problem}
-          </div>
-        )}
-
-        {result && (
-          <div className="tc-message tc-success" role="status">
-            <strong>{result.name}</strong> started training.
-            <span> +{result.gain.toFixed(2)} development</span>
-          </div>
-        )}
-
-        <section className="tc-picker">
-          <div className="tc-picker-heading">
-            <div>
-              <span className="tc-eyebrow">
-                {TYPES.find((type) => type.pos === pos)?.short} SQUAD
-              </span>
-
-              <h2>
-                {TYPES.find((type) => type.pos === pos)?.title}
-              </h2>
-
-              <p>
-                {selectedRunning
-                  ? "This position is currently occupied."
-                  : "Select a player to start his individual training."}
-              </p>
-            </div>
-
-            <div className="tc-filters">
-              {chips.map(([id, label]) => (
-                <button
-                  key={id}
-                  type="button"
-                  aria-pressed={filter === id}
-                  onClick={() => setFilter(id)}
-                >
-                  {label}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {selectedRunning && selectedPlayer ? (
-            <div className="tc-occupied">
-              <div className="tc-occupied-face">
-                <PlayerFace player={selectedPlayer} />
+      {open && (
+        <div className="tc-sheet-bg" onClick={() => setSel(null)}>
+          <section className="tc-sheet" role="dialog" aria-label={`Choose ${open.title}`} onClick={(e) => e.stopPropagation()}>
+            <header>
+              <h2>{open.title}</h2>
+              <div className="tc-filters" role="group" aria-label="Filter by age">
+                {chips.map(([id, label]) => (
+                  <button key={id} type="button" aria-pressed={filter === id} onClick={() => setFilter(id)}>{label}</button>
+                ))}
               </div>
-
-              <div className="tc-occupied-info">
-                <span className="tc-live-label">
-                  <i />
-                  TRAINING IN PROGRESS
-                </span>
-
-                <h3>{selectedPlayer.name}</h3>
-
-                <p>
-                  {selectedPlayer.position} · Rating {selectedPlayer.rating}
-                </p>
-
-                <div className="tc-meter">
-                  {(() => {
-                    const end = finishesAt(selectedRunning);
-
-                    const share =
-                      end && now
-                        ? Math.min(
-                            1,
-                            Math.max(0, 1 - (end - now) / TRAIN_MS)
-                          )
-                        : 0;
-
-                    return (
-                      <i style={{ width: `${share * 100}%` }} />
-                    );
-                  })()}
-                </div>
-              </div>
-
-              <div className="tc-occupied-timer">
-                <span>TIME LEFT</span>
-
-                <strong>
-                  {clock(
-                    (finishesAt(selectedRunning) ?? now) - now
-                  )}
-                </strong>
-
-                <small>
-                  +{Number(selectedRunning.gain).toFixed(2)} development
-                </small>
-              </div>
-            </div>
-          ) : (
-            <ul className="tc-grid">
-              {rows.map((player, index) => {
-                const trained = trainingIds.has(player.id);
-                const busy = busyIds.includes(player.id);
-
-                const currentProgress = progressOf(
-                  finished[player.id] ?? 0
-                );
-
-                const gain = previewGain(player);
-
-                const projected = Math.min(
-                  1 - currentProgress,
-                  gain
-                );
-
-                const atCap = gain <= 0;
-                const playerPhase = phase(player.age);
-
+              <button type="button" className="tc-x" onClick={() => setSel(null)} aria-label="Close">×</button>
+            </header>
+            <ul className="tc-list">
+              {rows.map((p) => {
+                const spent = seasonGain[p.id] ?? 0;
+                const atCap = spent >= cap(p.age) - 0.005;
+                const prog = progressOf(finished[p.id] ?? 0);
+                const add = atCap ? 0 : Math.max(0, Math.min(sessionGain(p.age) * boost, cap(p.age) - spent));
+                const done = Math.min(1 - prog, add);
+                const full = prog + add >= 0.995;
+                const ph = phase(p.age);
                 return (
-                  <li
-                    key={player.id}
-                    style={{
-                      animationDelay: `${Math.min(index, 16) * 25}ms`,
-                    }}
-                  >
-                    <button
-                      type="button"
-                      className={`tc-card ph-${playerPhase} ${
-                        trained ? "is-trained" : ""
-                      } ${busy ? "is-busy" : ""}`}
-                      onClick={() => void train(player)}
-                      disabled={
-                        trained ||
-                        busy ||
-                        !!selectedRunning ||
-                        day === null ||
-                        atCap
-                      }
-                    >
-                      <span className="tc-card-top">
-                        <span className="tc-card-position">
-                          {player.position}
-                        </span>
-
-                        <span className="tc-card-phase">
-                          {playerPhase}
+                  <li key={p.id}>
+                    <button type="button" className={`tc-row ph-${ph}`} onClick={() => void train(p)} disabled={busy || atCap}>
+                      <b>{p.rating}</b>
+                      <span className="tc-who">
+                        <strong>{p.name}</strong>
+                        <small>{p.age} yrs · {ph === "rising" ? "Rising" : ph === "prime" ? "Prime" : "Declining"}</small>
+                        <span className="tc-prog" aria-hidden="true">
+                          <em className="is-done" style={{ width: `${prog * 100}%` }} />
+                          <em className="is-wait" style={{ width: `${done * 100}%` }} />
                         </span>
                       </span>
-
-                      <span className="tc-player-visual">
-                        <span className="tc-player-photo">
-                          <PlayerFace player={player} />
-                        </span>
-
-                        <span className="tc-rating">
-                          {player.rating}
-                          <small>OVR</small>
-                        </span>
-                      </span>
-
-                      <span className="tc-player-name">
-                        {player.name}
-                      </span>
-
-                      <span className="tc-player-age">
-                        {player.age} YEARS OLD
-                      </span>
-
-                      <span className="tc-next-session">
-                        <span>NEXT SESSION</span>
-
-                        <strong>
-                          {atCap ? "MAX" : `+${gain.toFixed(2)}`}
-                        </strong>
-                      </span>
-
-                      <span className="tc-development-label">
-                        <span>DEVELOPMENT</span>
-
-                        <strong>
-                          {Math.round(currentProgress * 100)}%
-                          {projected > 0
-                            ? ` → ${Math.round(
-                                (currentProgress + projected) * 100
-                              )}%`
-                            : ""}
-                        </strong>
-                      </span>
-
-                      <span className="tc-prog">
-                        <i
-                          className="is-done"
-                          style={{
-                            width: `${currentProgress * 100}%`,
-                          }}
-                        />
-
-                        <i
-                          className="is-preview"
-                          style={{
-                            width: `${projected * 100}%`,
-                          }}
-                        />
-                      </span>
-
-                      <span className="tc-card-action">
-                        {trained
-                          ? "Training in progress"
-                          : busy
-                          ? "Starting..."
-                          : atCap
-                          ? "Season limit reached"
-                          : "Select player  ›"}
-                      </span>
+                      <span className="tc-end">{atCap ? "Season limit" : full ? `+1 rating` : `${Math.round(prog * 100)}→${Math.round((prog + add) * 100)}%`}</span>
                     </button>
                   </li>
                 );
               })}
-
-              {rows.length === 0 && (
-                <li className="tc-none">
-                  No players available in this position.
-                </li>
-              )}
+              {rows.length === 0 && <li className="tc-none">No players here{filter === "YOUNG" ? " aged 23 or under" : ""}.</li>}
             </ul>
-          )}
-        </section>
-
-        <footer className="tc-footer">
-          <span>Coach level {level}</span>
-
-          <span>
-            Training bonus +{Math.round((boost - 1) * 100)}%
-          </span>
-
-          <span>One player per position</span>
-        </footer>
-      </div>
+            <p className="tc-legend"><i className="d" /> his progress now <i className="l" /> what this session adds</p>
+          </section>
+        </div>
+      )}
     </main>
   );
 }

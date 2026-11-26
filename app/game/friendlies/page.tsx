@@ -13,6 +13,7 @@ import { friendlyOnServer } from "@/lib/football/serverPlay";
 import { currentLineup, loadSim, withTimeout } from "@/lib/football/strength";
 import { sessionGain } from "@/lib/football/development";
 import { squadOf, teamRating } from "@/lib/football/squads";
+import { aiStyle, matchup } from "@/lib/football/tactics";
 import GsmMark from "@/components/GsmMark";
 import DxBar from "@/components/DxBar";
 import MatchOverlay from "@/components/MatchOverlay";
@@ -119,7 +120,7 @@ export default function FriendliesPage() {
     setError("");
     try {
       // the server plays it (venue, shine and score); the old way below is only for before it is deployed
-      const served = await withTimeout(friendlyOnServer(supabase, season, slot, target, friends[target]?.name ?? null), 25000);
+      const served = await withTimeout(friendlyOnServer(supabase, season, slot, target, friends[target]?.name ?? null, friends[target]?.user_id ?? null), 25000);
       let homeClub: string;
       let awayClub: string;
       let result: SimulationResult;
@@ -137,6 +138,9 @@ export default function FriendliesPage() {
         const shine = 4 + Math.floor(Math.random() * 4);
         homeClub = home ? myClub : target;
         awayClub = home ? target : myClub;
+        const mine = sim.style;
+        const theirs = mine ? aiStyle(target) : undefined;
+        const edge = mine && theirs ? matchup(mine, theirs) : 0;
         result = simulateFixture({
           leagueKey: `friendly|${userId}`,
           season,
@@ -144,8 +148,9 @@ export default function FriendliesPage() {
           homeClub,
           awayClub,
           // in a friendly my players shine: a few rating points more than usual, like a team in top form
-          homeBonus: (sim.bonus[homeClub] ?? 0) + (homeClub === myClub ? shine : 0),
-          awayBonus: (sim.bonus[awayClub] ?? 0) + (awayClub === myClub ? shine : 0),
+          homeBonus: (sim.bonus[homeClub] ?? 0) + (homeClub === myClub ? shine + edge : 0),
+          awayBonus: (sim.bonus[awayClub] ?? 0) + (awayClub === myClub ? shine + edge : 0),
+          ...(mine && theirs ? { homeStyle: homeClub === myClub ? mine : theirs, awayStyle: awayClub === myClub ? mine : theirs } : {}),
           squads: sim.squads,
         });
         const { error: insertError } = await supabase.from("friendlies").insert({

@@ -61,8 +61,8 @@ export function ownPrefs(userId: string): Record<string, string> {
 }
 
 /** A friendly played by the server ("play-friendly"). Null when the function is not deployed yet. */
-export async function friendlyOnServer(client: SupabaseClient, season: string, slot: number, opponent: string, oppManager: string | null): Promise<{ home: string; away: string; result: SimulationResult } | null> {
-  const { data, error } = await client.functions.invoke("play-friendly", { body: { season, slot, opponent, opp_manager: oppManager } });
+export async function friendlyOnServer(client: SupabaseClient, season: string, slot: number, opponent: string, oppManager: string | null, oppUser: string | null = null): Promise<{ home: string; away: string; result: SimulationResult } | null> {
+  const { data, error } = await client.functions.invoke("play-friendly", { body: { season, slot, opponent, opp_manager: oppManager, opp_user: oppUser } });
   if (error) {
     const status = (error as { context?: { status?: number } }).context?.status;
     if (status === undefined || status === 404) return null;
@@ -97,13 +97,9 @@ export async function settleOnServer(client: SupabaseClient): Promise<boolean> {
   if (Date.now() - lastSettle < 15_000) return lastServed;
   lastSettle = Date.now();
   try {
+    // only a clean answer counts: a missing, crashing or refusing function means the page settles the sales itself
     const { error } = await client.functions.invoke("settle-sales", { body: {} });
-    if (error) {
-      const status = (error as { context?: { status?: number } }).context?.status;
-      lastServed = !(status === undefined || status === 404);
-    } else {
-      lastServed = true;
-    }
+    lastServed = !error;
   } catch {
     lastServed = false;
   }

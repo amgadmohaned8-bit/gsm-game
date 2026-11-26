@@ -4,7 +4,8 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.4";
 import { simulateFixture } from "../_shared/src/lib/football/matchSim.ts";
 import { FRIENDLIES_PER_ROUND } from "../_shared/src/lib/football/friendlies.ts";
-import { currentLineup, loadSim } from "../_shared/src/lib/football/strength.ts";
+import { currentLineup, loadSim, strengthBonus } from "../_shared/src/lib/football/strength.ts";
+import { aiStyle, matchup, readTactic } from "../_shared/src/lib/football/tactics.ts";
 import { sessionGain } from "../_shared/src/lib/football/development.ts";
 import { squadOf } from "../_shared/src/lib/football/squads.ts";
 import { clubsOfLeague } from "../_shared/src/lib/football/leagueClubs.ts";
@@ -78,6 +79,27 @@ async function handle(req: Request): Promise<Response> {
   for (const r of prefs ?? []) store.set(r.k, r.v);
   const sim = await loadSim(asUser, { userId: user.id, clubId: myClub, roomId: null, season, matchday: slot, leagueId });
 
+  // a friend's club plays as the friend set it up: his squad (with his sales), his lineup and his tactic
+  let oppBonus = sim.bonus[opponent] ?? 0;
+  let oppStyle = aiStyle(opponent);
+  let friendStyle = false;
+  const oppUser = typeof body.opp_user === "string" ? body.opp_user : "";
+  if (oppUser) {
+    const { data: mine } = await admin.from("manager_contracts").select("room_id").eq("user_id", user.id).maybeSingle();
+    const { data: mem } = mine?.room_id ? await admin.from("room_members").select("club_id").eq("room_id", mine.room_id).eq("user_id", oppUser).maybeSingle() : { data: null };
+    if (mem?.club_id === opponent) {
+      const { data: fp } = await admin.from("manager_prefs").select("k, v").eq("user_id", oppUser);
+      for (const r of fp ?? []) store.set(r.k, r.v);
+      try {
+        const fsim = await loadSim(admin, { userId: oppUser, clubId: opponent, roomId: null, season, matchday: slot, leagueId });
+        if (fsim.squads?.[opponent]) sim.squads = { ...(sim.squads ?? {}), [opponent]: fsim.squads[opponent] };
+        oppBonus = fsim.bonus[opponent] ?? oppBonus;
+        const st = readTactic(oppUser, opponent)?.style;
+        if (st) { oppStyle = st; friendStyle = true; }
+      } catch { /* the friend's club plays at its normal strength */ }
+    }
+  }
+  const myStyle = sim.style;
   const home = Math.random() < 0.5; // only the venue is random
   const shine = 4 + Math.floor(Math.random() * 4);
   const homeClub = home ? myClub : opponent;
@@ -89,8 +111,9 @@ async function handle(req: Request): Promise<Response> {
     matchday: 100 + slot + count * 1000,
     homeClub,
     awayClub,
-    homeBonus: (sim.bonus[homeClub] ?? 0) + (homeClub === myClub ? shine : 0),
-    awayBonus: (sim.bonus[awayClub] ?? 0) + (awayClub === myClub ? shine : 0),
+    homeBonus: (homeClub === myClub ? (sim.bonus[myClub] ?? 0) + shine + (myStyle ? matchup(myStyle, oppStyle) : 0) : oppBonus + (friendStyle && myStyle ? matchup(oppStyle, myStyle) : 0)),
+    awayBonus: (awayClub === myClub ? (sim.bonus[myClub] ?? 0) + shine + (myStyle ? matchup(myStyle, oppStyle) : 0) : oppBonus + (friendStyle && myStyle ? matchup(oppStyle, myStyle) : 0)),
+    ...(myStyle ? { homeStyle: homeClub === myClub ? myStyle : oppStyle, awayStyle: awayClub === myClub ? myStyle : oppStyle } : {}),
     squads: sim.squads,
   });
 

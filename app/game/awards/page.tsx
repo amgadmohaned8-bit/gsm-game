@@ -1,5 +1,9 @@
 "use client";
 
+import Flag from "@/components/Flag";
+import { squadOf } from "@/lib/football/squads";
+
+const natOf = (p: { id: string; club: string }) => squadOf(p.club).find((x) => x.id === p.id)?.nationality;
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -38,7 +42,7 @@ function Winner({ title, note, p, unit, value }: { title: string; note: string; 
           <div className="aw-who">
             {c && <img src={c.logo} alt="" />}
             <div>
-              <strong>{p.name}</strong>
+              <strong><Flag code={natOf(p)} />{p.name}</strong>
               <span>{c?.name ?? p.club}</span>
             </div>
           </div>
@@ -250,7 +254,7 @@ export default function AwardsPage() {
                       return (
                         <div key={p.id} className={`aw-pl ${p.club === myClub ? "is-mine" : ""}`}>
                           {c && <img src={c.logo} alt="" />}
-                          <strong>{p.name}</strong>
+                          <strong><Flag code={natOf(p)} />{p.name}</strong>
                           <small>{p.rating}{p.goals || p.assists ? ` · ${p.goals}G ${p.assists}A` : ""}</small>
                         </div>
                       );
