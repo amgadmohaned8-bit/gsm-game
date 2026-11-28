@@ -1,6 +1,6 @@
 // Call this from the Edge Function that finishes a competition or a season.
 // It uses the service-role client, so players cannot award themselves trophies.
-import type { SupabaseClient } from 'https://esm.sh/@supabase/supabase-js@2';
+import type { SupabaseClient } from "@supabase/supabase-js";
 
 export interface AwardTrophyInput {
   managerId: string;
